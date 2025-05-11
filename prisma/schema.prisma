@@ -10,18 +10,20 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 model User {
   id         String          @id @default(uuid())
   email      String          @unique
   name       String?
+  password   String
   createdAt  DateTime        @default(now())
   proStatus  Boolean         @default(false)
   settings   UserSettings?
   tasks      Task[]          @relation("UserTasks")
   sessions   PomodoroSession[]
+  authSessions Session[]
 }
 
 model Task {
@@ -62,6 +64,15 @@ model UserSettings {
   theme              Theme   @default(AUTO)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum TaskStatus {

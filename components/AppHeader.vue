@@ -4,7 +4,7 @@
       <div class="flex justify-between items-center">
         <!-- Logo -->
         <div class="flex items-center">
-          <h1 class="text-2xl font-bold text-[var(--primary)]">FocusHub</h1>
+          <NuxtLink to="/" class="text-2xl font-bold text-[var(--primary)]">FocusHub</NuxtLink>
         </div>
 
         <!-- Navigation -->
@@ -16,10 +16,29 @@
 
         <!-- Auth Buttons -->
         <div class="flex items-center space-x-4">
-          <button class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors">Login</button>
-          <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors">
-            Sign Up
-          </button>
+          <template v-if="user">
+            <span class="text-[var(--text-primary)]">Welcome, {{ user.name }}</span>
+            <button 
+              @click="handleLogout" 
+              class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              Logout
+            </button>
+          </template>
+          <template v-else>
+            <NuxtLink 
+              to="/login" 
+              class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors"
+            >
+              Login
+            </NuxtLink>
+            <NuxtLink 
+              to="/signup" 
+              class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Sign Up
+            </NuxtLink>
+          </template>
         </div>
       </div>
     </nav>
@@ -27,5 +46,28 @@
 </template>
 
 <script setup lang="ts">
-// Component logic can be added here
+const user = ref(null)
+const router = useRouter()
+
+// Fetch user data on component mount
+onMounted(async () => {
+  try {
+    const response = await fetch('/api/auth/me')
+    if (response.ok) {
+      user.value = await response.json()
+    }
+  } catch (error) {
+    console.error('Failed to fetch user data:', error)
+  }
+})
+
+async function handleLogout() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    user.value = null
+    router.push('/')
+  } catch (error) {
+    console.error('Failed to logout:', error)
+  }
+}
 </script> 
