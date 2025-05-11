@@ -2,20 +2,9 @@
   <div class="min-h-screen bg-[var(--background)]">
     <div class="container mx-auto px-4 py-8">
       <div class="max-w-md mx-auto bg-[var(--card-background)] rounded-lg shadow-md p-8">
-        <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">Create an Account</h1>
+        <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">Login to Your Account</h1>
         
         <form @submit.prevent="handleSubmit" class="space-y-4">
-          <div>
-            <label for="username" class="block text-sm font-medium text-[var(--text-primary)] mb-1">Username</label>
-            <input
-              id="username"
-              v-model="form.username"
-              type="text"
-              required
-              class="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--input-background)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            />
-          </div>
-
           <div>
             <label for="email" class="block text-sm font-medium text-[var(--text-primary)] mb-1">Email Address</label>
             <input
@@ -38,17 +27,6 @@
             />
           </div>
 
-          <div>
-            <label for="confirmPassword" class="block text-sm font-medium text-[var(--text-primary)] mb-1">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              v-model="form.confirmPassword"
-              type="password"
-              required
-              class="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--input-background)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            />
-          </div>
-
           <div v-if="error" class="text-red-500 text-sm">{{ error }}</div>
 
           <button
@@ -56,12 +34,12 @@
             class="w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-medium py-2 px-4 rounded-lg transition-colors"
             :disabled="loading"
           >
-            {{ loading ? 'Creating Account...' : 'Sign Up' }}
+            {{ loading ? 'Logging in...' : 'Login' }}
           </button>
 
           <p class="text-center text-sm text-[var(--text-secondary)]">
-            Already have an account?
-            <NuxtLink to="/login" class="text-[var(--primary)] hover:underline">Log in</NuxtLink>
+            Don't have an account?
+            <NuxtLink to="/signup" class="text-[var(--primary)] hover:underline">Sign up</NuxtLink>
           </p>
         </form>
       </div>
@@ -70,25 +48,38 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  middleware: ['auth']
+})
+
 const form = ref({
-  username: '',
   email: '',
-  password: '',
-  confirmPassword: ''
+  password: ''
 })
 
 const error = ref('')
 const loading = ref(false)
-const router = useRouter()
+
+// Add user state
+const user = useState('user')
+
+// Check if user is already logged in
+onMounted(async () => {
+  try {
+    const response = await $fetch('/api/auth/me')
+    if (response) {
+      user.value = response
+      await navigateTo('/app', { replace: true })
+    }
+  } catch (error) {
+    // User is not logged in, stay on login page
+  }
+})
 
 async function handleSubmit() {
   error.value = ''
   
   // Validate all fields are filled
-  if (!form.value.username.trim()) {
-    error.value = 'Username is required'
-    return
-  }
   if (!form.value.email.trim()) {
     error.value = 'Email is required'
     return
@@ -97,41 +88,28 @@ async function handleSubmit() {
     error.value = 'Password is required'
     return
   }
-  if (!form.value.confirmPassword) {
-    error.value = 'Please confirm your password'
-    return
-  }
-
-  if (form.value.password !== form.value.confirmPassword) {
-    error.value = 'Passwords do not match'
-    return
-  }
 
   loading.value = true
 
   try {
-    const response = await fetch('/api/auth/signup', {
+    const response = await $fetch('/api/auth/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        username: form.value.username,
+      body: {
         email: form.value.email,
         password: form.value.password
-      })
+      }
     })
 
-    const data = await response.json()
+    // Update user state
+    user.value = response.user
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to create account')
-    }
+    // Wait a moment for the cookie to be set
+    await new Promise(resolve => setTimeout(resolve, 100))
 
-    // Navigate to the app page after successful signup
-    router.push('/app')
+    // Navigate to the app page
+    await navigateTo('/app', { replace: true })
   } catch (e: any) {
-    error.value = e.message
+    error.value = e.message || 'Failed to login'
   } finally {
     loading.value = false
   }
