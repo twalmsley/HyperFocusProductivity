@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String          @id @default(uuid())
+  email      String          @unique
+  name       String?
+  createdAt  DateTime        @default(now())
+  proStatus  Boolean         @default(false)
+  settings   UserSettings?
+  tasks      Task[]          @relation("UserTasks")
+  sessions   PomodoroSession[]
+}
+
+model Task {
+  id                  String          @id @default(uuid())
+  userId              String
+  title               String
+  notes               String?
+  estimatedPomodoros Int?
+  status              TaskStatus      @default(BACKLOG)
+  createdAt           DateTime        @default(now())
+  completedAt         DateTime?
+  position            Int?
+
+  user     User       @relation("UserTasks", fields: [userId], references: [id], onDelete: Cascade)
+  sessions PomodoroSession[]
+}
+
+model PomodoroSession {
+  id             String            @id @default(uuid())
+  userId         String
+  taskId         String?
+  type           SessionType
+  startTime      DateTime
+  endTime        DateTime
+  durationMinutes Int
+  notes          String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+}
+
+model UserSettings {
+  userId             String  @id
+  focusDuration      Int     @default(25)
+  shortBreakDuration Int     @default(5)
+  longBreakDuration  Int     @default(15)
+  longBreakInterval  Int     @default(4)
+  theme              Theme   @default(AUTO)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum TaskStatus {
+  BACKLOG
+  IN_PROGRESS
+  DONE
+}
+
+enum SessionType {
+  FOCUS
+  SHORT_BREAK
+  LONG_BREAK
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  AUTO
+}
