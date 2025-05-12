@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="min-h-screen bg-[var(--background)] py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
       <!-- Subscription Status -->
       <div v-if="subscription" class="mb-12 bg-white rounded-lg shadow p-6">
@@ -27,43 +27,78 @@
       </div>
 
       <!-- Subscription Plans -->
-      <div class="space-y-12 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-6 lg:max-w-4xl lg:mx-auto">
-        <!-- Monthly Plan -->
-        <div class="border border-gray-200 rounded-lg shadow-sm divide-y divide-gray-200">
-          <div class="p-6">
-            <h2 class="text-xl leading-6 font-bold text-gray-900">Monthly</h2>
-            <p class="mt-4 text-sm text-gray-500">Perfect for individuals who want flexibility.</p>
-            <p class="mt-8">
-              <span class="text-4xl font-bold text-gray-900">$9.99</span>
-              <span class="text-base font-medium text-gray-500">/mo</span>
-            </p>
-            <button
-              @click="subscribe('MONTHLY')"
-              class="mt-8 block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md"
-              :disabled="isLoading"
-            >
-              {{ subscription?.status === 'ACTIVE' ? 'Change Plan' : 'Subscribe Now' }}
-            </button>
-          </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <!-- Basic Plan -->
+        <div class="bg-white p-8 rounded-lg shadow-md border-t-4 border-[var(--primary)] relative">
+          <div class="absolute -top-4 right-8 bg-[var(--primary)] text-white text-sm font-bold px-3 py-1 rounded-full">Popular</div>
+          <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Basic Plan</h2>
+          <p class="text-[var(--text-secondary)] mb-6">Perfect for individual users</p>
+          <p class="text-4xl font-bold text-[var(--text-primary)] mb-6">
+            £10<span class="text-lg text-[var(--text-secondary)]">/month</span>
+          </p>
+          <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
+            <li class="flex items-start">
+              <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
+              <span>Unlimited Pomodoro sessions</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
+              <span>Advanced task management</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
+              <span>Basic productivity analytics</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
+              <span>Email support</span>
+            </li>
+          </ul>
+          <button
+            @click="subscribe('MONTHLY')"
+            class="w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-4 rounded-lg transition-colors"
+            :disabled="isLoading"
+          >
+            {{ subscription?.status === 'ACTIVE' ? 'Change Plan' : 'Subscribe Now' }}
+          </button>
         </div>
 
-        <!-- Annual Plan -->
-        <div class="border border-gray-200 rounded-lg shadow-sm divide-y divide-gray-200">
-          <div class="p-6">
-            <h2 class="text-xl leading-6 font-bold text-gray-900">Annual</h2>
-            <p class="mt-4 text-sm text-gray-500">Save 20% with our annual plan.</p>
-            <p class="mt-8">
-              <span class="text-4xl font-bold text-gray-900">$95.88</span>
-              <span class="text-base font-medium text-gray-500">/year</span>
-            </p>
-            <button
-              @click="subscribe('YEARLY')"
-              class="mt-8 block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md"
-              :disabled="isLoading"
-            >
-              {{ subscription?.status === 'ACTIVE' ? 'Change Plan' : 'Subscribe Now' }}
-            </button>
-          </div>
+        <!-- Premium Plan -->
+        <div class="bg-white p-8 rounded-lg shadow-md border-t-4 border-[var(--primary-dark)]">
+          <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Premium Plan</h2>
+          <p class="text-[var(--text-secondary)] mb-6">For power users who want it all</p>
+          <p class="text-4xl font-bold text-[var(--text-primary)] mb-6">
+            £20<span class="text-lg text-[var(--text-secondary)]">/month</span>
+          </p>
+          <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
+            <li class="flex items-start">
+              <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
+              <span>Everything in Basic</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
+              <span>Advanced analytics and insights</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
+              <span>Team collaboration features</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
+              <span>Priority support</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
+              <span>Early access to new features</span>
+            </li>
+          </ul>
+          <button
+            @click="subscribe('YEARLY')"
+            class="w-full bg-[var(--primary-dark)] hover:bg-[var(--primary)] text-white font-bold py-3 px-4 rounded-lg transition-colors"
+            :disabled="isLoading"
+          >
+            {{ subscription?.status === 'ACTIVE' ? 'Change Plan' : 'Subscribe Now' }}
+          </button>
         </div>
       </div>
     </div>
