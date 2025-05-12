@@ -83,7 +83,7 @@
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
           />
         </svg>
-        <span>Warning: Do not leave the page while the timer is running. Your progress will be lost.</span>
+        <span>Your timer state will be saved if you navigate away from the page.</span>
       </div>
     </div>
 
@@ -149,12 +149,100 @@ const timerInterval = ref<number | null>(null)
 const titleInterval = ref<number | null>(null)
 const startTime = ref(0)
 const elapsedTime = ref(0)
+const stepEndTime = ref<number | null>(null)
+
+// Add state persistence
+const STORAGE_KEY = 'pomodoro-state'
 
 const circumference = 2 * Math.PI * 45
 const dashOffset = computed(() => {
-  const progress = timeLeft.value / (isBreak.value ? props.breakDuration : props.focusDuration)
+  const totalDuration = isBreak.value ? props.breakDuration : props.focusDuration
+  const progress = timeLeft.value / totalDuration
   return circumference * (1 - progress)
 })
+
+function saveState() {
+  const state = {
+    isRunning: isRunning.value,
+    isBreak: isBreak.value,
+    currentRound: currentRound.value,
+    stepEndTime: stepEndTime.value,
+    sessionSteps: sessionSteps.value
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+}
+
+function loadState() {
+  const savedState = localStorage.getItem(STORAGE_KEY)
+  if (savedState) {
+    const state = JSON.parse(savedState)
+    isRunning.value = state.isRunning
+    isBreak.value = state.isBreak
+    currentRound.value = state.currentRound
+    stepEndTime.value = state.stepEndTime
+    if (state.sessionSteps) {
+      sessionSteps.value = state.sessionSteps
+    }
+
+    // If timer was running, calculate remaining time and restart
+    if (isRunning.value && stepEndTime.value) {
+      // First update the remaining time
+      updateRemainingTime()
+      
+      // Clear any existing intervals
+      if (timerInterval.value) {
+        clearInterval(timerInterval.value)
+      }
+      if (titleInterval.value) {
+        clearInterval(titleInterval.value)
+      }
+
+      // Force a re-render of the progress circle
+      nextTick(() => {
+        // Restart the timer with the current state
+        const totalDuration = isBreak.value ? props.breakDuration : props.focusDuration
+        stepEndTime.value = Date.now() + (timeLeft.value * 1000)
+        
+        timerInterval.value = window.setInterval(() => {
+          if (!updateRemainingTime()) {
+            // Timer finished
+            if (isBreak.value) {
+              isBreak.value = false
+              timeLeft.value = props.focusDuration
+              currentRound.value++
+            } else {
+              if (currentRound.value < props.rounds) {
+                isBreak.value = true
+                timeLeft.value = props.breakDuration
+              } else {
+                resetTimer()
+                return
+              }
+            }
+            stepEndTime.value = Date.now() + (timeLeft.value * 1000)
+            updateSessionSteps()
+          }
+          saveState()
+        }, 100) // Update more frequently for smoother animation
+
+        // Update title immediately and then every second
+        updateTitle()
+        titleInterval.value = window.setInterval(updateTitle, 1000)
+        window.addEventListener('beforeunload', handleBeforeUnload)
+      })
+    }
+  }
+}
+
+function updateRemainingTime() {
+  if (stepEndTime.value) {
+    const now = Date.now()
+    const remainingSeconds = Math.max(0, Math.floor((stepEndTime.value - now) / 1000))
+    timeLeft.value = remainingSeconds
+    return remainingSeconds > 0
+  }
+  return false
+}
 
 interface SessionStep {
   type: string
@@ -224,13 +312,38 @@ function handleBeforeUnload(e: BeforeUnloadEvent) {
 function startTimer() {
   if (!isRunning.value) {
     isRunning.value = true
-    startTime.value = Date.now() - elapsedTime.value
-    timerInterval.value = window.setInterval(updateTimer, 1000)
-    // Update title immediately and then every 5 seconds
+    const totalDuration = isBreak.value ? props.breakDuration : props.focusDuration
+    stepEndTime.value = Date.now() + (totalDuration * 1000)
+    
+    timerInterval.value = window.setInterval(() => {
+      if (!updateRemainingTime()) {
+        // Timer finished
+        if (isBreak.value) {
+          isBreak.value = false
+          timeLeft.value = props.focusDuration
+          currentRound.value++
+        } else {
+          if (currentRound.value < props.rounds) {
+            isBreak.value = true
+            timeLeft.value = props.breakDuration
+          } else {
+            resetTimer()
+            return
+          }
+        }
+        stepEndTime.value = Date.now() + (timeLeft.value * 1000)
+        updateSessionSteps()
+      }
+      saveState()
+    }, 100) // Update more frequently for smoother animation
+
+    // Update title immediately and then every second
     updateTitle()
     titleInterval.value = window.setInterval(updateTitle, 1000)
     // Add beforeunload event listener
     window.addEventListener('beforeunload', handleBeforeUnload)
+    // Save state when starting
+    saveState()
   }
 }
 
@@ -243,11 +356,12 @@ function pauseTimer() {
     if (titleInterval.value) {
       clearInterval(titleInterval.value)
     }
-    elapsedTime.value = Date.now() - startTime.value
     // Reset title when paused
     document.title = 'Pomodoro Timer'
     // Remove beforeunload event listener
     window.removeEventListener('beforeunload', handleBeforeUnload)
+    // Save state when pausing
+    saveState()
   }
 }
 
@@ -256,10 +370,12 @@ function resetTimer() {
   timeLeft.value = props.focusDuration
   isBreak.value = false
   currentRound.value = 1
-  elapsedTime.value = 0
+  stepEndTime.value = null
   resetSessionSteps()
   // Reset title
   document.title = 'Pomodoro Timer'
+  // Clear saved state
+  localStorage.removeItem(STORAGE_KEY)
 }
 
 function skipToNextRound() {
@@ -276,40 +392,15 @@ function skipToNextRound() {
       return
     }
   }
-  startTime.value = Date.now()
-  elapsedTime.value = 0
+  stepEndTime.value = Date.now() + (timeLeft.value * 1000)
   updateSessionSteps()
+  saveState()
 }
 
-function updateTimer() {
-  const now = Date.now()
-  elapsedTime.value = now - startTime.value
-  const totalDuration = isBreak.value ? props.breakDuration : props.focusDuration
-  timeLeft.value = Math.max(0, totalDuration - Math.floor(elapsedTime.value / 1000))
-
-  if (timeLeft.value === 0) {
-    if (isBreak.value) {
-      isBreak.value = false
-      timeLeft.value = props.focusDuration
-      currentRound.value++
-    } else {
-      if (currentRound.value < props.rounds) {
-        isBreak.value = true
-        timeLeft.value = props.breakDuration
-      } else {
-        resetTimer()
-        return
-      }
-    }
-    startTime.value = Date.now()
-    elapsedTime.value = 0
-    updateSessionSteps()
-  }
-}
-
-// Initialize steps on component mount
+// Initialize steps and load state on component mount
 onMounted(() => {
   generateSessionSteps()
+  loadState()
 })
 
 onUnmounted(() => {
@@ -323,5 +414,7 @@ onUnmounted(() => {
   document.title = 'Pomodoro Timer'
   // Remove beforeunload event listener
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  // Save state when unmounting
+  saveState()
 })
 </script> 
