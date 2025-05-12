@@ -10,8 +10,8 @@
         <!-- Navigation -->
         <div class="hidden md:flex space-x-8">
           <NuxtLink to="/features" class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors">Features</NuxtLink>
-          <a href="#" class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors">Pricing</a>
-          <a href="#" class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors">About</a>
+          <NuxtLink to="/pricing" class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors">Pricing</NuxtLink>
+          <NuxtLink to="/about" class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors">About</NuxtLink>
         </div>
 
         <!-- Auth Buttons -->

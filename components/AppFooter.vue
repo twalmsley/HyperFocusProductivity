@@ -14,9 +14,10 @@
         <div>
           <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">Quick Links</h3>
           <ul class="space-y-2">
-            <li><a href="#" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Features</a></li>
-            <li><a href="#" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Pricing</a></li>
-            <li><a href="#" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">About</a></li>
+            <li><NuxtLink to="/features" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Features</NuxtLink></li>
+            <li><NuxtLink to="/pricing" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Pricing</NuxtLink></li>
+            <li><NuxtLink to="/about" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">About</NuxtLink></li>
+            <li><NuxtLink to="/contact" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Contact Us</NuxtLink></li>
           </ul>
         </div>
 
@@ -24,9 +25,9 @@
         <div>
           <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">Legal</h3>
           <ul class="space-y-2">
-            <li><a href="#" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Privacy Policy</a></li>
-            <li><a href="#" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Terms of Service</a></li>
-            <li><a href="#" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Cookie Policy</a></li>
+            <li><NuxtLink to="/privacy" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Privacy Policy</NuxtLink></li>
+            <li><NuxtLink to="/terms" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Terms of Service</NuxtLink></li>
+            <li><NuxtLink to="/cookies" class="text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Cookie Policy</NuxtLink></li>
           </ul>
         </div>
       </div>
