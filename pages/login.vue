@@ -109,7 +109,13 @@ async function handleSubmit() {
     // Navigate to the app page
     await navigateTo('/app', { replace: true })
   } catch (e: any) {
-    error.value = e.message || 'Failed to login'
+    // Handle authentication errors more gracefully
+    if (e.response && e.response.status === 401) {
+      error.value = 'Invalid email or password'
+    } else {
+      error.value = 'An error occurred while logging in. Please try again.'
+    }
+    console.error('Login error:', e)
   } finally {
     loading.value = false
   }
