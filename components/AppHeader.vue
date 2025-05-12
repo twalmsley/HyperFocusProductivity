@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-const user = ref(null)
+const user = useState('user')
 const router = useRouter()
 
 // Fetch user data on component mount
