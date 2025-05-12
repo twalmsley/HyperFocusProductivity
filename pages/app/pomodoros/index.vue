@@ -2,7 +2,7 @@
   <div>
     <AppNavHeader v-if="user" />
     <main class="container mx-auto px-4 py-8">
-      <h1 class="text-3xl font-bold mb-6">Pomodoros</h1>
+      <h1 class="text-3xl font-bold mb-6">Pomodoro</h1>
       <div class="bg-white p-6 rounded-lg shadow-sm">
         <PomodoroTimer
           :focus-duration="25 * 60"
