@@ -3,11 +3,18 @@
     <div class="container mx-auto px-4">
       <div class="flex space-x-8 py-3">
         <NuxtLink 
-          to="/app/dashboard" 
+          to="/app" 
           class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors"
-          :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/dashboard') }"
+          :class="{ 'text-[var(--primary)]': route.path === '/app' }"
         >
           Dashboard
+        </NuxtLink>
+        <NuxtLink 
+          to="/app/pomodoros" 
+          class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors"
+          :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/pomodoros') }"
+        >
+          Pomodoros
         </NuxtLink>
         <NuxtLink 
           to="/app/tasks" 
