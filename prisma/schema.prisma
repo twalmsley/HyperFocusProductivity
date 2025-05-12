@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -24,6 +25,7 @@ model User {
   tasks      Task[]          @relation("UserTasks")
   sessions   PomodoroSession[]
   authSessions Session[]
+  subscription UserSubscription?
 }
 
 model Task {
@@ -75,6 +77,23 @@ model Session {
   @@index([userId])
 }
 
+model UserSubscription {
+  id                String            @id @default(uuid())
+  userId            String            @unique
+  status            SubscriptionStatus @default(FREE_TRIAL)
+  type              SubscriptionType?
+  freeTrialExpiresAt DateTime
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  stripeCustomerId   String?
+  stripeSubscriptionId String?
+  cancelAtPeriodEnd  Boolean          @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 enum TaskStatus {
   BACKLOG
   IN_PROGRESS
@@ -91,4 +110,17 @@ enum Theme {
   LIGHT
   DARK
   AUTO
+}
+
+enum SubscriptionStatus {
+  FREE_TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum SubscriptionType {
+  MONTHLY
+  YEARLY
 }

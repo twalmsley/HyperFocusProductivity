@@ -24,6 +24,7 @@ logs
 !.env.example
 
 # Prisma
+/prisma/generated/
 /generated/
 /prisma/*.db
 /prisma/*.db-journal

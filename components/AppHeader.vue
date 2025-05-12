@@ -17,13 +17,31 @@
         <!-- Auth Buttons -->
         <div class="flex items-center space-x-4">
           <template v-if="user">
-            <span class="text-[var(--text-primary)]">Welcome, {{ user.name }}</span>
-            <button 
-              @click="handleLogout" 
-              class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors"
-            >
-              Logout
-            </button>
+            <div class="flex items-center space-x-4">
+              <span class="text-[var(--text-primary)]">Welcome, {{ user.name }}</span>
+              
+              <!-- Subscription Status -->
+              <NuxtLink 
+                v-if="showSubscriptionAlert"
+                to="/subscription" 
+                class="text-yellow-500 hover:text-yellow-600 transition-colors flex items-center"
+              >
+                <span class="mr-1">⚠️</span>
+                <span v-if="user.subscription?.status === 'FREE_TRIAL'">
+                  Trial expires in {{ trialDaysLeft }} days
+                </span>
+                <span v-else>
+                  Subscription needed
+                </span>
+              </NuxtLink>
+              
+              <button 
+                @click="handleLogout" 
+                class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors"
+              >
+                Logout
+              </button>
+            </div>
           </template>
           <template v-else>
             <NuxtLink 
@@ -48,6 +66,31 @@
 <script setup lang="ts">
 const user = useState('user')
 const router = useRouter()
+const showSubscriptionAlert = computed(() => {
+  if (!user.value?.subscription) return false
+  
+  const status = user.value.subscription.status
+  if (status === 'EXPIRED' || status === 'CANCELED' || status === 'PAST_DUE') {
+    return true
+  }
+  
+  if (status === 'FREE_TRIAL') {
+    const trialEnd = new Date(user.value.subscription.freeTrialExpiresAt)
+    const now = new Date()
+    const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    return daysLeft <= 3 // Show alert when 3 or fewer days remain
+  }
+  
+  return false
+})
+
+const trialDaysLeft = computed(() => {
+  if (!user.value?.subscription || user.value.subscription.status !== 'FREE_TRIAL') return 0
+  
+  const trialEnd = new Date(user.value.subscription.freeTrialExpiresAt)
+  const now = new Date()
+  return Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+})
 
 // Fetch user data on component mount
 onMounted(async () => {

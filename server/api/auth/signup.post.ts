@@ -1,5 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 import { hash } from 'bcrypt'
+import type { SubscriptionStatus } from '~/server/types'
 
 const prisma = new PrismaClient()
 
@@ -36,23 +37,33 @@ export default defineEventHandler(async (event) => {
     // Hash password
     const hashedPassword = await hash(password, 10)
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name: username,
-        email,
-        // Store hashed password in a separate field (you'll need to add this to your schema)
-        password: hashedPassword,
-        // Create default settings
-        settings: {
-          create: {
-            focusDuration: 25,
-            shortBreakDuration: 5,
-            longBreakDuration: 15,
-            longBreakInterval: 4
-          }
+    // Calculate free trial expiry date (14 days from now)
+    const freeTrialExpiresAt = new Date()
+    freeTrialExpiresAt.setDate(freeTrialExpiresAt.getDate() + 14)
+
+    // Create user with type-safe data
+    const userData: Prisma.UserCreateInput = {
+      name: username,
+      email,
+      password: hashedPassword,
+      settings: {
+        create: {
+          focusDuration: 25,
+          shortBreakDuration: 5,
+          longBreakDuration: 15,
+          longBreakInterval: 4
+        }
+      },
+      subscription: {
+        create: {
+          status: 'FREE_TRIAL',
+          freeTrialExpiresAt
         }
       }
+    }
+
+    const user = await prisma.user.create({
+      data: userData
     })
 
     // Create session

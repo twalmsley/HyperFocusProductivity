@@ -1,6 +1,11 @@
 import { H3Event } from 'h3'
 import { prisma } from '~/server/utils/db'
 import bcrypt from 'bcryptjs'
+import { Prisma } from '@prisma/client'
+
+type UserWithSubscription = Prisma.UserGetPayload<{
+  include: { subscription: true }
+}>
 
 export default defineEventHandler(async (event: H3Event) => {
   try {
@@ -11,8 +16,11 @@ export default defineEventHandler(async (event: H3Event) => {
 
     // Find user by email
     const user = await prisma.user.findUnique({
-      where: { email }
-    })
+      where: { email },
+      include: {
+        subscription: true
+      }
+    }) as UserWithSubscription | null
 
     if (!user) {
       console.log('Login failed: User not found')
@@ -31,6 +39,40 @@ export default defineEventHandler(async (event: H3Event) => {
         statusCode: 401,
         message: 'Invalid email or password'
       })
+    }
+
+    // Check subscription status
+    let subscriptionStatus = user.subscription?.status || 'FREE_TRIAL'
+    const now = new Date()
+
+    if (user.subscription) {
+      if (subscriptionStatus === 'FREE_TRIAL' && user.subscription.freeTrialExpiresAt < now) {
+        // Update subscription status to EXPIRED if free trial has ended
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            subscription: {
+              update: {
+                status: 'EXPIRED'
+              }
+            }
+          }
+        })
+        subscriptionStatus = 'EXPIRED'
+      } else if (subscriptionStatus === 'ACTIVE' && user.subscription.currentPeriodEnd && user.subscription.currentPeriodEnd < now) {
+        // Update subscription status to EXPIRED if paid subscription has ended
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            subscription: {
+              update: {
+                status: 'EXPIRED'
+              }
+            }
+          }
+        })
+        subscriptionStatus = 'EXPIRED'
+      }
     }
 
     console.log('Login successful for:', email)
@@ -57,7 +99,12 @@ export default defineEventHandler(async (event: H3Event) => {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        subscription: {
+          status: subscriptionStatus,
+          freeTrialExpiresAt: user.subscription?.freeTrialExpiresAt,
+          currentPeriodEnd: user.subscription?.currentPeriodEnd
+        }
       }
     }
   } catch (error: any) {
