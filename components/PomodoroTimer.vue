@@ -143,6 +143,8 @@ const props = defineProps({
   }
 })
 
+const emit = defineEmits(['timer-state-change'])
+
 const timeLeft = ref(props.focusDuration)
 const isRunning = ref(false)
 const isBreak = ref(false)
@@ -152,6 +154,19 @@ const titleInterval = ref<number | null>(null)
 const startTime = ref(0)
 const elapsedTime = ref(0)
 const stepEndTime = ref<number | null>(null)
+
+// Watch for prop changes and update only when timer is not running
+watch(() => [props.focusDuration, props.breakDuration, props.rounds], ([newFocusDuration, newBreakDuration, newRounds], [oldFocusDuration, oldBreakDuration, oldRounds]) => {
+  if (!isRunning.value) {
+    // Only update the timer if the timer is not running
+    if (!isBreak.value) {
+      timeLeft.value = newFocusDuration
+    } else {
+      timeLeft.value = newBreakDuration
+    }
+    generateSessionSteps()
+  }
+}, { deep: true })
 
 // Add state persistence
 const STORAGE_KEY = 'pomodoro-state'
@@ -184,8 +199,12 @@ function loadState() {
     isBreak.value = state.isBreak
     currentRound.value = state.currentRound
     stepEndTime.value = state.stepEndTime
-    if (state.sessionSteps) {
+    
+    // Use saved session steps if available, otherwise generate new ones
+    if (state.sessionSteps && state.sessionSteps.length > 0) {
       sessionSteps.value = state.sessionSteps
+    } else {
+      generateSessionSteps()
     }
 
     // If timer was running, calculate remaining time and restart
@@ -382,6 +401,8 @@ function startTimer() {
     window.addEventListener('beforeunload', handleBeforeUnload)
     // Save state when starting
     saveState()
+    // Emit timer state change
+    emit('timer-state-change', true)
   }
 }
 
@@ -400,6 +421,8 @@ function pauseTimer() {
     window.removeEventListener('beforeunload', handleBeforeUnload)
     // Save state when pausing
     saveState()
+    // Emit timer state change
+    emit('timer-state-change', false)
   }
 }
 
@@ -414,6 +437,8 @@ function resetTimer() {
   document.title = 'Pomodoro Timer'
   // Clear saved state
   localStorage.removeItem(STORAGE_KEY)
+  // Emit timer state change (should be false already from pauseTimer)
+  emit('timer-state-change', false)
 }
 
 function skipToNextRound() {
@@ -445,8 +470,12 @@ function skipToNextRound() {
 
 // Initialize steps and load state on component mount
 onMounted(() => {
-  generateSessionSteps()
-  loadState()
+  const savedState = localStorage.getItem(STORAGE_KEY)
+  if (savedState) {
+    loadState()
+  } else {
+    generateSessionSteps()
+  }
 })
 
 onUnmounted(() => {

@@ -26,6 +26,7 @@ model User {
   sessions   PomodoroSession[]
   authSessions Session[]
   subscription UserSubscription?
+  pomodoroTemplates PomodoroTemplate[] @relation("UserPomodoroTemplates")
 }
 
 model Task {
@@ -55,6 +56,22 @@ model PomodoroSession {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   task Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+}
+
+model PomodoroTemplate {
+  id                String  @id @default(uuid())
+  userId            String
+  name              String
+  description       String?
+  focusDuration     Int
+  shortBreakDuration Int
+  longBreakDuration Int?
+  rounds            Int
+  isDefault         Boolean @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation("UserPomodoroTemplates", fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserSettings {
