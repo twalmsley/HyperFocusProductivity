@@ -1,5 +1,7 @@
 <template>
   <div class="bg-[var(--background)]">
+    <!-- AppNavHeader when user is logged in -->
+    <AppNavHeader v-if="user" />
     <!-- Hero Section -->
     <section class="container mx-auto px-4 py-20 text-center">
       <h1 class="text-5xl md:text-6xl font-bold text-[var(--text-primary)] mb-6">
@@ -8,9 +10,11 @@
       <p class="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mb-8">
         Your personal productivity companion. Stay focused, track progress, and achieve more.
       </p>
-      <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg">
-        Get Started Free
-      </button>
+      <NuxtLink to="/signup">
+        <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg">
+          Get Started Free
+        </button>
+      </NuxtLink>
     </section>
 
     <!-- Features Grid -->
@@ -49,16 +53,19 @@
         <p class="text-xl text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto">
           Join thousands of users who have transformed their work habits with FocusHub.
         </p>
-        <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg">
-          Start Your Free Trial
-        </button>
+        <NuxtLink to="/signup">
+          <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg">
+            Start Your Free Trial
+          </button>
+        </NuxtLink>
       </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-// Component logic can be added here
+// Get user state
+const user = useState('user')
 </script>
 
 <style>

@@ -1,66 +1,75 @@
 <template>
-  <div class="min-h-screen bg-[var(--background)]">
-    <div class="container mx-auto px-4 py-8">
-      <div class="max-w-md mx-auto bg-[var(--card-background)] rounded-lg shadow-md p-8">
-        <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">Create an Account</h1>
-        
-        <form @submit.prevent="handleSubmit" class="space-y-4">
-          <div>
-            <label for="username" class="block text-sm font-medium text-[var(--text-primary)] mb-1">Username</label>
-            <input
-              id="username"
-              v-model="form.username"
-              type="text"
-              required
-              class="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--input-background)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            />
+  <div class="min-h-screen bg-[var(--background)] py-20">
+    <div class="container mx-auto px-4">
+      <div class="max-w-2xl mx-auto">
+        <!-- Motivational Header -->
+        <div class="text-center mb-12">
+          <h1 class="text-4xl md:text-5xl font-bold text-[var(--text-primary)] mb-6">
+            Start Your Productivity Journey Today
+          </h1>
+          <p class="text-xl text-[var(--text-secondary)] mb-8">
+            Join thousands of successful professionals who have transformed their work habits with FocusHub. Your future self will thank you.
+          </p>
+          <div class="bg-[var(--primary-light)] p-6 rounded-lg mb-8">
+            <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-4">
+              Why Choose FocusHub?
+            </h2>
+            <ul class="text-left space-y-3 text-[var(--text-secondary)]">
+              <li class="flex items-center">
+                <span class="text-[var(--primary)] mr-2">✓</span>
+                Boost your productivity by up to 40%
+              </li>
+              <li class="flex items-center">
+                <span class="text-[var(--primary)] mr-2">✓</span>
+                Join a community of focused achievers
+              </li>
+              <li class="flex items-center">
+                <span class="text-[var(--primary)] mr-2">✓</span>
+                Start with a 14-day free trial
+              </li>
+            </ul>
           </div>
+        </div>
 
-          <div>
-            <label for="email" class="block text-sm font-medium text-[var(--text-primary)] mb-1">Email Address</label>
-            <input
-              id="email"
-              v-model="form.email"
-              type="email"
-              required
-              class="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--input-background)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            />
+        <!-- Signup Form -->
+        <form class="bg-white p-8 rounded-lg shadow-md">
+          <div class="space-y-6">
+            <div>
+              <label for="name" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Full Name</label>
+              <input
+                type="text"
+                id="name"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                placeholder="Enter your full name"
+              />
+            </div>
+            <div>
+              <label for="email" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                placeholder="Enter your email"
+              />
+            </div>
+            <div>
+              <label for="password" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Password</label>
+              <input
+                type="password"
+                id="password"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                placeholder="Create a password"
+              />
+            </div>
+            <button
+              type="submit"
+              class="w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-6 rounded-lg transition-colors"
+            >
+              Create Your Free Account
+            </button>
           </div>
-
-          <div>
-            <label for="password" class="block text-sm font-medium text-[var(--text-primary)] mb-1">Password</label>
-            <input
-              id="password"
-              v-model="form.password"
-              type="password"
-              required
-              class="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--input-background)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            />
-          </div>
-
-          <div>
-            <label for="confirmPassword" class="block text-sm font-medium text-[var(--text-primary)] mb-1">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              v-model="form.confirmPassword"
-              type="password"
-              required
-              class="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--input-background)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            />
-          </div>
-
-          <div v-if="error" class="text-red-500 text-sm">{{ error }}</div>
-
-          <button
-            type="submit"
-            class="w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            :disabled="loading"
-          >
-            {{ loading ? 'Creating Account...' : 'Sign Up' }}
-          </button>
-
-          <p class="text-center text-sm text-[var(--text-secondary)]">
-            Already have an account?
+          <p class="mt-4 text-center text-sm text-[var(--text-secondary)]">
+            Already have an account? 
             <NuxtLink to="/login" class="text-[var(--primary)] hover:underline">Log in</NuxtLink>
           </p>
         </form>
@@ -70,70 +79,5 @@
 </template>
 
 <script setup lang="ts">
-const form = ref({
-  username: '',
-  email: '',
-  password: '',
-  confirmPassword: ''
-})
-
-const error = ref('')
-const loading = ref(false)
-const router = useRouter()
-
-async function handleSubmit() {
-  error.value = ''
-  
-  // Validate all fields are filled
-  if (!form.value.username.trim()) {
-    error.value = 'Username is required'
-    return
-  }
-  if (!form.value.email.trim()) {
-    error.value = 'Email is required'
-    return
-  }
-  if (!form.value.password) {
-    error.value = 'Password is required'
-    return
-  }
-  if (!form.value.confirmPassword) {
-    error.value = 'Please confirm your password'
-    return
-  }
-
-  if (form.value.password !== form.value.confirmPassword) {
-    error.value = 'Passwords do not match'
-    return
-  }
-
-  loading.value = true
-
-  try {
-    const response = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        username: form.value.username,
-        email: form.value.email,
-        password: form.value.password
-      })
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to create account')
-    }
-
-    // Navigate to the app page after successful signup
-    router.push('/app')
-  } catch (e: any) {
-    error.value = e.message
-  } finally {
-    loading.value = false
-  }
-}
+// Form handling logic can be added here
 </script> 
