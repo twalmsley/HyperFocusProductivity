@@ -19,21 +19,31 @@
       <div class="mb-6 flex justify-center" v-if="templates.length > 0">
         <div class="w-full max-w-xs">
           <label for="template-selector" class="block text-sm font-medium text-gray-700 mb-1">Timer Template</label>
-          <select
-            id="template-selector"
-            v-model="selectedTemplateId"
-            @change="selectTemplate"
-            class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            :disabled="timerIsRunning"
-          >
-            <option 
-              v-for="template in templates" 
-              :key="template.id" 
-              :value="template.id"
+          <div class="relative">
+            <select
+              id="template-selector"
+              v-model="selectedTemplateId"
+              @change="selectTemplate"
+              class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              :disabled="timerIsRunning"
+              :class="{'opacity-75 cursor-not-allowed': timerIsRunning}"
             >
-              {{ template.name }}
-            </option>
-          </select>
+              <option 
+                v-for="template in templates" 
+                :key="template.id" 
+                :value="template.id"
+              >
+                {{ template.name }}
+              </option>
+            </select>
+            <!-- Overlay to prevent dropdown from showing when disabled -->
+            <div 
+              v-if="timerIsRunning" 
+              class="absolute inset-0"
+              @click.prevent
+              @mousedown.prevent
+            ></div>
+          </div>
         </div>
       </div>
       
@@ -166,6 +176,9 @@ const currentTemplate = ref<Partial<PomodoroTemplate>>({
 const timerIsRunning = ref(false)
 const timerRef = ref(null)
 
+// Storage key for template selection
+const TEMPLATE_STORAGE_KEY = 'pomodoro-selected-template'
+
 // Default templates if we can't fetch from the API yet
 const defaultTemplates = [
   {
@@ -216,8 +229,8 @@ onMounted(async () => {
     templates.value = defaultTemplates
     await fetchTemplates()
     
-    // Select default template
-    selectDefaultTemplate()
+    // Load saved template selection, then select default if none
+    loadTemplateSelection()
   } catch (error) {
     console.error('Failed to fetch user data:', error)
   }
@@ -235,6 +248,30 @@ async function fetchTemplates() {
     console.error('Failed to fetch templates:', error)
     // Keep the default templates if the API call fails
   }
+}
+
+function loadTemplateSelection() {
+  try {
+    // First try to load from local storage
+    const savedTemplateId = localStorage.getItem(TEMPLATE_STORAGE_KEY)
+    
+    if (savedTemplateId) {
+      // Check if the template exists in our templates list
+      const templateExists = templates.value.some(t => t.id === savedTemplateId)
+      
+      if (templateExists) {
+        selectedTemplateId.value = savedTemplateId
+        // Apply the saved template
+        selectTemplate()
+        return
+      }
+    }
+  } catch (error) {
+    console.error('Error loading template selection:', error)
+  }
+  
+  // If no saved template or it doesn't exist, select default
+  selectDefaultTemplate()
 }
 
 function selectDefaultTemplate() {
@@ -259,6 +296,13 @@ function selectTemplate() {
   const selected = templates.value.find(t => t.id === selectedTemplateId.value)
   if (selected) {
     currentTemplate.value = { ...selected }
+    
+    // Save selection to localStorage
+    try {
+      localStorage.setItem(TEMPLATE_STORAGE_KEY, selectedTemplateId.value)
+    } catch (error) {
+      console.error('Error saving template selection:', error)
+    }
   }
 }
 
