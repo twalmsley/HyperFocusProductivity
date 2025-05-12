@@ -63,6 +63,42 @@
         Skip
       </button>
     </div>
+
+    <!-- History Section -->
+    <div class="mt-8 w-full max-w-md">
+      <h3 class="text-lg font-semibold mb-3">Session Progress</h3>
+      <div class="space-y-2">
+        <div
+          v-for="(step, index) in sessionSteps"
+          :key="index"
+          class="flex items-center p-2 rounded-lg"
+          :class="{
+            'bg-gray-100': step.status === 'completed',
+            'bg-blue-50 border border-blue-200': step.status === 'current',
+            'text-gray-400': step.status === 'upcoming'
+          }"
+        >
+          <div class="w-6 h-6 flex items-center justify-center mr-3">
+            <div
+              v-if="step.status === 'completed'"
+              class="w-4 h-4 bg-green-500 rounded-full"
+            ></div>
+            <div
+              v-else-if="step.status === 'current'"
+              class="w-4 h-4 bg-blue-500 rounded-full animate-pulse"
+            ></div>
+            <div
+              v-else
+              class="w-4 h-4 border-2 border-gray-300 rounded-full"
+            ></div>
+          </div>
+          <div class="flex-grow">
+            <div class="font-medium">{{ step.type }}</div>
+            <div class="text-sm">{{ step.description }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -96,6 +132,53 @@ const dashOffset = computed(() => {
   return circumference * (1 - progress)
 })
 
+interface SessionStep {
+  type: string
+  description: string
+  status: 'completed' | 'current' | 'upcoming'
+}
+
+const sessionSteps = ref<SessionStep[]>([])
+
+function generateSessionSteps() {
+  const steps: SessionStep[] = []
+  for (let i = 1; i <= props.rounds; i++) {
+    steps.push({
+      type: `Focus Session ${i}`,
+      description: `${props.focusDuration / 60} minutes`,
+      status: i === 1 ? 'current' : 'upcoming'
+    })
+    if (i < props.rounds) {
+      steps.push({
+        type: `Break ${i}`,
+        description: `${props.breakDuration / 60} minutes`,
+        status: 'upcoming'
+      })
+    }
+  }
+  sessionSteps.value = steps
+}
+
+function updateSessionSteps() {
+  const currentIndex = sessionSteps.value.findIndex(step => step.status === 'current')
+  if (currentIndex > -1) {
+    // Mark current step as completed
+    sessionSteps.value[currentIndex].status = 'completed'
+    
+    // Mark next step as current if it exists
+    if (currentIndex + 1 < sessionSteps.value.length) {
+      sessionSteps.value[currentIndex + 1].status = 'current'
+    }
+  }
+}
+
+function resetSessionSteps() {
+  sessionSteps.value = sessionSteps.value.map((step, index) => ({
+    ...step,
+    status: index === 0 ? 'current' : 'upcoming'
+  }))
+}
+
 function formatTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60)
   const remainingSeconds = seconds % 60
@@ -126,6 +209,7 @@ function resetTimer() {
   isBreak.value = false
   currentRound.value = 1
   elapsedTime.value = 0
+  resetSessionSteps()
 }
 
 function skipToNextRound() {
@@ -144,6 +228,7 @@ function skipToNextRound() {
   }
   startTime.value = Date.now()
   elapsedTime.value = 0
+  updateSessionSteps()
 }
 
 function updateTimer() {
@@ -168,8 +253,14 @@ function updateTimer() {
     }
     startTime.value = Date.now()
     elapsedTime.value = 0
+    updateSessionSteps()
   }
 }
+
+// Initialize steps on component mount
+onMounted(() => {
+  generateSessionSteps()
+})
 
 onUnmounted(() => {
   if (timerInterval.value) {
