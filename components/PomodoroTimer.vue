@@ -86,42 +86,6 @@
         <span>Your timer state will be saved if you navigate away from the page.</span>
       </div>
     </div>
-
-    <!-- History Section -->
-    <div class="mt-8 w-full max-w-md">
-      <h3 class="text-lg font-semibold mb-3">Session Progress</h3>
-      <div class="space-y-2">
-        <div
-          v-for="(step, index) in sessionSteps"
-          :key="index"
-          class="flex items-center p-2 rounded-lg"
-          :class="{
-            'bg-gray-100': step.status === 'completed',
-            'bg-blue-50 border border-blue-200': step.status === 'current',
-            'text-gray-400': step.status === 'upcoming'
-          }"
-        >
-          <div class="w-6 h-6 flex items-center justify-center mr-3">
-            <div
-              v-if="step.status === 'completed'"
-              class="w-4 h-4 bg-green-500 rounded-full"
-            ></div>
-            <div
-              v-else-if="step.status === 'current'"
-              class="w-4 h-4 bg-blue-500 rounded-full animate-pulse"
-            ></div>
-            <div
-              v-else
-              class="w-4 h-4 border-2 border-gray-300 rounded-full"
-            ></div>
-          </div>
-          <div class="flex-grow">
-            <div class="font-medium">{{ step.type }}</div>
-            <div class="text-sm">{{ step.description }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -154,6 +118,19 @@ const titleInterval = ref<number | null>(null)
 const startTime = ref(0)
 const elapsedTime = ref(0)
 const stepEndTime = ref<number | null>(null)
+const sessionSteps = ref<SessionStep[]>([])
+
+// Define the type for session steps
+interface SessionStep {
+  type: string;
+  description: string;
+  status: 'completed' | 'current' | 'upcoming';
+}
+
+// Expose the session steps for parent components
+defineExpose({
+  sessionSteps
+})
 
 // Watch for prop changes and update only when timer is not running
 watch(() => [props.focusDuration, props.breakDuration, props.rounds], ([newFocusDuration, newBreakDuration, newRounds], [oldFocusDuration, oldBreakDuration, oldRounds]) => {
@@ -247,214 +224,169 @@ function loadState() {
           }
           saveState()
         }, 100) // Update more frequently for smoother animation
-
-        // Update title immediately and then every second
-        updateTitle()
-        titleInterval.value = window.setInterval(updateTitle, 1000)
-        window.addEventListener('beforeunload', handleBeforeUnload)
+        
+        updateDocumentTitle()
+        titleInterval.value = window.setInterval(updateDocumentTitle, 1000)
       })
     }
   }
 }
 
-function updateRemainingTime() {
-  if (stepEndTime.value) {
-    const now = Date.now()
-    const remainingSeconds = Math.max(0, Math.floor((stepEndTime.value - now) / 1000))
-    timeLeft.value = remainingSeconds
-    
-    // If timer has completed
-    if (remainingSeconds === 0) {
-      console.log('Timer completed, saving session')
-      const totalDuration = isBreak.value ? props.breakDuration : props.focusDuration
-      const sessionType = isBreak.value ? 'SHORT_BREAK' : 'FOCUS'
-      saveSession(sessionType, totalDuration)
-    }
-    
-    return remainingSeconds > 0
+function updateRemainingTime(): boolean {
+  if (!stepEndTime.value) return false
+  
+  const now = Date.now()
+  const remaining = stepEndTime.value - now
+  
+  if (remaining <= 0) {
+    timeLeft.value = 0
+    return false
   }
-  return false
+  
+  timeLeft.value = Math.ceil(remaining / 1000)
+  return true
 }
 
-interface SessionStep {
-  type: string
-  description: string
-  status: 'completed' | 'current' | 'upcoming'
-}
-
-const sessionSteps = ref<SessionStep[]>([])
-
-function generateSessionSteps() {
-  const steps: SessionStep[] = []
-  for (let i = 1; i <= props.rounds; i++) {
-    steps.push({
-      type: `Focus Session ${i}`,
-      description: `${props.focusDuration / 60} minutes`,
-      status: i === 1 ? 'current' : 'upcoming'
-    })
-    if (i < props.rounds) {
-      steps.push({
-        type: `Break ${i}`,
-        description: `${props.breakDuration / 60} minutes`,
-        status: 'upcoming'
-      })
-    }
+function updateDocumentTitle() {
+  if (isRunning.value) {
+    const titlePrefix = isBreak.value ? '☕' : '🍅'
+    document.title = `${titlePrefix} ${formatTime(timeLeft.value)} - Pomodoro Timer`
+  } else {
+    document.title = 'Pomodoro Timer'
   }
-  sessionSteps.value = steps
-}
-
-function updateSessionSteps() {
-  const currentIndex = sessionSteps.value.findIndex(step => step.status === 'current')
-  if (currentIndex > -1) {
-    // Mark current step as completed
-    sessionSteps.value[currentIndex].status = 'completed'
-    
-    // Mark next step as current if it exists
-    if (currentIndex + 1 < sessionSteps.value.length) {
-      sessionSteps.value[currentIndex + 1].status = 'current'
-    }
-  }
-}
-
-function resetSessionSteps() {
-  sessionSteps.value = sessionSteps.value.map((step, index) => ({
-    ...step,
-    status: index === 0 ? 'current' : 'upcoming'
-  }))
 }
 
 function formatTime(seconds: number): string {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
-}
-
-function updateTitle() {
-  const mode = isBreak.value ? 'Break' : 'Focus'
-  document.title = `${formatTime(timeLeft.value)} - ${mode} | Pomodoro`
-}
-
-function handleBeforeUnload(e: BeforeUnloadEvent) {
-  if (isRunning.value) {
-    e.preventDefault()
-    e.returnValue = ''
-  }
-}
-
-function saveSession(type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK', duration: number) {
-  console.log('Saving session:', { type, duration })
-  const startTime = new Date(Date.now() - (duration * 1000))
-  const endTime = new Date()
-  
-  fetch('/api/pomodoro/sessions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      type,
-      startTime,
-      endTime,
-      durationMinutes: Math.floor(duration / 60)
-    })
-  }).then(() => {
-    console.log('Session saved successfully')
-    // Notify that a session has been updated
-    notifySessionUpdate()
-  }).catch(error => {
-    console.error('Failed to save session:', error)
-  })
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
 function startTimer() {
-  if (!isRunning.value) {
-    isRunning.value = true
-    const totalDuration = isBreak.value ? props.breakDuration : props.focusDuration
-    stepEndTime.value = Date.now() + (totalDuration * 1000)
-    
-    timerInterval.value = window.setInterval(() => {
-      if (!updateRemainingTime()) {
-        // Timer finished
-        if (isBreak.value) {
-          isBreak.value = false
-          timeLeft.value = props.focusDuration
-          currentRound.value++
+  if (isRunning.value) return
+  
+  isRunning.value = true
+  emit('timer-state-change', true)
+  
+  // Set the end time for the current step
+  stepEndTime.value = Date.now() + (timeLeft.value * 1000)
+  
+  timerInterval.value = window.setInterval(() => {
+    if (!updateRemainingTime()) {
+      // Timer finished
+      if (isBreak.value) {
+        // End of break - start focus
+        isBreak.value = false
+        timeLeft.value = props.focusDuration
+        currentRound.value++
+      } else {
+        // End of focus - start break if not the last round
+        if (currentRound.value < props.rounds) {
+          isBreak.value = true
+          timeLeft.value = props.breakDuration
         } else {
-          if (currentRound.value < props.rounds) {
-            isBreak.value = true
-            timeLeft.value = props.breakDuration
-          } else {
-            resetTimer()
-            return
-          }
+          resetTimer()
+          return
         }
-        stepEndTime.value = Date.now() + (timeLeft.value * 1000)
-        updateSessionSteps()
       }
-      saveState()
-    }, 100) // Update more frequently for smoother animation
-
-    // Update title immediately and then every second
-    updateTitle()
-    titleInterval.value = window.setInterval(updateTitle, 1000)
-    // Add beforeunload event listener
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    // Save state when starting
+      stepEndTime.value = Date.now() + (timeLeft.value * 1000)
+      updateSessionSteps()
+      
+      // Play sound notification
+      const audio = new Audio('/sounds/timer-complete.mp3')
+      audio.play().catch(err => console.log('Audio play failed:', err))
+      
+      // Send browser notification
+      if (Notification.permission === 'granted') {
+        const notificationTitle = isBreak.value ? 'Break Time!' : 'Focus Time!'
+        const notificationBody = isBreak.value 
+          ? `Time to take a ${Math.floor(props.breakDuration / 60)} minute break`
+          : `Time to focus for ${Math.floor(props.focusDuration / 60)} minutes`
+        
+        new Notification(notificationTitle, {
+          body: notificationBody,
+          icon: '/favicon.ico'
+        })
+      }
+      
+      // Log completed session to the API
+      logSessionUpdate()
+    }
     saveState()
-    // Emit timer state change
-    emit('timer-state-change', true)
+  }, 100) // Update more frequently for smoother animation
+  
+  // Update document title with timer
+  updateDocumentTitle()
+  titleInterval.value = window.setInterval(updateDocumentTitle, 1000)
+  
+  // Request notification permission if not already granted
+  if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+    Notification.requestPermission()
   }
 }
 
 function pauseTimer() {
-  if (isRunning.value) {
-    isRunning.value = false
-    if (timerInterval.value) {
-      clearInterval(timerInterval.value)
-    }
-    if (titleInterval.value) {
-      clearInterval(titleInterval.value)
-    }
-    // Reset title when paused
-    document.title = 'Pomodoro Timer'
-    // Remove beforeunload event listener
-    window.removeEventListener('beforeunload', handleBeforeUnload)
-    // Save state when pausing
-    saveState()
-    // Emit timer state change
-    emit('timer-state-change', false)
+  if (!isRunning.value) return
+  
+  isRunning.value = false
+  emit('timer-state-change', false)
+  
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
+    timerInterval.value = null
   }
+  
+  if (titleInterval.value) {
+    clearInterval(titleInterval.value)
+    titleInterval.value = null
+    document.title = 'Pomodoro Timer (Paused)'
+  }
+  
+  // If a step was in progress, save the elapsed time
+  if (stepEndTime.value) {
+    elapsedTime.value = stepEndTime.value - Date.now()
+    stepEndTime.value = null
+  }
+  
+  saveState()
 }
 
 function resetTimer() {
-  pauseTimer()
-  timeLeft.value = props.focusDuration
+  // Clear intervals
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
+    timerInterval.value = null
+  }
+  if (titleInterval.value) {
+    clearInterval(titleInterval.value)
+    titleInterval.value = null
+    document.title = 'Pomodoro Timer'
+  }
+  
+  // Reset state
+  isRunning.value = false
+  emit('timer-state-change', false)
   isBreak.value = false
   currentRound.value = 1
+  timeLeft.value = props.focusDuration
   stepEndTime.value = null
-  resetSessionSteps()
-  // Reset title
-  document.title = 'Pomodoro Timer'
-  // Clear saved state
-  localStorage.removeItem(STORAGE_KEY)
-  // Emit timer state change (should be false already from pauseTimer)
-  emit('timer-state-change', false)
+  elapsedTime.value = 0
+  
+  // Regenerate session steps
+  generateSessionSteps()
+  
+  saveState()
 }
 
 function skipToNextRound() {
+  // Skip to next phase
   if (isBreak.value) {
-    const sessionType = 'SHORT_BREAK'
-    const duration = props.breakDuration - timeLeft.value
-    saveSession(sessionType, duration)
-    
+    // Skip break, go to focus
     isBreak.value = false
     timeLeft.value = props.focusDuration
     currentRound.value++
   } else {
-    const sessionType = 'FOCUS'
-    const duration = props.focusDuration - timeLeft.value
-    saveSession(sessionType, duration)
-    
+    // Skip focus, go to break or end
     if (currentRound.value < props.rounds) {
       isBreak.value = true
       timeLeft.value = props.breakDuration
@@ -463,33 +395,86 @@ function skipToNextRound() {
       return
     }
   }
-  stepEndTime.value = Date.now() + (timeLeft.value * 1000)
+  
+  // If the timer is running, update the end time
+  if (isRunning.value) {
+    stepEndTime.value = Date.now() + (timeLeft.value * 1000)
+  }
+  
   updateSessionSteps()
   saveState()
 }
 
-// Initialize steps and load state on component mount
-onMounted(() => {
-  const savedState = localStorage.getItem(STORAGE_KEY)
-  if (savedState) {
-    loadState()
-  } else {
-    generateSessionSteps()
+function generateSessionSteps() {
+  const steps: SessionStep[] = []
+  
+  for (let round = 1; round <= props.rounds; round++) {
+    // Focus step
+    steps.push({
+      type: `Focus ${round}`,
+      description: `${Math.floor(props.focusDuration / 60)} minute focus period`,
+      status: 
+        round < currentRound.value || (round === currentRound.value && isBreak.value) 
+          ? 'completed' 
+          : round === currentRound.value && !isBreak.value 
+            ? 'current' 
+            : 'upcoming'
+    })
+    
+    // Break step
+    if (round < props.rounds) {
+      steps.push({
+        type: `Break ${round}`,
+        description: `${Math.floor(props.breakDuration / 60)} minute break`,
+        status: 
+          round < currentRound.value 
+            ? 'completed' 
+            : round === currentRound.value && isBreak.value 
+              ? 'current' 
+              : 'upcoming'
+      })
+    }
   }
+  
+  sessionSteps.value = steps
+}
+
+function updateSessionSteps() {
+  generateSessionSteps()
+}
+
+async function logSessionUpdate() {
+  try {
+    const sessionData = {
+      type: isBreak.value ? 'break' : 'focus',
+      duration: isBreak.value ? props.breakDuration : props.focusDuration,
+      completedAt: new Date().toISOString()
+    }
+    
+    await $fetch('/api/pomodoro/sessions', {
+      method: 'POST',
+      body: sessionData
+    })
+    
+    // Notify any listeners about the session update
+    notifySessionUpdate()
+  } catch (error) {
+    console.error('Failed to log session:', error)
+  }
+}
+
+// Initialize session steps on component creation
+onMounted(() => {
+  generateSessionSteps()
+  loadState()
 })
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   if (timerInterval.value) {
     clearInterval(timerInterval.value)
   }
   if (titleInterval.value) {
     clearInterval(titleInterval.value)
   }
-  // Reset title when component is unmounted
-  document.title = 'Pomodoro Timer'
-  // Remove beforeunload event listener
-  window.removeEventListener('beforeunload', handleBeforeUnload)
-  // Save state when unmounting
-  saveState()
 })
 </script> 

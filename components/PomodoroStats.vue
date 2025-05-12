@@ -1,54 +1,45 @@
 <template>
-  <div class="w-full max-w-4xl mx-auto p-6">
-    <h2 class="text-2xl font-bold mb-6">Pomodoro Statistics - last 7 days</h2>
+  <div>
+    <h2 class="text-xl font-semibold mb-4">Weekly Stats</h2>
     
     <!-- Weekly Summary -->
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-      <h3 class="text-lg font-semibold mb-4">Weekly Summary</h3>
-      <div class="grid grid-cols-3 gap-6">
+    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+      <div class="grid grid-cols-1 gap-3">
         <div>
           <div class="text-sm text-gray-500">Total Focus Time</div>
-          <div class="text-2xl font-bold">{{ formatDuration(totalFocusTime) }}</div>
+          <div class="text-xl font-bold">{{ formatDuration(totalFocusTime) }}</div>
         </div>
         <div>
           <div class="text-sm text-gray-500">Total Break Time</div>
-          <div class="text-2xl font-bold">{{ formatDuration(totalBreakTime) }}</div>
+          <div class="text-xl font-bold">{{ formatDuration(totalBreakTime) }}</div>
         </div>
         <div>
           <div class="text-sm text-gray-500">Total Sessions</div>
-          <div class="text-2xl font-bold">{{ totalSessions }}</div>
+          <div class="text-xl font-bold">{{ totalSessions }}</div>
         </div>
       </div>
     </div>
 
     <!-- Daily Statistics Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="overflow-hidden rounded-lg">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Focus Time</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Break Time</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Time</th>
+            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Focus</th>
+            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="day in weeklyStats" :key="day.date" class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            <td class="px-3 py-2 whitespace-nowrap text-xs font-medium text-gray-900">
               {{ formatDate(day.date) }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
               {{ formatDuration(day.focusTime) }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ formatDuration(day.breakTime) }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
               {{ day.totalSessions }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ formatDuration(day.focusTime + day.breakTime) }}
             </td>
           </tr>
         </tbody>
