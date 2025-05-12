@@ -126,6 +126,8 @@
 </template>
 
 <script setup lang="ts">
+import { usePomodoroEvents } from '../composables/usePomodoroEvents'
+
 const props = defineProps({
   focusDuration: {
     type: Number,
@@ -160,6 +162,8 @@ const dashOffset = computed(() => {
   const progress = timeLeft.value / totalDuration
   return circumference * (1 - progress)
 })
+
+const { notifySessionUpdate } = usePomodoroEvents()
 
 function saveState() {
   const state = {
@@ -239,6 +243,15 @@ function updateRemainingTime() {
     const now = Date.now()
     const remainingSeconds = Math.max(0, Math.floor((stepEndTime.value - now) / 1000))
     timeLeft.value = remainingSeconds
+    
+    // If timer has completed
+    if (remainingSeconds === 0) {
+      console.log('Timer completed, saving session')
+      const totalDuration = isBreak.value ? props.breakDuration : props.focusDuration
+      const sessionType = isBreak.value ? 'SHORT_BREAK' : 'FOCUS'
+      saveSession(sessionType, totalDuration)
+    }
+    
     return remainingSeconds > 0
   }
   return false
@@ -307,6 +320,31 @@ function handleBeforeUnload(e: BeforeUnloadEvent) {
     e.preventDefault()
     e.returnValue = ''
   }
+}
+
+function saveSession(type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK', duration: number) {
+  console.log('Saving session:', { type, duration })
+  const startTime = new Date(Date.now() - (duration * 1000))
+  const endTime = new Date()
+  
+  fetch('/api/pomodoro/sessions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      type,
+      startTime,
+      endTime,
+      durationMinutes: Math.floor(duration / 60)
+    })
+  }).then(() => {
+    console.log('Session saved successfully')
+    // Notify that a session has been updated
+    notifySessionUpdate()
+  }).catch(error => {
+    console.error('Failed to save session:', error)
+  })
 }
 
 function startTimer() {
@@ -380,10 +418,18 @@ function resetTimer() {
 
 function skipToNextRound() {
   if (isBreak.value) {
+    const sessionType = 'SHORT_BREAK'
+    const duration = props.breakDuration - timeLeft.value
+    saveSession(sessionType, duration)
+    
     isBreak.value = false
     timeLeft.value = props.focusDuration
     currentRound.value++
   } else {
+    const sessionType = 'FOCUS'
+    const duration = props.focusDuration - timeLeft.value
+    saveSession(sessionType, duration)
+    
     if (currentRound.value < props.rounds) {
       isBreak.value = true
       timeLeft.value = props.breakDuration
