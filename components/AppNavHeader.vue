@@ -14,7 +14,7 @@
           class="text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors"
           :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/pomodoros') }"
         >
-          Pomodoros
+          Pomodoro
         </NuxtLink>
         <NuxtLink 
           to="/app/tasks" 
