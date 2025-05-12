@@ -3,9 +3,9 @@ Here's a `StyleGuide.md` file suitable for inclusion in your project. It sets ou
 ---
 
 ````markdown
-# 🧭 FocusHub UI Style Guide
+# 🧭 HyperFocusProductivity UI Style Guide
 
-This style guide defines the visual and structural principles for FocusHub. It provides guidance for consistent UI design across all components and pages using **Tailwind CSS**. All developers and designers should adhere to this document.
+This style guide defines the visual and structural principles for HyperFocusProductivity. It provides guidance for consistent UI design across all components and pages using **Tailwind CSS**. All developers and designers should adhere to this document.
 
 ---
 

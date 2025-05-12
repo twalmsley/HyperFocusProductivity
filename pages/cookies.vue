@@ -19,7 +19,7 @@
       <div class="container mx-auto px-4">
         <div class="max-w-4xl mx-auto">
           <div class="prose prose-lg max-w-none text-[var(--text-secondary)]">
-            <p>This Cookie Policy explains how FocusHub ("we", "us", or "our") uses cookies and similar technologies to recognize and remember you when you visit our website and use our services.</p>
+            <p>This Cookie Policy explains how HyperFocusProductivity ("we", "us", or "our") uses cookies and similar technologies to recognize and remember you when you visit our website and use our services.</p>
             
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-8 mb-4">What are Cookies?</h2>
             
@@ -67,7 +67,7 @@
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-8 mb-4">Contact Us</h2>
             
             <p>If you have any questions about our Cookie Policy, please contact us at:</p>
-            <p class="mb-6">Email: privacy@focushub.com</p>
+            <p class="mb-6">Email: privacy@hyperfocusproductivity.com</p>
             <p>Or visit our <NuxtLink to="/contact" class="text-[var(--primary)] hover:underline">Contact Page</NuxtLink>.</p>
           </div>
         </div>

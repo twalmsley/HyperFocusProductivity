@@ -8,11 +8,11 @@
             Start Your Productivity Journey Today
           </h1>
           <p class="text-xl text-[var(--text-secondary)] mb-8">
-            Join thousands of successful professionals who have transformed their work habits with FocusHub. Your future self will thank you.
+            Join thousands of successful professionals who have transformed their work habits with HyperFocusProductivity. Your future self will thank you.
           </p>
           <div class="bg-[var(--primary-light)] p-6 rounded-lg mb-8">
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-4">
-              Why Choose FocusHub?
+              Why Choose HyperFocusProductivity?
             </h2>
             <ul class="text-left space-y-3 text-[var(--text-secondary)]">
               <li class="flex items-center">

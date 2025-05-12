@@ -217,7 +217,7 @@
           Ready to boost your productivity?
         </h2>
         <p class="text-xl text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto">
-          Join thousands of users who have transformed their work habits with FocusHub.
+          Join thousands of users who have transformed their work habits with HyperFocusProductivity.
         </p>
         <NuxtLink to="/signup">
           <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg">

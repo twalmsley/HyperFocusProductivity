@@ -1,0 +1,14 @@
+{
+  "name": "Hyper Focus Productivity",
+  "short_name": "HyperFocus",
+  "icons": [
+    {
+      "src": "/favicon-v2.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone"
+} 

@@ -72,7 +72,7 @@
                 <div>
                   <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-2">Email</h3>
                   <p class="text-[var(--text-secondary)]">
-                    <a href="mailto:support@focushub.com" class="text-[var(--primary)] hover:underline">support@focushub.com</a>
+                    <a href="mailto:support@hyperfocusproductivity.com" class="text-[var(--primary)] hover:underline">support@hyperfocusproductivity.com</a>
                   </p>
                   <p class="text-sm text-[var(--text-secondary)] mt-1">For general inquiries and support</p>
                 </div>

@@ -132,7 +132,7 @@
           
           <div class="bg-white p-6 rounded-lg shadow-sm">
             <h3 class="text-xl font-bold text-[var(--text-primary)] mb-2">What happens when my free trial ends?</h3>
-            <p class="text-[var(--text-secondary)]">At the end of your free trial, you'll need to choose a paid plan to continue using FocusHub. We'll send you a reminder before your trial expires.</p>
+            <p class="text-[var(--text-secondary)]">At the end of your free trial, you'll need to choose a paid plan to continue using HyperFocusProductivity. We'll send you a reminder before your trial expires.</p>
           </div>
           
           <div class="bg-white p-6 rounded-lg shadow-sm">

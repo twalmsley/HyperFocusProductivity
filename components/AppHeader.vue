@@ -4,7 +4,7 @@
       <div class="flex justify-between items-center">
         <!-- Logo -->
         <div class="flex items-center">
-          <NuxtLink to="/" class="text-2xl font-bold text-white">FocusHub</NuxtLink>
+          <NuxtLink to="/" class="text-2xl font-bold text-white">HyperFocusProductivity</NuxtLink>
         </div>
 
         <!-- Navigation -->

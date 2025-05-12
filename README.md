@@ -1,6 +1,6 @@
 # Hyper Focus Productivity Web App
 
-Good. Here’s a clear breakdown of the **core feature scope** for the FocusHub MVP, covering the **Timer**, **Task List**, and **Session Log** modules. This scope should be tight enough for a fast launch, but cleanly extendable for future features.
+Good. Here’s a clear breakdown of the **core feature scope** for the HyperFocusProductivity MVP, covering the **Timer**, **Task List**, and **Session Log** modules. This scope should be tight enough for a fast launch, but cleanly extendable for future features.
 
 ---
 

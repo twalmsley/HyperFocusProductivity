@@ -19,7 +19,7 @@
       <div class="container mx-auto px-4">
         <div class="max-w-4xl mx-auto">
           <div class="prose prose-lg max-w-none text-[var(--text-secondary)]">
-            <p>At FocusHub, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our service.</p>
+            <p>At HyperFocusProductivity, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our service.</p>
             
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-8 mb-4">Information We Collect</h2>
             
@@ -97,7 +97,7 @@
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-8 mb-4">Contact Us</h2>
             
             <p>If you have questions or concerns about this Privacy Policy, please contact us at:</p>
-            <p class="mb-6">Email: privacy@focushub.com</p>
+            <p class="mb-6">Email: privacy@hyperfocusproductivity.com</p>
             <p>Or visit our <NuxtLink to="/contact" class="text-[var(--primary)] hover:underline">Contact Page</NuxtLink>.</p>
           </div>
         </div>

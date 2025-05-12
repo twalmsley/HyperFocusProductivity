@@ -6,7 +6,7 @@
     <section class="bg-[var(--primary-light)] py-20">
       <div class="container mx-auto px-4 text-center">
         <h1 class="text-4xl md:text-5xl font-bold text-[var(--text-primary)] mb-6">
-          About FocusHub
+          About HyperFocusProductivity
         </h1>
         <p class="text-xl text-[var(--text-secondary)] max-w-3xl mx-auto">
           We're on a mission to help people achieve more by working smarter, not harder.
@@ -21,7 +21,7 @@
           <h2 class="text-3xl font-bold text-[var(--text-primary)] mb-8">Our Story</h2>
           
           <div class="prose prose-lg max-w-none text-[var(--text-secondary)]">
-            <p>FocusHub was born out of a simple observation: in today's distraction-filled world, maintaining focus is harder than ever. As productivity enthusiasts ourselves, we found that existing tools were either too complex or too simplistic.</p>
+            <p>HyperFocusProductivity was born out of a simple observation: in today's distraction-filled world, maintaining focus is harder than ever. As productivity enthusiasts ourselves, we found that existing tools were either too complex or too simplistic.</p>
             
             <p class="my-6">Founded in 2022, our small team of developers and productivity experts set out to create a solution that balances powerful features with an intuitive, distraction-free interface. We believe that technology should enhance your productivity, not compete for your attention.</p>
             
@@ -38,7 +38,7 @@
           <h2 class="text-3xl font-bold text-[var(--text-primary)] mb-8">Our Mission</h2>
           
           <div class="prose prose-lg max-w-none text-[var(--text-secondary)]">
-            <p>At FocusHub, we believe that everyone deserves to work in a state of flow – that magical condition where you're fully immersed in a task, time seems to disappear, and your best work emerges.</p>
+            <p>At HyperFocusProductivity, we believe that everyone deserves to work in a state of flow – that magical condition where you're fully immersed in a task, time seems to disappear, and your best work emerges.</p>
             
             <p class="my-6">Our mission is to help 1 million people achieve more focus time and deeper work by 2025. We're not just building software; we're creating a movement around intentional work and digital wellbeing.</p>
             

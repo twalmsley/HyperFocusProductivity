@@ -4,7 +4,7 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <!-- Brand Section -->
         <div class="col-span-1 md:col-span-2">
-          <h2 class="text-2xl font-bold text-white mb-4">FocusHub</h2>
+          <h2 class="text-2xl font-bold text-white mb-4">HyperFocusProductivity</h2>
           <p class="text-gray-200 mb-4">
             Your personal productivity companion. Stay focused, track progress, and achieve more.
           </p>
@@ -35,7 +35,7 @@
       <!-- Copyright -->
       <div class="border-t border-[var(--primary-light)] mt-8 pt-8 text-center">
         <p class="text-gray-200">
-          © {{ new Date().getFullYear() }} FocusHub. All rights reserved.
+          © {{ new Date().getFullYear() }} HyperFocusProductivity. All rights reserved.
         </p>
       </div>
     </div>
