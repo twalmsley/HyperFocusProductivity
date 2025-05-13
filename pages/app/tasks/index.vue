@@ -139,8 +139,18 @@
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-500">
-                  {{ task.estimatedPomodoros || '-' }}
+                <div class="text-sm flex items-center">
+                  <span 
+                    :class="{
+                      'text-green-600 font-medium': task.completedPomodoros && task.estimatedPomodoros && task.completedPomodoros >= task.estimatedPomodoros,
+                      'text-orange-500': task.completedPomodoros && task.estimatedPomodoros && task.completedPomodoros < task.estimatedPomodoros,
+                      'text-gray-500': !task.completedPomodoros || !task.estimatedPomodoros
+                    }"
+                  >
+                    {{ task.completedPomodoros || 0 }}
+                  </span>
+                  <span class="text-gray-400 mx-0.5">/</span>
+                  <span class="text-gray-500">{{ task.estimatedPomodoros || '-' }}</span>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
