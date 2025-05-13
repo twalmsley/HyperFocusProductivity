@@ -1,7 +1,6 @@
-import { PrismaClient, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import type { User, UserSubscription, Session } from '~/server/types'
-
-const prisma = new PrismaClient()
+import { prisma } from '~/server/utils/db'
 
 type SessionWithUser = Prisma.SessionGetPayload<{
   include: { user: { include: { subscription: true } } }

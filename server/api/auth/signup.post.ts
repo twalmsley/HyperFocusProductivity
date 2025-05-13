@@ -1,8 +1,7 @@
-import { PrismaClient, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { hash } from 'bcrypt'
 import type { SubscriptionStatus } from '~/server/types'
-
-const prisma = new PrismaClient()
+import { prisma } from '~/server/utils/db'
 
 export default defineEventHandler(async (event) => {
   try {

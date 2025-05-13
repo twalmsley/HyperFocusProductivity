@@ -20,8 +20,7 @@ export default defineEventHandler(async (event) => {
           userId,
         },
         include: {
-          user: true,
-          sessions: true
+          user: true
         },
         orderBy: {
           position: 'asc'
@@ -58,8 +57,7 @@ export default defineEventHandler(async (event) => {
           position: newPosition
         },
         include: {
-          user: true,
-          sessions: true
+          user: true
         }
       })
     
@@ -77,8 +75,7 @@ export default defineEventHandler(async (event) => {
         where: { id },
         data: updateData,
         include: {
-          user: true,
-          sessions: true
+          user: true
         }
       })
 
@@ -95,8 +92,7 @@ export default defineEventHandler(async (event) => {
       return await prisma.task.delete({
         where: { id: taskId },
         include: {
-          user: true,
-          sessions: true
+          user: true
         }
       })
     
