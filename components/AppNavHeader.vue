@@ -25,14 +25,7 @@
             Settings
           </NuxtLink>
         </div>
-        <div class="flex items-center space-x-4">
-          <button 
-            @click="logout" 
-            class="text-gray-900 hover:text-[var(--primary)] transition-colors"
-          >
-            Logout
-          </button>
-        </div>
+        
       </div>
     </nav>
   </header>
@@ -42,5 +35,4 @@
 import { useAuth } from '~/composables/useAuth'
 
 const route = useRoute()
-const { logout } = useAuth()
 </script> 
