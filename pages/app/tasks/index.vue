@@ -205,26 +205,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import SortIndicator from '~/components/SortIndicator.vue'
 
-definePageMeta({
-  middleware: ['auth']
-})
-
-const user = ref<{
-  id: string;
-  email: string;
-  name: string | null;
-  subscription: {
-    type: string | null;
-    status: string;
-    freeTrialExpiresAt: string;
-    currentPeriodStart: string | null;
-    currentPeriodEnd: string | null;
-    cancelAtPeriodEnd: boolean;
-  } | null;
-} | null>(null)
+const user = useState('user')
 
 type TaskStatus = 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
 
@@ -405,22 +389,16 @@ function sortTasks(column: string) {
   }
 }
 
-// Fetch user data and tasks on component mount
+// Handle authentication
 onMounted(async () => {
   try {
     const response = await $fetch('/api/auth/me')
     user.value = response
-    
-    if (user.value) {
-      const tasksResponse = await $fetch('/api/tasks', {
-        query: {
-          userId: user.value.id
-        }
-      }) as typeof tasks.value
-      tasks.value = tasksResponse
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      // Only redirect if we're sure the user is not authenticated
+      navigateTo('/login', { replace: true })
     }
-  } catch (error) {
-    console.error('Failed to fetch data:', error)
   }
 })
 

@@ -140,7 +140,7 @@ interface PomodoroTemplate {
   updatedAt: Date
 }
 
-const user = ref<UserWithSubscription | null>(null)
+const user = useState('user')
 const templates = ref<PomodoroTemplate[]>([])
 const selectedTemplateId = ref('')
 const currentTemplate = ref<Partial<PomodoroTemplate>>({
@@ -194,20 +194,16 @@ const defaultTemplates = [
   }
 ]
 
-// Fetch user data on component mount
+// Handle authentication
 onMounted(async () => {
   try {
-    const response = await $fetch<UserWithSubscription>('/api/auth/me')
+    const response = await $fetch('/api/auth/me')
     user.value = response
-    
-    // Set initial templates and fetch from API
-    templates.value = defaultTemplates
-    await fetchTemplates()
-    
-    // Load saved template selection, then select default if none
-    loadTemplateSelection()
-  } catch (error) {
-    console.error('Failed to fetch user data:', error)
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      // Only redirect if we're sure the user is not authenticated
+      navigateTo('/login', { replace: true })
+    }
   }
 })
 

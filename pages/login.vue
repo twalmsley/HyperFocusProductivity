@@ -69,7 +69,9 @@ onMounted(async () => {
     const response = await $fetch('/api/auth/me')
     if (response) {
       user.value = response
-      await navigateTo('/app', { replace: true })
+      const route = useRoute()
+      const redirectPath = route.query.redirect as string || '/app'
+      await navigateTo(redirectPath, { replace: true })
     }
   } catch (error) {
     // User is not logged in, stay on login page
@@ -106,8 +108,12 @@ async function handleSubmit() {
     // Wait a moment for the cookie to be set
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    // Navigate to the app page
-    await navigateTo('/app', { replace: true })
+    // Get the redirect URL from the query parameters, default to /app
+    const route = useRoute()
+    const redirectPath = route.query.redirect as string || '/app'
+
+    // Navigate to the redirect path or default to app page
+    await navigateTo(redirectPath, { replace: true })
   } catch (e: any) {
     // Handle authentication errors more gracefully
     if (e.response && e.response.status === 401) {
