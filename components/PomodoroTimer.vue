@@ -43,8 +43,9 @@
           <!-- Timer text -->
           <div class="absolute inset-0 flex items-center justify-center">
             <div class="text-center">
-              <div class="text-4xl font-bold">{{ formatTime(timeRemaining) }}</div>
-              <div class="text-sm mt-1" :class="currentPhase === 'Focus' ? 'text-orange-500' : 'text-green-600'">
+              <div v-if="isCompleted" class="text-2xl font-bold text-green-600">All Done!</div>
+              <div v-else class="text-4xl font-bold">{{ formatTime(timeRemaining) }}</div>
+              <div v-if="!isCompleted" class="text-sm mt-1" :class="currentPhase === 'Focus' ? 'text-orange-500' : 'text-green-600'">
                 {{ currentPhase }}
               </div>
             </div>
@@ -54,37 +55,49 @@
         <!-- Controls -->
         <div class="flex space-x-4">
           <button
-            v-if="!isRunning"
+            v-if="!isRunning && !isCompleted"
             @click="startTimer"
             class="px-4 py-2 bg-[var(--primary)] text-white rounded-md hover:bg-[var(--button-hover)]"
           >
             Start
           </button>
           <button
-            v-else
+            v-if="isRunning && !isCompleted"
             @click="pauseTimer"
             class="px-4 py-2 bg-[var(--primary)] text-white rounded-md hover:bg-[var(--button-hover)]"
           >
             Pause
           </button>
           <button
+            v-if="!isCompleted"
             @click="handleSkip"
             class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
           >
             Skip
           </button>
           <button
+            v-if="!isCompleted"
             @click="handleReset"
             class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
           >
             Reset
           </button>
+          <button
+            v-if="isCompleted"
+            @click="emit('close')"
+            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          >
+            Close
+          </button>
         </div>
 
         <!-- Progress -->
         <div class="mt-6 text-center">
+          <div v-if="isCompleted" class="text-green-600 font-medium mb-2">
+            Congratulations! You've completed all planned pomodoros.
+          </div>
           <div class="text-sm text-gray-500">
-            Round {{ currentRound }} of {{ totalRounds }}
+            Round {{ currentRound }} of {{ totalRemainingRounds }}
           </div>
           <div class="text-sm text-gray-500">
             Completed: {{ completedPomodoros }} pomodoros
@@ -123,7 +136,29 @@ const currentRound = ref(1)
 const currentPhase = ref('Focus')
 const timerInterval = ref<number | null>(null)
 
+// Calculate remaining rounds based on total and already completed
+const totalRemainingRounds = computed(() => {
+  return Math.max(1, props.totalRounds - props.completedPomodoros)
+})
+
+// Check if all pomodoros are completed
+const isCompleted = computed(() => {
+  return currentRound.value > totalRemainingRounds.value && currentPhase.value === 'Focus'
+})
+
+// Watch for completion state
+watch(isCompleted, (newVal) => {
+  if (newVal) {
+    pauseTimer()
+    document.title = 'Pomodoros Completed! - HyperFocus'
+  }
+})
+
 const progress = computed(() => {
+  if (isCompleted.value) {
+    return 1 // Full circle for completed state
+  }
+  
   const totalTime = currentPhase.value === 'Focus' 
     ? props.focusDuration * 60 
     : currentRound.value % props.longBreakInterval === 0 
@@ -177,6 +212,14 @@ function pauseTimer() {
 function handlePhaseComplete() {
   if (currentPhase.value === 'Focus') {
     emit('update:completedPomodoros', props.completedPomodoros + 1)
+    
+    // Check if this was the last round
+    if (currentRound.value >= totalRemainingRounds.value) {
+      currentRound.value++
+      currentPhase.value = 'Focus'
+      timeRemaining.value = 0
+      return // Done with all rounds
+    }
     
     if (currentRound.value % props.longBreakInterval === 0) {
       currentPhase.value = 'Long Break'

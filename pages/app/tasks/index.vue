@@ -458,6 +458,28 @@
               <p class="mt-1 text-gray-900">{{ selectedTask?.estimatedPomodoros || '-' }}</p>
             </div>
             <div>
+              <h4 class="text-sm font-medium text-gray-500">Completed Pomodoros</h4>
+              <p class="mt-1 flex items-center">
+                <span 
+                  :class="{
+                    'text-green-600 font-medium': selectedTask?.completedPomodoros && selectedTask?.estimatedPomodoros && selectedTask?.completedPomodoros >= selectedTask?.estimatedPomodoros,
+                    'text-orange-500': selectedTask?.completedPomodoros && selectedTask?.estimatedPomodoros && selectedTask?.completedPomodoros < selectedTask?.estimatedPomodoros,
+                    'text-gray-900': !selectedTask?.completedPomodoros || !selectedTask?.estimatedPomodoros
+                  }"
+                >
+                  {{ selectedTask?.completedPomodoros || 0 }}
+                </span>
+                <span v-if="selectedTask?.estimatedPomodoros" class="text-gray-400 mx-1">/</span>
+                <span v-if="selectedTask?.estimatedPomodoros" class="text-gray-900">{{ selectedTask?.estimatedPomodoros }}</span>
+                <span 
+                  v-if="selectedTask?.completedPomodoros && selectedTask?.estimatedPomodoros && selectedTask?.completedPomodoros >= selectedTask?.estimatedPomodoros" 
+                  class="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full"
+                >
+                  Completed
+                </span>
+              </p>
+            </div>
+            <div>
               <h4 class="text-sm font-medium text-gray-500">Completed</h4>
               <p class="mt-1 text-gray-900">{{ selectedTask?.completedAt ? new Date(selectedTask.completedAt).toLocaleDateString() : 'Not completed' }}</p>
             </div>
