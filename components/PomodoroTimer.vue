@@ -308,9 +308,6 @@ function startTimer() {
           icon: '/favicon.ico'
         })
       }
-      
-      // Log completed session to the API
-      logSessionUpdate()
     }
     saveState()
   }, 100) // Update more frequently for smoother animation
@@ -441,26 +438,6 @@ function generateSessionSteps() {
 
 function updateSessionSteps() {
   generateSessionSteps()
-}
-
-async function logSessionUpdate() {
-  try {
-    const sessionData = {
-      type: isBreak.value ? 'break' : 'focus',
-      duration: isBreak.value ? props.breakDuration : props.focusDuration,
-      completedAt: new Date().toISOString()
-    }
-    
-    await $fetch('/api/pomodoro/sessions', {
-      method: 'POST',
-      body: sessionData
-    })
-    
-    // Notify any listeners about the session update
-    notifySessionUpdate()
-  } catch (error) {
-    console.error('Failed to log session:', error)
-  }
 }
 
 // Initialize session steps on component creation

@@ -48,7 +48,19 @@
       </div>
       
       <!-- 3-column layout -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Middle column: Timer -->
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+          <PomodoroTimer
+            ref="timerRef"
+            :focus-duration="currentTemplate.focusDuration || 25 * 60"
+            :break-duration="currentTemplate.shortBreakDuration || 5 * 60"
+            :rounds="currentTemplate.rounds || 4"
+            @timer-state-change="handleTimerStateChange"
+          />
+          
+        </div>
+        
         <!-- Left column: Session Steps -->
         <div class="bg-white p-6 rounded-lg shadow-sm">
           <h2 class="text-xl font-semibold mb-4">Session Progress</h2>
@@ -90,22 +102,6 @@
           </div>
         </div>
         
-        <!-- Middle column: Timer -->
-        <div class="bg-white p-6 rounded-lg shadow-sm">
-          <PomodoroTimer
-            ref="timerRef"
-            :focus-duration="currentTemplate.focusDuration || 25 * 60"
-            :break-duration="currentTemplate.shortBreakDuration || 5 * 60"
-            :rounds="currentTemplate.rounds || 4"
-            @timer-state-change="handleTimerStateChange"
-          />
-          
-        </div>
-        
-        <!-- Right column: Stats -->
-        <div class="bg-white p-6 rounded-lg shadow-sm">
-          <PomodoroStats />
-        </div>
       </div>
     </main>
   </div>
