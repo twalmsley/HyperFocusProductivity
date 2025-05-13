@@ -2,7 +2,7 @@ import { PrismaClient, TaskStatus } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-const userId = '66392c20-c43b-41ac-aced-3d48b3bf708c'
+const userId = 'd7553963-0af2-4a35-841c-d6c3dddccd06'
 
 const statuses: TaskStatus[] = ['BACKLOG', 'IN_PROGRESS', 'DONE']
 const taskTitles = [
@@ -67,6 +67,7 @@ async function seedTasks() {
       title: `${getRandomElement(taskTitles)} ${i + 1}`,
       notes: Math.random() > 0.5 ? getRandomElement(taskNotes) : null,
       estimatedPomodoros: Math.random() > 0.3 ? Math.floor(Math.random() * 8) + 1 : null,
+      completedPomodoros: 0,
       status,
       createdAt,
       completedAt,

@@ -28,20 +28,19 @@ model User {
 }
 
 model Task {
-  id                  String          @id @default(uuid())
-  userId              String
-  title               String
-  notes               String?
+  id                String    @id @default(uuid())
+  userId            String
+  title             String
+  notes             String?
   estimatedPomodoros Int?
-  status              TaskStatus      @default(BACKLOG)
-  createdAt           DateTime        @default(now())
-  completedAt         DateTime?
-  dueDate             DateTime?
-  position            Int?
-
-  user     User       @relation("UserTasks", fields: [userId], references: [id], onDelete: Cascade)
+  completedPomodoros Int      @default(0)
+  status            TaskStatus @default(BACKLOG)
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+  dueDate           DateTime?
+  position          Int?
+  user              User      @relation("UserTasks", fields: [userId], references: [id])
 }
-
 
 model UserSettings {
   userId             String  @id
@@ -74,9 +73,12 @@ model UserSubscription {
 model Session {
   id        String   @id @default(uuid())
   userId    String
+  startTime DateTime @default(now())
+  endTime   DateTime?
   expiresAt DateTime
-  createdAt DateTime @default(now())
-  user      User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+  duration  Int      // Duration in minutes
+  type      String   // "focus" or "break"
+  user      User     @relation("UserSessions", fields: [userId], references: [id])
 }
 
 enum TaskStatus {

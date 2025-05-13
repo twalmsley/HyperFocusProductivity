@@ -161,6 +161,16 @@
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium w-[160px]">
                 <div class="flex justify-end space-x-2">
                   <button 
+                    v-if="task.status === 'IN_PROGRESS'"
+                    @click="startPomodoro(task)"
+                    class="text-gray-400 hover:text-[var(--primary)]"
+                    title="Start Pomodoro Timer"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button 
                     @click="viewTask(task)"
                     class="text-gray-400 hover:text-[var(--primary)]"
                     title="View Details"
@@ -488,6 +498,19 @@
         </div>
       </div>
     </div>
+
+    <!-- Pomodoro Timer Modal -->
+    <PomodoroTimer
+      v-if="showPomodoroTimer"
+      :total-rounds="selectedTask?.estimatedPomodoros || 1"
+      :focus-duration="userSettings?.focusDuration || 25"
+      :short-break-duration="userSettings?.shortBreakDuration || 5"
+      :long-break-duration="userSettings?.longBreakDuration || 15"
+      :long-break-interval="userSettings?.longBreakInterval || 4"
+      :completed-pomodoros="selectedTask?.completedPomodoros || 0"
+      @close="closePomodoroTimer"
+      @update:completed-pomodoros="updateCompletedPomodoros"
+    />
   </div>
 </template>
 
@@ -495,6 +518,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import SortIndicator from '~/components/SortIndicator.vue'
 import { useAuth } from '~/composables/useAuth'
+import PomodoroTimer from '~/components/PomodoroTimer.vue'
 
 definePageMeta({
   middleware: ['auth']
@@ -780,6 +804,15 @@ const selectedTask = ref<Task | null>(null)
 const showEditModal = ref(false)
 const editingTask = ref<Partial<Task>>({})
 
+// Pomodoro timer state
+const showPomodoroTimer = ref(false)
+const userSettings = ref<{
+  focusDuration: number
+  shortBreakDuration: number
+  longBreakDuration: number
+  longBreakInterval: number
+} | null>(null)
+
 // Sort tasks by column
 function sortTasks(column: string) {
   // If clicking the same column, toggle direction
@@ -944,8 +977,53 @@ function clearFilters() {
   }
 }
 
+// Fetch user settings
+async function fetchUserSettings() {
+  if (!user.value) return
+  
+  try {
+    const response = await $fetch('/api/settings')
+    userSettings.value = response
+  } catch (error) {
+    console.error('Failed to fetch user settings:', error)
+  }
+}
 
-// Fetch templates on component mount
+function startPomodoro(task: Task) {
+  selectedTask.value = task
+  showPomodoroTimer.value = true
+}
+
+function closePomodoroTimer() {
+  showPomodoroTimer.value = false
+  selectedTask.value = null
+}
+
+async function updateCompletedPomodoros(value: number) {
+  if (!selectedTask.value) return
+
+  try {
+    const updatedTask = await $fetch('/api/tasks', {
+      method: 'PATCH',
+      body: {
+        id: selectedTask.value.id,
+        completedPomodoros: value
+      }
+    }) as Task
+
+    // Update the task in the local state
+    const index = tasks.value.findIndex(t => t.id === updatedTask.id)
+    if (index !== -1) {
+      tasks.value[index] = updatedTask
+    }
+    selectedTask.value = updatedTask
+  } catch (error) {
+    console.error('Failed to update completed pomodoros:', error)
+  }
+}
+
+// Fetch user settings when component mounts
 onMounted(() => {
+  fetchUserSettings()
 })
 </script> 
