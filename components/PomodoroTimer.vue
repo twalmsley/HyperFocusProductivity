@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white border-b">
+  <div class="border-b" :class="isRunning ? (isBreak ? 'bg-[var(--pomodoro-break)]' : 'bg-[var(--pomodoro-focus)]') : 'bg-white'">
     <div class="container mx-auto px-4">
       <div class="flex items-center justify-between py-3">
         <!-- Timer Display -->
@@ -19,7 +19,8 @@
         <div class="flex-1 mx-8">
           <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
-              class="h-full bg-blue-500 transition-all duration-1000 ease-linear"
+              class="h-full transition-all duration-1000 ease-linear"
+              :class="isBreak ? 'bg-green-500' : 'bg-[var(--primary)]'"
               :style="{ width: `${(1 - timeLeft / (isBreak ? breakDuration : focusDuration)) * 100}%` }"
             ></div>
           </div>
@@ -31,7 +32,7 @@
             <select
               v-model="selectedTemplateId"
               @change="selectTemplate"
-              class="block w-40 px-3 py-1.5 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+              class="block w-40 px-3 py-1.5 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] text-sm"
               :disabled="isRunning"
               :class="{'opacity-75 cursor-not-allowed': isRunning}"
             >
@@ -57,7 +58,7 @@
             <button
               v-if="!isRunning"
               @click="startTimer"
-              class="px-4 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm"
+              class="px-4 py-1.5 bg-[var(--primary)] text-white rounded hover:bg-[var(--button-hover)] transition-colors text-sm"
             >
               Start
             </button>
@@ -141,18 +142,40 @@ defineExpose({
   sessionSteps
 })
 
-// Watch for prop changes and update only when timer is not running
-watch(() => [props.focusDuration, props.breakDuration, props.rounds], ([newFocusDuration, newBreakDuration, newRounds], [oldFocusDuration, oldBreakDuration, oldRounds]) => {
-  if (!isRunning.value) {
-    // Only update the timer if the timer is not running
-    if (!isBreak.value) {
-      timeLeft.value = newFocusDuration
-    } else {
-      timeLeft.value = newBreakDuration
+// Add template selection persistence
+const TEMPLATE_STORAGE_KEY = 'pomodoro-selected-template'
+
+// Initialize template selection
+onMounted(() => {
+  if (process.client) {
+    const savedTemplateId = localStorage.getItem(TEMPLATE_STORAGE_KEY)
+    if (savedTemplateId && props.templates.some(t => t.id === savedTemplateId)) {
+      selectedTemplateId.value = savedTemplateId
+      selectTemplate()
+    } else if (props.templates.length > 0) {
+      // If no saved template or saved template not found, select the first one
+      selectedTemplateId.value = props.templates[0].id
+      selectTemplate()
     }
-    generateSessionSteps()
   }
-}, { deep: true })
+  generateSessionSteps()
+  loadState()
+})
+
+// Watch for template changes
+watch(() => props.templates, (newTemplates) => {
+  if (newTemplates.length > 0 && process.client) {
+    const savedTemplateId = localStorage.getItem(TEMPLATE_STORAGE_KEY)
+    if (savedTemplateId && newTemplates.some(t => t.id === savedTemplateId)) {
+      selectedTemplateId.value = savedTemplateId
+      selectTemplate()
+    } else if (!selectedTemplateId.value) {
+      // Only set to first template if no template is currently selected
+      selectedTemplateId.value = newTemplates[0].id
+      selectTemplate()
+    }
+  }
+}, { immediate: true })
 
 // Add state persistence
 const STORAGE_KEY = 'pomodoro-state'
@@ -167,6 +190,8 @@ const dashOffset = computed(() => {
 const { notifySessionUpdate } = usePomodoroEvents()
 
 function saveState() {
+  if (!process.client) return
+  
   const state = {
     isRunning: isRunning.value,
     isBreak: isBreak.value,
@@ -178,6 +203,8 @@ function saveState() {
 }
 
 function loadState() {
+  if (!process.client) return
+  
   const savedState = localStorage.getItem(STORAGE_KEY)
   if (savedState) {
     const state = JSON.parse(savedState)
@@ -358,6 +385,11 @@ function pauseTimer() {
 }
 
 function resetTimer() {
+  // Stop the timer if it's running
+  if (isRunning.value) {
+    pauseTimer()
+  }
+  
   // Clear intervals
   if (timerInterval.value) {
     clearInterval(timerInterval.value)
@@ -454,11 +486,14 @@ function selectTemplate() {
   
   const selected = props.templates.find(t => t.id === selectedTemplateId.value)
   if (selected) {
+    // Save the selected template ID only on client side
+    if (process.client) {
+      localStorage.setItem(TEMPLATE_STORAGE_KEY, selected.id)
+    }
     emit('template-change', selected)
   }
 }
 
-// Initialize session steps on component creation
 onMounted(() => {
   generateSessionSteps()
   loadState()
