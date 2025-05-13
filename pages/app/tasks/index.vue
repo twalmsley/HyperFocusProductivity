@@ -70,7 +70,7 @@
       </div>
 
       <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div v-if="filteredTasks.length === 0" class="p-6 text-gray-600">
+        <div v-if="paginatedTasks.length === 0" class="p-6 text-gray-600">
           <p v-if="tasks.length === 0">Your tasks will appear here.</p>
           <p v-else>No tasks match your current filters.</p>
         </div>
@@ -122,7 +122,7 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="task in filteredTasks" :key="task.id" class="hover:bg-gray-50">
+            <tr v-for="task in paginatedTasks" :key="task.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm font-medium text-gray-900">{{ task.title }}</div>
               </td>
@@ -208,6 +208,84 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="mt-4 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="text-sm text-gray-700">Show</span>
+          <select
+            v-model="pageSize"
+            class="rounded-md border-gray-300 text-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+          >
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+          <span class="text-sm text-gray-700">items per page</span>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <span class="text-sm text-gray-700">
+            Showing {{ paginationStart }} to {{ paginationEnd }} of {{ paginatedTasks.length }} items
+          </span>
+          <div class="flex space-x-1">
+            <button
+              @click="currentPage = 1"
+              :disabled="currentPage === 1"
+              class="px-2 py-1 text-sm rounded-md border"
+              :class="currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'"
+              title="First Page"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button
+              @click="currentPage--"
+              :disabled="currentPage === 1"
+              class="px-2 py-1 text-sm rounded-md border"
+              :class="currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'"
+              title="Previous Page"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button
+              v-for="page in displayedPages"
+              :key="page"
+              @click="currentPage = page"
+              class="px-3 py-1 text-sm rounded-md border"
+              :class="currentPage === page ? 'bg-[var(--primary)] text-white' : 'text-gray-700 hover:bg-gray-50'"
+            >
+              {{ page }}
+            </button>
+            <button
+              @click="currentPage++"
+              :disabled="currentPage === totalPages"
+              class="px-2 py-1 text-sm rounded-md border"
+              :class="currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'"
+              title="Next Page"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button
+              @click="currentPage = totalPages"
+              :disabled="currentPage === totalPages"
+              class="px-2 py-1 text-sm rounded-md border"
+              :class="currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'"
+              title="Last Page"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 15.707a1 1 0 001.414 0l5-5a1 1 0 000-1.414l-5-5a1 1 0 00-1.414 1.414L8.586 10 4.293 14.293a1 1 0 000 1.414zm6 0a1 1 0 001.414 0l5-5a1 1 0 000-1.414l-5-5a1 1 0 00-1.414 1.414L14.586 10l-4.293 4.293a1 1 0 000 1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -476,33 +554,16 @@ const filters = ref({
   dueDate: ''
 })
 
-// Clear all filters
-function clearFilters() {
-  filters.value = {
-    search: '',
-    status: '',
-    dueDate: ''
-  }
-}
-
-// Variables for delete confirmation
-const showDeleteConfirm = ref(false)
-const taskToDelete = ref<typeof tasks.value[0] | null>(null)
-
-// View task modal state
-const showViewModal = ref(false)
-const selectedTask = ref<Task | null>(null)
-
-// Edit task modal state
-const showEditModal = ref(false)
-const editingTask = ref<Partial<Task>>({})
+// Pagination state
+const currentPage = ref(1)
+const pageSize = ref(20)
 
 // Computed property for filtered tasks
 const filteredTasks = computed(() => {
   if (!tasks.value.length) return []
   
   // Apply filters
-  return sortedTasks.value.filter(task => {
+  return tasks.value.filter(task => {
     // Filter by search text (title and notes)
     if (filters.value.search) {
       const searchTerm = filters.value.search.toLowerCase()
@@ -562,9 +623,9 @@ const filteredTasks = computed(() => {
 
 // Computed property for sorted tasks
 const sortedTasks = computed(() => {
-  if (!tasks.value.length) return []
+  if (!filteredTasks.value.length) return []
   
-  const sorted = [...tasks.value].sort((a, b) => {
+  const sorted = [...filteredTasks.value].sort((a, b) => {
     let valA, valB
     
     // Handle different data types for sorting
@@ -607,6 +668,59 @@ const sortedTasks = computed(() => {
   
   return sorted
 })
+
+// Computed property for paginated tasks
+const paginatedTasks = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return sortedTasks.value.slice(start, end)
+})
+
+// Computed properties for pagination
+const totalPages = computed(() => Math.ceil(filteredTasks.value.length / pageSize.value))
+
+const paginationStart = computed(() => {
+  if (filteredTasks.value.length === 0) return 0
+  return (currentPage.value - 1) * pageSize.value + 1
+})
+
+const paginationEnd = computed(() => {
+  return Math.min(currentPage.value * pageSize.value, filteredTasks.value.length)
+})
+
+const displayedPages = computed(() => {
+  const pages = []
+  const maxVisiblePages = 5
+  let start = Math.max(1, currentPage.value - Math.floor(maxVisiblePages / 2))
+  let end = Math.min(totalPages.value, start + maxVisiblePages - 1)
+  
+  if (end - start + 1 < maxVisiblePages) {
+    start = Math.max(1, end - maxVisiblePages + 1)
+  }
+  
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  
+  return pages
+})
+
+// Watch for changes that should reset pagination
+watch([filters, sortColumn, sortDirection, pageSize], () => {
+  currentPage.value = 1
+})
+
+// Variables for delete confirmation
+const showDeleteConfirm = ref(false)
+const taskToDelete = ref<typeof tasks.value[0] | null>(null)
+
+// View task modal state
+const showViewModal = ref(false)
+const selectedTask = ref<Task | null>(null)
+
+// Edit task modal state
+const showEditModal = ref(false)
+const editingTask = ref<Partial<Task>>({})
 
 // Sort tasks by column
 function sortTasks(column: string) {
@@ -760,6 +874,15 @@ async function saveTask() {
     closeEditModal()
   } catch (error) {
     console.error('Failed to update task:', error)
+  }
+}
+
+// Clear all filters
+function clearFilters() {
+  filters.value = {
+    search: '',
+    status: '',
+    dueDate: ''
   }
 }
 </script> 
