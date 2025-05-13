@@ -36,12 +36,6 @@
               Create New Task
             </NuxtLink>
             <NuxtLink 
-              to="/app/pomodoros/new" 
-              class="block w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg text-center transition-colors"
-            >
-              Create New Pomodoro
-            </NuxtLink>
-            <NuxtLink 
               to="/app/settings" 
               class="block w-full border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white px-4 py-2 rounded-lg text-center transition-colors"
             >

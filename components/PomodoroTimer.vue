@@ -4,6 +4,12 @@
       <div class="flex items-center justify-between py-3">
         <!-- Timer Display -->
         <div class="flex items-center space-x-4">
+          <div class="text-[var(--primary)]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+          </div>
           <div class="text-2xl font-bold">{{ formatTime(timeLeft) }}</div>
           <div class="text-sm text-gray-500">{{ isBreak ? 'Break' : 'Focus' }}</div>
           <div class="text-sm text-gray-500">Round {{ currentRound }} of {{ rounds }}</div>
