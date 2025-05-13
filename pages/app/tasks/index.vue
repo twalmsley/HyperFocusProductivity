@@ -609,6 +609,7 @@ type Task = {
   title: string;
   notes: string | null;
   estimatedPomodoros: number | null;
+  completedPomodoros: number;
   status: TaskStatus;
   createdAt: string;
   completedAt: string | null;
@@ -817,10 +818,12 @@ const editingTask = ref<Partial<Task>>({})
 // Pomodoro timer state
 const showPomodoroTimer = ref(false)
 const userSettings = ref<{
-  focusDuration: number
-  shortBreakDuration: number
-  longBreakDuration: number
-  longBreakInterval: number
+  focusDuration: number;
+  shortBreakDuration: number;
+  longBreakDuration: number;
+  longBreakInterval: number;
+  userId?: string;
+  theme?: string;
 } | null>(null)
 
 // Sort tasks by column
