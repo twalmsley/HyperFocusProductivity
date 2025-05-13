@@ -47,9 +47,9 @@
         </div>
       </div>
       
-      <!-- 3-column layout -->
+      <!-- 2-column layout -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Middle column: Timer -->
+        <!-- Left column: Timer -->
         <div class="bg-white p-6 rounded-lg shadow-sm">
           <PomodoroTimer
             ref="timerRef"
@@ -61,7 +61,7 @@
           
         </div>
         
-        <!-- Left column: Session Steps -->
+        <!-- Right column: Session Steps -->
         <div class="bg-white p-6 rounded-lg shadow-sm">
           <h2 class="text-xl font-semibold mb-4">Session Progress</h2>
           <div v-if="timerRef">
