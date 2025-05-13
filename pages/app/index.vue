@@ -1,15 +1,6 @@
 <template>
   <div>
     <AppNavHeader />
-    <PomodoroTimer
-      ref="timerRef"
-      :focus-duration="currentTemplate.focusDuration || 25 * 60"
-      :break-duration="currentTemplate.shortBreakDuration || 5 * 60"
-      :rounds="currentTemplate.rounds || 4"
-      :templates="templates"
-      @timer-state-change="handleTimerStateChange"
-      @template-change="handleTemplateChange"
-    />
     <main class="container mx-auto px-4 py-8">
       <h1 class="text-3xl font-bold mb-6">Welcome to HyperFocusProductivity</h1>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -50,7 +41,6 @@
 
 <script setup lang="ts">
 import { useAuth } from '~/composables/useAuth'
-import PomodoroTimer from '~/components/PomodoroTimer.vue'
 
 definePageMeta({
   middleware: ['auth']
@@ -76,8 +66,6 @@ const currentTemplate = ref<Partial<PomodoroTemplate>>({
   shortBreakDuration: 5 * 60,
   rounds: 4
 })
-const timerIsRunning = ref(false)
-const timerRef = ref<typeof PomodoroTimer | null>(null)
 
 // Storage key for template selection
 const TEMPLATE_STORAGE_KEY = 'pomodoro-selected-template'
@@ -132,37 +120,8 @@ watch([isLoading, user], ([loading, currentUser]) => {
   }
 })
 
-async function fetchTemplates() {
-  try {
-    const response = await $fetch<PomodoroTemplate[]>('/api/pomodoro/templates')
-    
-    if (response && response.length > 0) {
-      // Replace templates with API response only if we got valid templates back
-      templates.value = response
-    }
-  } catch (error) {
-    console.error('Failed to fetch templates:', error)
-    // Keep the default templates if the API call fails
-  }
-}
-
-function handleTemplateChange(template: PomodoroTemplate) {
-  currentTemplate.value = { ...template }
-  
-  // Save selection to localStorage
-  try {
-    localStorage.setItem(TEMPLATE_STORAGE_KEY, template.id)
-  } catch (error) {
-    console.error('Error saving template selection:', error)
-  }
-}
-
-function handleTimerStateChange(isRunning: boolean) {
-  timerIsRunning.value = isRunning
-}
 
 // Fetch templates on component mount
 onMounted(() => {
-  fetchTemplates()
 })
 </script> 
