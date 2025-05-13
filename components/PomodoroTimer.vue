@@ -1,89 +1,81 @@
 <template>
-  <div class="flex flex-col items-center">
-    <div class="relative w-64 h-64">
-      <!-- Circular progress background -->
-      <svg class="w-full h-full" viewBox="0 0 100 100">
-        <circle
-          class="text-gray-200"
-          stroke-width="8"
-          stroke="currentColor"
-          fill="transparent"
-          r="45"
-          cx="50"
-          cy="50"
-        />
-        <circle
-          class="text-blue-500 transition-all duration-1000 ease-linear"
-          stroke-width="8"
-          stroke="currentColor"
-          fill="transparent"
-          r="45"
-          cx="50"
-          cy="50"
-          :stroke-dasharray="circumference"
-          :stroke-dashoffset="dashOffset"
-          transform="rotate(-90 50 50)"
-        />
-      </svg>
-      <!-- Timer display -->
-      <div class="absolute inset-0 flex items-center justify-center">
-        <div class="text-center">
-          <div class="text-4xl font-bold">{{ formatTime(timeLeft) }}</div>
+  <div class="bg-white border-b">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between py-3">
+        <!-- Timer Display -->
+        <div class="flex items-center space-x-4">
+          <div class="text-2xl font-bold">{{ formatTime(timeLeft) }}</div>
           <div class="text-sm text-gray-500">{{ isBreak ? 'Break' : 'Focus' }}</div>
-          <div class="text-sm text-gray-500 mt-1">Round {{ currentRound }} of {{ rounds }}</div>
+          <div class="text-sm text-gray-500">Round {{ currentRound }} of {{ rounds }}</div>
         </div>
-      </div>
-    </div>
-    <!-- Controls -->
-    <div class="mt-6 space-x-4">
-      <button
-        v-if="!isRunning"
-        @click="startTimer"
-        class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-      >
-        Start
-      </button>
-      <button
-        v-else
-        @click="pauseTimer"
-        class="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
-      >
-        Pause
-      </button>
-      <button
-        @click="resetTimer"
-        class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-      >
-        Reset
-      </button>
-      <button
-        @click="skipToNextRound"
-        class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
-      >
-        Skip
-      </button>
-    </div>
 
-    <!-- Warning Message -->
-    <div
-      v-if="isRunning"
-      class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800"
-    >
-      <div class="flex items-center">
-        <svg
-          class="w-5 h-5 mr-2"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
-        <span>Your timer state will be saved if you navigate away from the page.</span>
+        <!-- Progress Bar -->
+        <div class="flex-1 mx-8">
+          <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              class="h-full bg-blue-500 transition-all duration-1000 ease-linear"
+              :style="{ width: `${(1 - timeLeft / (isBreak ? breakDuration : focusDuration)) * 100}%` }"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Template Selector -->
+        <div class="flex items-center space-x-4">
+          <div class="relative">
+            <select
+              v-model="selectedTemplateId"
+              @change="selectTemplate"
+              class="block w-40 px-3 py-1.5 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+              :disabled="isRunning"
+              :class="{'opacity-75 cursor-not-allowed': isRunning}"
+            >
+              <option 
+                v-for="template in templates" 
+                :key="template.id" 
+                :value="template.id"
+              >
+                {{ template.name }}
+              </option>
+            </select>
+            <!-- Overlay to prevent dropdown from showing when disabled -->
+            <div 
+              v-if="isRunning" 
+              class="absolute inset-0"
+              @click.prevent
+              @mousedown.prevent
+            ></div>
+          </div>
+
+          <!-- Controls -->
+          <div class="flex items-center space-x-2">
+            <button
+              v-if="!isRunning"
+              @click="startTimer"
+              class="px-4 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm"
+            >
+              Start
+            </button>
+            <button
+              v-else
+              @click="pauseTimer"
+              class="px-4 py-1.5 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors text-sm"
+            >
+              Pause
+            </button>
+            <button
+              @click="resetTimer"
+              class="px-4 py-1.5 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors text-sm"
+            >
+              Reset
+            </button>
+            <button
+              @click="skipToNextRound"
+              class="px-4 py-1.5 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors text-sm"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -104,11 +96,22 @@ const props = defineProps({
   rounds: {
     type: Number,
     default: 4
+  },
+  templates: {
+    type: Array as PropType<Array<{
+      id: string;
+      name: string;
+      focusDuration: number;
+      shortBreakDuration: number;
+      rounds: number;
+    }>>,
+    default: () => []
   }
 })
 
-const emit = defineEmits(['timer-state-change'])
+const emit = defineEmits(['timer-state-change', 'template-change'])
 
+const selectedTemplateId = ref('')
 const timeLeft = ref(props.focusDuration)
 const isRunning = ref(false)
 const isBreak = ref(false)
@@ -438,6 +441,15 @@ function generateSessionSteps() {
 
 function updateSessionSteps() {
   generateSessionSteps()
+}
+
+function selectTemplate() {
+  if (isRunning.value) return
+  
+  const selected = props.templates.find(t => t.id === selectedTemplateId.value)
+  if (selected) {
+    emit('template-change', selected)
+  }
 }
 
 // Initialize session steps on component creation

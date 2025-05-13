@@ -1,6 +1,15 @@
 <template>
   <div>
     <AppNavHeader />
+    <PomodoroTimer
+      ref="timerRef"
+      :focus-duration="currentTemplate.focusDuration || 25 * 60"
+      :break-duration="currentTemplate.shortBreakDuration || 5 * 60"
+      :rounds="currentTemplate.rounds || 4"
+      :templates="templates"
+      @timer-state-change="handleTimerStateChange"
+      @template-change="handleTemplateChange"
+    />
     <main class="container mx-auto px-4 py-8">
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Pomodoro</h1>
@@ -45,63 +54,6 @@
             ></div>
           </div>
         </div>
-      </div>
-      
-      <!-- 2-column layout -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Left column: Timer -->
-        <div class="bg-white p-6 rounded-lg shadow-sm">
-          <PomodoroTimer
-            ref="timerRef"
-            :focus-duration="currentTemplate.focusDuration || 25 * 60"
-            :break-duration="currentTemplate.shortBreakDuration || 5 * 60"
-            :rounds="currentTemplate.rounds || 4"
-            @timer-state-change="handleTimerStateChange"
-          />
-          
-        </div>
-        
-        <!-- Right column: Session Steps -->
-        <div class="bg-white p-6 rounded-lg shadow-sm">
-          <h2 class="text-xl font-semibold mb-4">Session Progress</h2>
-          <div v-if="timerRef">
-            <div class="space-y-2">
-              <div
-                v-for="(step, index) in timerRef.sessionSteps"
-                :key="index"
-                class="flex items-center p-2 rounded-lg"
-                :class="{
-                  'bg-gray-100': step.status === 'completed',
-                  'bg-blue-50 border border-blue-200': step.status === 'current',
-                  'text-gray-400': step.status === 'upcoming'
-                }"
-              >
-                <div class="w-6 h-6 flex items-center justify-center mr-3">
-                  <div
-                    v-if="step.status === 'completed'"
-                    class="w-4 h-4 bg-green-500 rounded-full"
-                  ></div>
-                  <div
-                    v-else-if="step.status === 'current'"
-                    class="w-4 h-4 bg-blue-500 rounded-full animate-pulse"
-                  ></div>
-                  <div
-                    v-else
-                    class="w-4 h-4 border-2 border-gray-300 rounded-full"
-                  ></div>
-                </div>
-                <div class="flex-grow">
-                  <div class="font-medium">{{ step.type }}</div>
-                  <div class="text-sm">{{ step.description }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div v-else class="text-gray-500 text-center py-4">
-            Start a session to see progress steps
-          </div>
-        </div>
-        
       </div>
     </main>
   </div>
@@ -195,6 +147,9 @@ const defaultTemplates = [
   }
 ]
 
+// Initialize templates with defaults
+templates.value = defaultTemplates
+
 // Redirect to login if not authenticated
 watch([isLoading, user], ([loading, currentUser]) => {
   if (!loading && !currentUser) {
@@ -272,7 +227,23 @@ function selectTemplate() {
   }
 }
 
+function handleTemplateChange(template: PomodoroTemplate) {
+  currentTemplate.value = { ...template }
+  
+  // Save selection to localStorage
+  try {
+    localStorage.setItem(TEMPLATE_STORAGE_KEY, template.id)
+  } catch (error) {
+    console.error('Error saving template selection:', error)
+  }
+}
+
 function handleTimerStateChange(isRunning: boolean) {
   timerIsRunning.value = isRunning
 }
+
+// Fetch templates on component mount
+onMounted(() => {
+  fetchTemplates()
+})
 </script> 
