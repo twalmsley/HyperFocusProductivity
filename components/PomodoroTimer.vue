@@ -32,7 +32,7 @@
               cy="50"
               r="45"
               fill="none"
-              stroke="var(--primary)"
+              :stroke="currentPhase === 'Focus' ? '#f97316' : '#22c55e'" 
               stroke-width="8"
               :stroke-dasharray="283"
               :stroke-dashoffset="283 - (283 * progress)"
@@ -44,7 +44,9 @@
           <div class="absolute inset-0 flex items-center justify-center">
             <div class="text-center">
               <div class="text-4xl font-bold">{{ formatTime(timeRemaining) }}</div>
-              <div class="text-sm text-gray-500 mt-1">{{ currentPhase }}</div>
+              <div class="text-sm mt-1" :class="currentPhase === 'Focus' ? 'text-orange-500' : 'text-green-600'">
+                {{ currentPhase }}
+              </div>
             </div>
           </div>
         </div>
@@ -94,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps<{
   totalRounds: number
@@ -131,16 +133,28 @@ function formatTime(seconds: number): string {
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
 }
 
+function updateDocumentTitle() {
+  if (isRunning.value) {
+    const time = formatTime(timeRemaining.value)
+    const phase = currentPhase.value
+    document.title = `(${time}) ${phase} - HyperFocus`
+  } else {
+    document.title = 'HyperFocus Productivity'
+  }
+}
+
 function startTimer() {
   if (!isRunning.value) {
     isRunning.value = true
     timerInterval.value = window.setInterval(() => {
       if (timeRemaining.value > 0) {
         timeRemaining.value--
+        updateDocumentTitle()
       } else {
         handlePhaseComplete()
       }
     }, 1000)
+    updateDocumentTitle()
   }
 }
 
@@ -151,6 +165,7 @@ function pauseTimer() {
       clearInterval(timerInterval.value)
       timerInterval.value = null
     }
+    document.title = 'HyperFocus Productivity'
   }
 }
 
@@ -178,6 +193,7 @@ async function handleClose() {
     if (!confirmed) return
   }
   pauseTimer()
+  document.title = 'HyperFocus Productivity'
   emit('close')
 }
 
@@ -200,9 +216,14 @@ async function handleReset() {
   timeRemaining.value = props.focusDuration * 60
 }
 
-onUnmounted(() => {
-  if (timerInterval.value) {
-    clearInterval(timerInterval.value)
-  }
+onMounted(() => {
+  const originalTitle = document.title
+  
+  onUnmounted(() => {
+    if (timerInterval.value) {
+      clearInterval(timerInterval.value)
+    }
+    document.title = originalTitle
+  })
 })
 </script> 
