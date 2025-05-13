@@ -32,10 +32,10 @@ export default defineEventHandler(async (event) => {
       const body = await readBody(event)
       const { userId: newTaskUserId, title, notes, estimatedPomodoros, status = 'BACKLOG', dueDate } = body
 
-      if (!newTaskUserId || !title) {
+      if (!newTaskUserId || !title || !notes || !estimatedPomodoros || !status || !dueDate) {
         throw createError({
           statusCode: 400,
-          message: 'userId and title are required'
+          message: 'All fields (userId, title, notes, estimatedPomodoros, status, dueDate) are required'
         })
       }
 

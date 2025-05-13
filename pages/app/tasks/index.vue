@@ -74,7 +74,7 @@
                   <span v-else>Reopen</span>
                 </button>
                 <button 
-                  @click="deleteTask(task.id)"
+                  @click="confirmDelete(task)"
                   class="text-red-600 hover:text-red-900"
                 >
                   Delete
@@ -85,6 +85,28 @@
         </table>
       </div>
     </main>
+
+    <!-- Confirmation Dialog -->
+    <div v-if="showDeleteConfirm" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Task</h3>
+        <p class="text-gray-600 mb-6">Are you sure you want to delete the task "{{ taskToDelete?.title }}"?</p>
+        <div class="flex justify-end space-x-4">
+          <button 
+            @click="cancelDelete" 
+            class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100"
+          >
+            No, Cancel
+          </button>
+          <button 
+            @click="confirmDeleteTask" 
+            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+          >
+            Yes, Delete
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -139,6 +161,10 @@ const tasks = ref<Array<{
   }>;
 }>>([])
 
+// Variables for delete confirmation
+const showDeleteConfirm = ref(false)
+const taskToDelete = ref<typeof tasks.value[0] | null>(null)
+
 // Fetch user data and tasks on component mount
 onMounted(async () => {
   try {
@@ -186,18 +212,35 @@ async function updateTaskStatus(task: typeof tasks.value[0]) {
   }
 }
 
-async function deleteTask(taskId: string) {
-  if (!user.value) return
+// Open delete confirmation dialog
+function confirmDelete(task: typeof tasks.value[0]) {
+  taskToDelete.value = task
+  showDeleteConfirm.value = true
+}
 
+// Close delete confirmation dialog
+function cancelDelete() {
+  showDeleteConfirm.value = false
+  taskToDelete.value = null
+}
+
+// Confirm and execute task deletion
+async function confirmDeleteTask() {
+  if (!user.value || !taskToDelete.value) return
+  
   try {
     await $fetch('/api/tasks', {
       method: 'DELETE',
       query: {
-        id: taskId
+        id: taskToDelete.value.id
       }
     })
     
-    tasks.value = tasks.value.filter(t => t.id !== taskId)
+    tasks.value = tasks.value.filter(t => t.id !== taskToDelete.value?.id)
+    
+    // Close the dialog
+    showDeleteConfirm.value = false
+    taskToDelete.value = null
   } catch (error) {
     console.error('Failed to delete task:', error)
   }

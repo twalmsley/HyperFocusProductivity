@@ -32,6 +32,7 @@
                 id="notes"
                 v-model="task.notes"
                 rows="3"
+                required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
               ></textarea>
             </div>
@@ -43,6 +44,7 @@
                 v-model.number="task.estimatedPomodoros"
                 type="number"
                 min="1"
+                required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
               />
             </div>
@@ -52,6 +54,7 @@
               <select
                 id="status"
                 v-model="task.status"
+                required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
               >
                 <option value="BACKLOG">Backlog</option>
@@ -66,6 +69,7 @@
                 id="dueDate"
                 v-model="task.dueDate"
                 type="date"
+                required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
               />
             </div>
@@ -134,6 +138,12 @@ onMounted(async () => {
 async function createTask() {
   if (!user.value) {
     console.error('User not found')
+    return
+  }
+
+  // Check that all required fields are filled
+  if (!task.value.title || !task.value.notes || !task.value.estimatedPomodoros || !task.value.status || !task.value.dueDate) {
+    console.error('All fields are required')
     return
   }
 
