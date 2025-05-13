@@ -996,7 +996,12 @@ async function fetchUserSettings() {
   
   try {
     const response = await $fetch('/api/settings')
-    userSettings.value = response
+    userSettings.value = response || {
+      focusDuration: 25,
+      shortBreakDuration: 5,
+      longBreakDuration: 15,
+      longBreakInterval: 4
+    }
   } catch (error) {
     console.error('Failed to fetch user settings:', error)
   }

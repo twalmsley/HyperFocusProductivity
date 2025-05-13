@@ -89,6 +89,11 @@
           <div class="text-sm text-gray-500">
             Completed: {{ completedPomodoros }} pomodoros
           </div>
+          
+          <!-- Warning message when timer is running -->
+          <div v-if="isRunning" class="mt-4 text-red-600 font-bold text-sm">
+            Keep this browser tab open. Use other tabs to continue browsing.
+          </div>
         </div>
       </div>
     </div>
