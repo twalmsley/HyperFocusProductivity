@@ -159,26 +159,235 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button 
-                  @click="updateTaskStatus(task)"
-                  class="text-[var(--primary)] hover:text-[var(--button-hover)] mr-4"
-                >
-                  <span v-if="task.status === 'BACKLOG'">Start</span>
-                  <span v-else-if="task.status === 'IN_PROGRESS'">Complete</span>
-                  <span v-else>Reopen</span>
-                </button>
-                <button 
-                  @click="confirmDelete(task)"
-                  class="text-red-600 hover:text-red-900"
-                >
-                  Delete
-                </button>
+                <div class="flex justify-end space-x-2">
+                  <button 
+                    @click="viewTask(task)"
+                    class="text-gray-400 hover:text-[var(--primary)]"
+                    title="View Details"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button 
+                    @click="editTask(task)"
+                    class="text-gray-400 hover:text-[var(--primary)]"
+                    title="Edit Task"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                  </button>
+                  <button 
+                    @click="updateTaskStatus(task)"
+                    class="text-gray-400 hover:text-[var(--primary)]"
+                    :title="task.status === 'BACKLOG' ? 'Start Task' : task.status === 'IN_PROGRESS' ? 'Complete Task' : 'Reopen Task'"
+                  >
+                    <svg v-if="task.status === 'BACKLOG'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                    </svg>
+                    <svg v-else-if="task.status === 'IN_PROGRESS'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button 
+                    @click="confirmDelete(task)"
+                    class="text-gray-400 hover:text-red-600"
+                    title="Delete Task"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
     </main>
+
+    <!-- Edit Task Modal -->
+    <div v-if="showEditModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-start mb-4">
+          <h3 class="text-xl font-medium text-gray-900">Edit Task</h3>
+          <button 
+            @click="closeEditModal" 
+            class="text-gray-400 hover:text-gray-500"
+          >
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form @submit.prevent="saveTask" class="space-y-4">
+          <!-- Title -->
+          <div>
+            <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+            <input
+              id="title"
+              v-model="editingTask.title"
+              type="text"
+              required
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            />
+          </div>
+
+          <!-- Status -->
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+            <select
+              id="status"
+              v-model="editingTask.status"
+              required
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            >
+              <option value="BACKLOG">Backlog</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="DONE">Done</option>
+            </select>
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
+            <textarea
+              id="notes"
+              v-model="editingTask.notes"
+              rows="4"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            ></textarea>
+          </div>
+
+          <!-- Estimated Pomodoros -->
+          <div>
+            <label for="estimatedPomodoros" class="block text-sm font-medium text-gray-700">Estimated Pomodoros</label>
+            <input
+              id="estimatedPomodoros"
+              v-model.number="editingTask.estimatedPomodoros"
+              type="number"
+              min="0"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            />
+          </div>
+
+          <!-- Due Date -->
+          <div>
+            <label for="dueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
+            <input
+              id="dueDate"
+              v-model="editingTask.dueDate"
+              type="date"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            />
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex justify-end space-x-4 mt-6">
+            <button
+              type="button"
+              @click="closeEditModal"
+              class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-[var(--primary)] text-white rounded-md hover:bg-[var(--button-hover)]"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- View Task Modal -->
+    <div v-if="showViewModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-start mb-4">
+          <h3 class="text-xl font-medium text-gray-900">{{ selectedTask?.title }}</h3>
+          <button 
+            @click="closeViewModal" 
+            class="text-gray-400 hover:text-gray-500"
+          >
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <!-- Status -->
+          <div>
+            <h4 class="text-sm font-medium text-gray-500">Status</h4>
+            <span 
+              class="mt-1 inline-block px-2 py-1 text-sm rounded-full"
+              :class="{
+                'bg-yellow-100 text-yellow-800': selectedTask?.status === 'BACKLOG',
+                'bg-blue-100 text-blue-800': selectedTask?.status === 'IN_PROGRESS',
+                'bg-green-100 text-green-800': selectedTask?.status === 'DONE'
+              }"
+            >
+              {{ selectedTask?.status.replace('_', ' ') }}
+            </span>
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <h4 class="text-sm font-medium text-gray-500">Notes</h4>
+            <p class="mt-1 text-gray-900 whitespace-pre-wrap">{{ selectedTask?.notes || 'No notes' }}</p>
+          </div>
+
+          <!-- Details -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Created</h4>
+              <p class="mt-1 text-gray-900">{{ selectedTask?.createdAt ? new Date(selectedTask.createdAt).toLocaleDateString() : '-' }}</p>
+            </div>
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Due Date</h4>
+              <p class="mt-1 text-gray-900">{{ selectedTask?.dueDate ? new Date(selectedTask.dueDate).toLocaleDateString() : 'No due date' }}</p>
+            </div>
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Estimated Pomodoros</h4>
+              <p class="mt-1 text-gray-900">{{ selectedTask?.estimatedPomodoros || '-' }}</p>
+            </div>
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Completed</h4>
+              <p class="mt-1 text-gray-900">{{ selectedTask?.completedAt ? new Date(selectedTask.completedAt).toLocaleDateString() : 'Not completed' }}</p>
+            </div>
+          </div>
+
+          <!-- Sessions -->
+          <div v-if="selectedTask?.sessions?.length">
+            <h4 class="text-sm font-medium text-gray-500 mb-2">Pomodoro Sessions</h4>
+            <div class="space-y-2">
+              <div 
+                v-for="session in selectedTask.sessions" 
+                :key="session.id"
+                class="bg-gray-50 p-3 rounded-lg"
+              >
+                <div class="flex justify-between text-sm">
+                  <span class="font-medium">{{ session.type.replace('_', ' ') }}</span>
+                  <span class="text-gray-500">{{ session.durationMinutes }} minutes</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">
+                  {{ new Date(session.startTime).toLocaleString() }}
+                </div>
+                <p v-if="session.notes" class="text-sm text-gray-600 mt-1">{{ session.notes }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Confirmation Dialog -->
     <div v-if="showDeleteConfirm" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
@@ -279,6 +488,14 @@ function clearFilters() {
 // Variables for delete confirmation
 const showDeleteConfirm = ref(false)
 const taskToDelete = ref<typeof tasks.value[0] | null>(null)
+
+// View task modal state
+const showViewModal = ref(false)
+const selectedTask = ref<Task | null>(null)
+
+// Edit task modal state
+const showEditModal = ref(false)
+const editingTask = ref<Partial<Task>>({})
 
 // Computed property for filtered tasks
 const filteredTasks = computed(() => {
@@ -485,4 +702,64 @@ watch([isLoading, user], ([loading, currentUser]) => {
     fetchTasks()
   }
 })
+
+function viewTask(task: Task) {
+  selectedTask.value = task
+  showViewModal.value = true
+}
+
+function closeViewModal() {
+  showViewModal.value = false
+  selectedTask.value = null
+}
+
+function editTask(task: Task) {
+  // Format the date for the input field (YYYY-MM-DD)
+  const formattedTask = {
+    ...task,
+    dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : null
+  }
+  editingTask.value = formattedTask
+  showEditModal.value = true
+}
+
+function closeEditModal() {
+  showEditModal.value = false
+  editingTask.value = {}
+}
+
+async function saveTask() {
+  if (!user.value || !editingTask.value.id) return
+
+  try {
+    // Format the date for the API (ISO string)
+    const taskToUpdate = {
+      ...editingTask.value,
+      dueDate: editingTask.value.dueDate ? new Date(editingTask.value.dueDate).toISOString() : null
+    }
+
+    const updatedTask = await $fetch<Task>('/api/tasks', {
+      method: 'PATCH',
+      body: {
+        id: taskToUpdate.id,
+        title: taskToUpdate.title,
+        notes: taskToUpdate.notes,
+        status: taskToUpdate.status,
+        estimatedPomodoros: taskToUpdate.estimatedPomodoros,
+        dueDate: taskToUpdate.dueDate,
+        completedAt: taskToUpdate.status === 'DONE' ? new Date().toISOString() : null
+      }
+    })
+
+    // Update the task in the local state
+    const index = tasks.value.findIndex(t => t.id === updatedTask.id)
+    if (index !== -1) {
+      tasks.value[index] = updatedTask
+    }
+
+    closeEditModal()
+  } catch (error) {
+    console.error('Failed to update task:', error)
+  }
+}
 </script> 
