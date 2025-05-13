@@ -171,7 +171,7 @@
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium w-[160px]">
                 <div class="flex justify-end space-x-2">
                   <button 
-                    v-if="task.status === 'IN_PROGRESS'"
+                    v-if="task.status === 'IN_PROGRESS' && (!task.estimatedPomodoros || task.completedPomodoros < task.estimatedPomodoros)"
                     @click="startPomodoro(task)"
                     class="text-gray-400 hover:text-[var(--primary)]"
                     title="Start Pomodoro Timer"
