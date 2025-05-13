@@ -224,7 +224,7 @@ watch([isLoading, user], ([loading, currentUser]) => {
 
 type TaskStatus = 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
 
-const tasks = ref<Array<{
+type Task = {
   id: string;
   userId: string;
   title: string;
@@ -252,7 +252,9 @@ const tasks = ref<Array<{
     durationMinutes: number;
     notes: string | null;
   }>;
-}>>([])
+}
+
+const tasks = ref<Task[]>([])
 
 // Sorting state
 const sortColumn = ref<string>('createdAt')
@@ -462,4 +464,25 @@ async function confirmDeleteTask() {
     console.error('Failed to delete task:', error)
   }
 }
+
+// Fetch tasks
+async function fetchTasks() {
+  if (!user.value) return
+  
+  try {
+    const response = await $fetch<Task[]>(`/api/tasks?userId=${user.value.id}`)
+    tasks.value = response
+  } catch (error) {
+    console.error('Failed to fetch tasks:', error)
+  }
+}
+
+// Fetch tasks when component mounts and when user changes
+watch([isLoading, user], ([loading, currentUser]) => {
+  if (!loading && !currentUser) {
+    navigateTo('/login')
+  } else if (!loading && currentUser) {
+    fetchTasks()
+  }
+})
 </script> 
