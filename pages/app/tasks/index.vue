@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AppNavHeader v-if="user" />
+    <AppNavHeader />
     <main class="container mx-auto px-4 py-8">
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Tasks</h1>
@@ -205,10 +205,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import SortIndicator from '~/components/SortIndicator.vue'
+import { useAuth } from '~/composables/useAuth'
 
-const user = useState('user')
+definePageMeta({
+  middleware: ['auth']
+})
+
+const { user, isLoading } = useAuth()
+
+// Redirect to login if not authenticated
+watch([isLoading, user], ([loading, currentUser]) => {
+  if (!loading && !currentUser) {
+    navigateTo('/login')
+  }
+})
 
 type TaskStatus = 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
 
@@ -388,19 +400,6 @@ function sortTasks(column: string) {
     sortDirection.value = 'desc'
   }
 }
-
-// Handle authentication
-onMounted(async () => {
-  try {
-    const response = await $fetch('/api/auth/me')
-    user.value = response
-  } catch (error: any) {
-    if (error.response?.status === 401) {
-      // Only redirect if we're sure the user is not authenticated
-      navigateTo('/login', { replace: true })
-    }
-  }
-})
 
 async function updateTaskStatus(task: typeof tasks.value[0]) {
   if (!user.value) return

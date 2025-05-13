@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AppNavHeader v-if="user" />
+    <AppNavHeader />
     <main class="container mx-auto px-4 py-8">
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Pomodoro</h1>
@@ -110,6 +110,7 @@
 <script setup lang="ts">
 import type { PomodoroTimer } from '#components'
 import type { User, UserSubscription } from '~/server/types'
+import { useAuth } from '~/composables/useAuth'
 
 definePageMeta({
   middleware: ['auth']
@@ -140,7 +141,7 @@ interface PomodoroTemplate {
   updatedAt: Date
 }
 
-const user = useState('user')
+const { user, isLoading } = useAuth()
 const templates = ref<PomodoroTemplate[]>([])
 const selectedTemplateId = ref('')
 const currentTemplate = ref<Partial<PomodoroTemplate>>({
@@ -194,16 +195,10 @@ const defaultTemplates = [
   }
 ]
 
-// Handle authentication
-onMounted(async () => {
-  try {
-    const response = await $fetch('/api/auth/me')
-    user.value = response
-  } catch (error: any) {
-    if (error.response?.status === 401) {
-      // Only redirect if we're sure the user is not authenticated
-      navigateTo('/login', { replace: true })
-    }
+// Redirect to login if not authenticated
+watch([isLoading, user], ([loading, currentUser]) => {
+  if (!loading && !currentUser) {
+    navigateTo('/login')
   }
 })
 

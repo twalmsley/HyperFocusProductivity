@@ -36,5 +36,17 @@
 </template>
 
 <script setup lang="ts">
+import { useAuth } from '~/composables/useAuth'
+
 const route = useRoute()
+const { isLoading } = useAuth()
+
+// Only render when auth state is loaded
+if (process.client) {
+  watch(isLoading, (loading) => {
+    if (!loading) {
+      // Auth state is loaded, we can now render
+    }
+  })
+}
 </script> 
