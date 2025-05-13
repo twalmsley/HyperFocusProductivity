@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
     
     case 'POST':
       const body = await readBody(event)
-      const { userId: newTaskUserId, title, notes, estimatedPomodoros, status = 'BACKLOG' } = body
+      const { userId: newTaskUserId, title, notes, estimatedPomodoros, status = 'BACKLOG', dueDate } = body
 
       if (!newTaskUserId || !title) {
         throw createError({
@@ -54,6 +54,7 @@ export default defineEventHandler(async (event) => {
           notes,
           estimatedPomodoros,
           status,
+          dueDate,
           position: newPosition
         },
         include: {

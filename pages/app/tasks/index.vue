@@ -22,6 +22,7 @@
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pomodoros</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
               <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
@@ -51,6 +52,11 @@
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-500">
                   {{ new Date(task.createdAt).toLocaleDateString() }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500">
+                  {{ task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : '-' }}
                 </div>
               </td>
               <td class="px-6 py-4">
@@ -112,6 +118,7 @@ const tasks = ref<Array<{
   status: TaskStatus;
   createdAt: string;
   completedAt: string | null;
+  dueDate: string | null;
   position: number | null;
   user: {
     id: string;

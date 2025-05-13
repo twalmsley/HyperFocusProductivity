@@ -60,6 +60,16 @@
               </select>
             </div>
 
+            <div>
+              <label for="dueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
+              <input
+                id="dueDate"
+                v-model="task.dueDate"
+                type="date"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+              />
+            </div>
+
             <div class="flex justify-end">
               <button
                 type="submit"
@@ -95,11 +105,20 @@ const user = ref<{
 } | null>(null)
 const router = useRouter()
 
-const task = ref({
+interface NewTask {
+  title: string;
+  notes: string;
+  estimatedPomodoros: number;
+  status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE';
+  dueDate: string;
+}
+
+const task = ref<NewTask>({
   title: '',
   notes: '',
   estimatedPomodoros: 1,
-  status: 'BACKLOG'
+  status: 'BACKLOG',
+  dueDate: ''
 })
 
 // Fetch user data on component mount
@@ -119,11 +138,17 @@ async function createTask() {
   }
 
   try {
+    let dueDate = task.value.dueDate !== '' ? new Date(task.value.dueDate) : null;
+
+    // If dueDate is set, convert to ISO string at midnight UTC
+    const dueDateISO = dueDate ? new Date(Date.UTC(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate())).toISOString() : undefined;
+    console.log(dueDate, task.value.dueDate, dueDateISO);
     await $fetch('/api/tasks', {
       method: 'POST',
       body: {
         userId: user.value.id,
-        ...task.value
+        ...task.value,
+        dueDate: dueDateISO
       }
     })
     

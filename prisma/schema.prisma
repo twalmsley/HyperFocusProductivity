@@ -38,6 +38,7 @@ model Task {
   status              TaskStatus      @default(BACKLOG)
   createdAt           DateTime        @default(now())
   completedAt         DateTime?
+  dueDate             DateTime?
   position            Int?
 
   user     User       @relation("UserTasks", fields: [userId], references: [id], onDelete: Cascade)
