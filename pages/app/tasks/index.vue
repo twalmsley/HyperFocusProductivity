@@ -18,17 +18,52 @@
         <table v-else class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pomodoros</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+              <th 
+                @click="sortTasks('title')" 
+                scope="col" 
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              >
+                Title
+                <SortIndicator :active="sortColumn === 'title'" :direction="sortDirection" />
+              </th>
+              <th 
+                @click="sortTasks('status')" 
+                scope="col" 
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              >
+                Status
+                <SortIndicator :active="sortColumn === 'status'" :direction="sortDirection" />
+              </th>
+              <th 
+                @click="sortTasks('estimatedPomodoros')" 
+                scope="col" 
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              >
+                Pomodoros
+                <SortIndicator :active="sortColumn === 'estimatedPomodoros'" :direction="sortDirection" />
+              </th>
+              <th 
+                @click="sortTasks('createdAt')" 
+                scope="col" 
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              >
+                Created
+                <SortIndicator :active="sortColumn === 'createdAt'" :direction="sortDirection" />
+              </th>
+              <th 
+                @click="sortTasks('dueDate')" 
+                scope="col" 
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              >
+                Due Date
+                <SortIndicator :active="sortColumn === 'dueDate'" :direction="sortDirection" />
+              </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
               <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="task in tasks" :key="task.id" class="hover:bg-gray-50">
+            <tr v-for="task in sortedTasks" :key="task.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm font-medium text-gray-900">{{ task.title }}</div>
               </td>
@@ -111,6 +146,9 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
+import SortIndicator from '~/components/SortIndicator.vue'
+
 definePageMeta({
   middleware: ['auth']
 })
@@ -161,9 +199,73 @@ const tasks = ref<Array<{
   }>;
 }>>([])
 
+// Sorting state
+const sortColumn = ref<string>('createdAt')
+const sortDirection = ref<'asc' | 'desc'>('desc')
+
 // Variables for delete confirmation
 const showDeleteConfirm = ref(false)
 const taskToDelete = ref<typeof tasks.value[0] | null>(null)
+
+// Computed property for sorted tasks
+const sortedTasks = computed(() => {
+  if (!tasks.value.length) return []
+  
+  const sorted = [...tasks.value].sort((a, b) => {
+    let valA, valB
+    
+    // Handle different data types for sorting
+    switch(sortColumn.value) {
+      case 'title':
+        valA = a.title?.toLowerCase() || ''
+        valB = b.title?.toLowerCase() || ''
+        break
+      case 'status':
+        // Custom order for status: BACKLOG, IN_PROGRESS, DONE
+        const statusOrder = { 'BACKLOG': 1, 'IN_PROGRESS': 2, 'DONE': 3 }
+        valA = statusOrder[a.status] || 0
+        valB = statusOrder[b.status] || 0
+        break
+      case 'estimatedPomodoros':
+        valA = a.estimatedPomodoros || 0
+        valB = b.estimatedPomodoros || 0
+        break
+      case 'createdAt':
+        valA = new Date(a.createdAt).getTime()
+        valB = new Date(b.createdAt).getTime()
+        break
+      case 'dueDate':
+        // Handle null due dates (sort them at the end)
+        valA = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER
+        valB = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER
+        break
+      default:
+        valA = a[sortColumn.value as keyof typeof a] || ''
+        valB = b[sortColumn.value as keyof typeof b] || ''
+    }
+    
+    // Compare based on direction
+    if (sortDirection.value === 'asc') {
+      return valA > valB ? 1 : valA < valB ? -1 : 0
+    } else {
+      return valA < valB ? 1 : valA > valB ? -1 : 0
+    }
+  })
+  
+  return sorted
+})
+
+// Sort tasks by column
+function sortTasks(column: string) {
+  // If clicking the same column, toggle direction
+  if (sortColumn.value === column) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    // Otherwise switch to the new column with default desc direction
+    sortColumn.value = column
+    sortDirection.value = 'desc'
+  }
+}
 
 // Fetch user data and tasks on component mount
 onMounted(async () => {
