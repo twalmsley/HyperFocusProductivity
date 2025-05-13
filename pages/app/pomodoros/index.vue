@@ -100,28 +100,6 @@
             @timer-state-change="handleTimerStateChange"
           />
           
-          <!-- Warning Message -->
-          <div
-            v-if="timerIsRunning"
-            class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800"
-          >
-            <div class="flex items-center">
-              <svg
-                class="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-              <span>Your timer state will be saved if you navigate away from the page.</span>
-            </div>
-          </div>
         </div>
         
         <!-- Right column: Stats -->
@@ -134,6 +112,7 @@
 </template>
 
 <script setup lang="ts">
+import type { PomodoroTimer } from '#components'
 import type { User, UserSubscription } from '~/server/types'
 
 definePageMeta({
@@ -174,7 +153,7 @@ const currentTemplate = ref<Partial<PomodoroTemplate>>({
   rounds: 4
 })
 const timerIsRunning = ref(false)
-const timerRef = ref(null)
+const timerRef = ref<typeof PomodoroTimer | null>(null)
 
 // Storage key for template selection
 const TEMPLATE_STORAGE_KEY = 'pomodoro-selected-template'
