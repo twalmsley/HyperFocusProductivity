@@ -290,8 +290,8 @@
     </main>
 
     <!-- Edit Task Modal -->
-    <div v-if="showEditModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div v-if="showEditModal" class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
+      <div class="bg-white/95 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
         <div class="flex justify-between items-start mb-4">
           <h3 class="text-xl font-medium text-gray-900">Edit Task</h3>
           <button 
@@ -387,8 +387,8 @@
     </div>
 
     <!-- View Task Modal -->
-    <div v-if="showViewModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div v-if="showViewModal" class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
+      <div class="bg-white/95 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
         <div class="flex justify-between items-start mb-4">
           <h3 class="text-xl font-medium text-gray-900">{{ selectedTask?.title }}</h3>
           <button 
@@ -468,8 +468,8 @@
     </div>
 
     <!-- Confirmation Dialog -->
-    <div v-if="showDeleteConfirm" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-md w-full">
+    <div v-if="showDeleteConfirm" class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
+      <div class="bg-white/95 rounded-lg p-6 max-w-md w-full shadow-xl">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Task</h3>
         <p class="text-gray-600 mb-6">Are you sure you want to delete the task "{{ taskToDelete?.title }}"?</p>
         <div class="flex justify-end space-x-4">
