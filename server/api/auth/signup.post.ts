@@ -69,7 +69,9 @@ export default defineEventHandler(async (event) => {
     const session = await prisma.session.create({
       data: {
         userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        duration: 7 * 24 * 60, // 10080 minutes
+        type: 'auth'
       }
     })
 
