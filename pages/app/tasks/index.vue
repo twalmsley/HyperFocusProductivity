@@ -117,8 +117,8 @@
                 Due Date
                 <SortIndicator :active="sortColumn === 'dueDate'" :direction="sortDirection" />
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">Notes</th>
+              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[160px]">Actions</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -154,11 +154,11 @@
                 </div>
               </td>
               <td class="px-6 py-4">
-                <div class="text-sm text-gray-500 max-w-xs truncate">
+                <div class="text-sm text-gray-500 max-w-[200px] min-w-0 truncate">
                   {{ task.notes || '-' }}
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium w-[160px]">
                 <div class="flex justify-end space-x-2">
                   <button 
                     @click="viewTask(task)"
