@@ -85,15 +85,15 @@
                   </td>
                   <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex justify-end space-x-2">
-                      <NuxtLink 
-                        :to="`/app/tasks?edit=${task.id}`"
+                      <button 
+                        @click="editTask(task)"
                         class="text-gray-400 hover:text-[var(--primary)]"
                         title="Edit Task"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                         </svg>
-                      </NuxtLink>
+                      </button>
                       <button 
                         @click="markInProgress(task)"
                         v-if="task.status === 'BACKLOG'"
@@ -175,6 +175,97 @@
         </div>
       </div>
     </main>
+    
+    <!-- Edit Task Modal -->
+    <div v-if="showEditModal" class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="bg-white/95 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex justify-between items-start mb-4">
+          <h3 class="text-xl font-medium text-gray-900">Edit Task</h3>
+          <button @click="closeEditModal" class="text-gray-400 hover:text-gray-500">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <!-- Title -->
+          <div>
+            <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <input
+              id="title"
+              v-model="editingTask.title"
+              type="text"
+              required
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            />
+          </div>
+          
+          <!-- Notes -->
+          <div>
+            <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea
+              id="notes"
+              v-model="editingTask.notes"
+              rows="3"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            ></textarea>
+          </div>
+          
+          <!-- Status -->
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              id="status"
+              v-model="editingTask.status"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            >
+              <option value="BACKLOG">Backlog</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="DONE">Done</option>
+            </select>
+          </div>
+          
+          <!-- Due Date -->
+          <div>
+            <label for="dueDate" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+            <input
+              id="dueDate"
+              v-model="editingTask.dueDate"
+              type="date"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            />
+          </div>
+          
+          <!-- Estimated Pomodoros -->
+          <div>
+            <label for="estimatedPomodoros" class="block text-sm font-medium text-gray-700 mb-1">Estimated Pomodoros</label>
+            <input
+              id="estimatedPomodoros"
+              v-model.number="editingTask.estimatedPomodoros"
+              type="number"
+              min="0"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            />
+          </div>
+        </div>
+        
+        <div class="mt-6 flex justify-end space-x-3">
+          <button
+            @click="closeEditModal"
+            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            @click="saveTask"
+            class="px-4 py-2 bg-[var(--primary)] text-white rounded-md shadow-sm text-sm font-medium hover:bg-[var(--button-hover)]"
+          >
+            Save Task
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -423,6 +514,59 @@ async function reopenTask(task: Task) {
     await fetchTasks()
   } catch (error) {
     console.error('Failed to reopen task:', error)
+  }
+}
+
+// Add state for edit modal
+const showEditModal = ref(false)
+const editingTask = ref<Partial<Task>>({})
+
+// Function to open edit modal
+function editTask(task: Task) {
+  // Format the date for the input field (YYYY-MM-DD)
+  const formattedTask = {
+    ...task,
+    dueDate: task.dueDate ? new Date(task.dueDate).toISOString().substring(0, 10) : null
+  }
+  editingTask.value = formattedTask
+  showEditModal.value = true
+}
+
+// Function to close edit modal
+function closeEditModal() {
+  showEditModal.value = false
+  editingTask.value = {}
+}
+
+// Function to save edited task
+async function saveTask() {
+  if (!user.value || !editingTask.value.id) return
+
+  try {
+    // Format the date for the API (ISO string)
+    const taskToUpdate = {
+      ...editingTask.value,
+      dueDate: editingTask.value.dueDate ? new Date(editingTask.value.dueDate + 'T00:00:00').toISOString() : null
+    }
+
+    await $fetch<Task>('/api/tasks', {
+      method: 'PATCH',
+      body: {
+        id: taskToUpdate.id,
+        title: taskToUpdate.title,
+        notes: taskToUpdate.notes,
+        status: taskToUpdate.status,
+        estimatedPomodoros: taskToUpdate.estimatedPomodoros,
+        dueDate: taskToUpdate.dueDate,
+        completedAt: taskToUpdate.status === 'DONE' ? new Date().toISOString() : null
+      }
+    })
+
+    // Refresh tasks and close modal
+    await fetchTasks()
+    closeEditModal()
+  } catch (error) {
+    console.error('Failed to update task:', error)
   }
 }
 </script> 
