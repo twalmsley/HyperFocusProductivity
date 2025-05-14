@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hyper-focus-productivity
+    restart: always
+    ports:
+      - "8888:3000"
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
