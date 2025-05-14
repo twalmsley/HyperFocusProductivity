@@ -103,6 +103,36 @@
           </div>
         </div>
       </div>
+      
+      <!-- Recently Completed Tasks -->
+      <div class="mt-8">
+        <h2 class="text-xl font-semibold mb-4">Recently Completed Tasks</h2>
+        <div v-if="isLoading" class="text-gray-600">Loading tasks...</div>
+        <div v-else-if="completedTasks.length === 0" class="text-gray-600 bg-white p-6 rounded-lg shadow-sm">No recently completed tasks</div>
+        <div v-else class="bg-white p-6 rounded-lg shadow-sm">
+          <ul class="space-y-2">
+            <li v-for="task in completedTasks" :key="task.id" class="p-3 rounded-lg border border-green-200 bg-green-50">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="font-medium">{{ task.title }}</h3>
+                  <p class="text-sm text-gray-500 mt-1">{{ task.notes.length > 50 ? task.notes.substring(0, 50) + '...' : task.notes }}</p>
+                  <div class="flex items-center mt-2 space-x-2">
+                    <span class="bg-green-100 text-green-800 px-2 py-0.5 text-xs rounded-full">
+                      DONE
+                    </span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">
+                      Due: {{ task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date' }}
+                    </span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">
+                      Completed: {{ task.completedAt ? new Date(task.completedAt).toLocaleDateString() : 'Unknown' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
     </main>
   </div>
 </template>
@@ -325,4 +355,20 @@ onMounted(() => {
 function refreshTasks() {
   fetchTasks()
 }
+
+// Add computed property for completed tasks
+const completedTasks = computed(() => {
+  if (!tasks.value || tasks.value.length === 0) return []
+  
+  return tasks.value
+    .filter(task => task.status === 'DONE' && task.completedAt)
+    // Sort by completion date (most recent first)
+    .sort((a, b) => {
+      if (!a.completedAt) return 1
+      if (!b.completedAt) return -1
+      return new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+    })
+    // Limit to 15 most recent
+    .slice(0, 15)
+})
 </script> 
