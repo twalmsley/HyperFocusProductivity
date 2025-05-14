@@ -122,7 +122,14 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="task in paginatedTasks" :key="task.id" class="hover:bg-gray-50">
+            <tr 
+              v-for="task in paginatedTasks" 
+              :key="task.id" 
+              :class="{
+                'hover:bg-gray-50': !isTaskOverdue(task),
+                'bg-orange-50 hover:bg-orange-100': isTaskOverdue(task)
+              }"
+            >
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm font-medium text-gray-900">{{ task.title }}</div>
               </td>
@@ -155,7 +162,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-500">
-                  {{ new Date(task.createdAt).toLocaleDateString() }}
+                  {{ new Date(task.createdAt).toISOString().substring(0, 10) }}
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
@@ -694,6 +701,9 @@ const filteredTasks = computed(() => {
     
     // Filter by due date
     if (filters.value.dueDate) {
+      // Exclude DONE tasks when filtering by due date
+      if (task.status === 'DONE') return false
+      
       var today = new Date()
       today.setHours(0, 0, 0, 0)
       today = new Date(today.getTime() + 1000 * 60 * 60 * 24)
@@ -1066,4 +1076,15 @@ async function updateCompletedPomodoros(value: number) {
 onMounted(() => {
   fetchUserSettings()
 })
+
+// Add isTaskOverdue helper function
+function isTaskOverdue(task: Task): boolean {
+  if (!task.dueDate || task.status === 'DONE') return false
+  
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const dueDate = new Date(task.dueDate)
+  
+  return dueDate < today
+}
 </script> 
