@@ -96,11 +96,14 @@
           <div v-if="isCompleted" class="text-green-600 font-medium mb-2">
             Congratulations! You've completed all planned pomodoros.
           </div>
-          <div class="text-sm text-gray-500">
-            Round {{ currentRound }} of {{ totalRemainingRounds }}
+          <div v-if="!isCompleted" class="text-sm text-gray-500">
+            Round {{ props.completedPomodoros }} of {{ props.totalRounds }}
+          </div>
+          <div v-if="isCompleted" class="text-sm text-gray-500">
+            Round {{ props.completedPomodoros }} of {{ props.totalRounds }}
           </div>
           <div class="text-sm text-gray-500">
-            Completed: {{ completedPomodoros }} pomodoros
+            Completed: {{ props.completedPomodoros }} pomodoros
           </div>
           
           <!-- Warning message when timer is running -->
@@ -143,7 +146,7 @@ const totalRemainingRounds = computed(() => {
 
 // Check if all pomodoros are completed
 const isCompleted = computed(() => {
-  return currentRound.value > totalRemainingRounds.value && currentPhase.value === 'Focus'
+  return props.completedPomodoros >= props.totalRounds && currentPhase.value === 'Focus'
 })
 
 // Watch for completion state
@@ -214,8 +217,8 @@ function handlePhaseComplete() {
     emit('update:completedPomodoros', props.completedPomodoros + 1)
     
     // Check if this was the last round
-    if (currentRound.value >= totalRemainingRounds.value) {
-      currentRound.value++
+    if (props.completedPomodoros >= props.totalRounds) {
+      currentRound.value = props.totalRounds
       currentPhase.value = 'Focus'
       timeRemaining.value = 0
       return // Done with all rounds
