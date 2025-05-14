@@ -3,12 +3,23 @@
     <AppNavHeader />
     <main class="container mx-auto px-4 py-8">
       <h1 class="text-3xl font-bold mb-6">Welcome to HyperFocusProductivity</h1>
+      
+      <!-- Debug Information -->
+      <div class="bg-gray-100 p-4 mb-6 rounded-lg">
+        <h2 class="text-lg font-semibold mb-2">Debug Information</h2>
+        <div>Total tasks loaded: {{ tasks.length }}</div>
+        <div>Tasks due today or earlier: {{ dueTasks.length }}</div>
+        <button @click="refreshTasks" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+          Refresh Tasks
+        </button>
+      </div>
+      
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Today's Tasks -->
         <div class="bg-white p-6 rounded-lg shadow-sm lg:col-span-2">
-          <h2 class="text-xl font-semibold mb-4">Tasks Due Today or Overdue</h2>
+          <h2 class="text-xl font-semibold mb-4">Tasks Due Today or Earlier</h2>
           <div v-if="isLoading" class="text-gray-600">Loading tasks...</div>
-          <div v-else-if="dueTasks.length === 0" class="text-gray-600">No tasks due today or overdue</div>
+          <div v-else-if="dueTasks.length === 0" class="text-gray-600">No tasks due today or earlier</div>
           <ul v-else class="space-y-2">
             <li v-for="task in dueTasks" :key="task.id" 
               class="p-3 rounded-lg border" 
@@ -132,21 +143,29 @@ const tasks = ref<Task[]>([])
 const dueTasks = computed(() => {
   if (!tasks.value || tasks.value.length === 0) return []
   
-  var today = new Date()
-  today.setHours(0, 0, 0, 0)
-  today = new Date(today.getTime() + 1000 * 60 * 60 * 24)
+  // Get current date
+  const now = new Date()
   
-  return tasks.value
+  // Create end of today timestamp for comparison
+  const endOfToday = new Date(now)
+  endOfToday.setHours(23, 59, 59, 999)
+  
+  const filteredTasks = tasks.value
     .filter(task => {
       // Filter for incomplete tasks (BACKLOG or IN_PROGRESS)
-      if (task.status === 'DONE') return false
+      if (task.status === 'DONE') {
+        return false
+      }
       
-      // Filter for tasks with due date on or before today
-      if (!task.dueDate) return false
+      // Filter for tasks with due date on or before end of today
+      if (!task.dueDate) {
+        return false
+      }
+      
       const dueDate = new Date(task.dueDate)
-      dueDate.setHours(0, 0, 0, 0)
-
-      return dueDate.getTime() <= today.getTime()
+      const isDueToday = dueDate <= endOfToday
+      
+      return isDueToday
     })
     // Sort by due date (ascending)
     .sort((a, b) => {
@@ -154,6 +173,9 @@ const dueTasks = computed(() => {
       if (!b.dueDate) return -1
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
     })
+    
+  
+  return filteredTasks
 })
 
 // Format due date with relative terms
@@ -189,9 +211,8 @@ function formatDueDate(dateString: string | null): string {
 function isOverdue(task: Task): boolean {
   if (!task.dueDate) return false
   const dueDate = new Date(task.dueDate)
-  dueDate.setHours(0, 0, 0, 0)
   const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  today.setHours(0, 0, 0, 0) // Start of today
   return dueDate < today
 }
 
@@ -199,10 +220,18 @@ function isOverdue(task: Task): boolean {
 function isDueToday(task: Task): boolean {
   if (!task.dueDate) return false
   const dueDate = new Date(task.dueDate)
-  dueDate.setHours(0, 0, 0, 0)
   const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return dueDate.getTime() === today.getTime()
+  
+  // Set today to start of day
+  const startOfDay = new Date(today)
+  startOfDay.setHours(0, 0, 0, 0)
+  
+  // Set today to end of day
+  const endOfDay = new Date(today)
+  endOfDay.setHours(23, 59, 59, 999)
+  
+  // Check if dueDate is between start and end of today
+  return dueDate >= startOfDay && dueDate <= endOfDay
 }
 
 // Mark task as in progress
@@ -250,10 +279,37 @@ async function markDone(task: Task) {
 
 // Fetch tasks on component mount
 async function fetchTasks() {
-  if (!user.value) return
+  if (!user.value) {
+    console.error('No user available for fetching tasks')
+    return
+  }
   
   try {
-    tasks.value = await $fetch<Task[]>(`/api/tasks?userId=${user.value.id}`)
+    const response = await $fetch<Task[]>(`/api/tasks?userId=${user.value.id}`)
+    
+    // Sanitize and validate tasks
+    const sanitizedTasks = response.map(task => {
+      // Ensure task has all required properties
+      if (!task.id || !task.title) {
+        console.error('Task missing required properties:', task)
+      }
+      
+      // Ensure status is valid
+      if (!['BACKLOG', 'IN_PROGRESS', 'DONE'].includes(task.status)) {
+        console.error(`Task ${task.id} has invalid status: ${task.status}`)
+        // Default to BACKLOG if invalid
+        task.status = 'BACKLOG'
+      }
+      
+      // Make sure notes exists
+      if (!task.notes) {
+        task.notes = ''
+      }
+      
+      return task
+    })
+    
+    tasks.value = sanitizedTasks
   } catch (error) {
     console.error('Failed to fetch tasks:', error)
   }
@@ -274,4 +330,9 @@ onMounted(() => {
     fetchTasks()
   }
 })
+
+// Refresh tasks
+function refreshTasks() {
+  fetchTasks()
+}
 </script> 
