@@ -4,16 +4,6 @@
     <main class="container mx-auto px-4 py-8">
       <h1 class="text-3xl font-bold mb-6">Welcome to HyperFocusProductivity</h1>
       
-      <!-- Debug Information -->
-      <div class="bg-gray-100 p-4 mb-6 rounded-lg">
-        <h2 class="text-lg font-semibold mb-2">Debug Information</h2>
-        <div>Total tasks loaded: {{ tasks.length }}</div>
-        <div>Tasks due today or earlier: {{ dueTasks.length }}</div>
-        <button @click="refreshTasks" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-          Refresh Tasks
-        </button>
-      </div>
-      
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Today's Tasks -->
         <div class="bg-white p-6 rounded-lg shadow-sm lg:col-span-2">
