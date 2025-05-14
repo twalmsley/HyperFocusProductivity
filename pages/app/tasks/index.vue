@@ -454,11 +454,11 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <h4 class="text-sm font-medium text-gray-500">Created</h4>
-              <p class="mt-1 text-gray-900">{{ selectedTask?.createdAt ? new Date(selectedTask.createdAt).toLocaleDateString() : '-' }}</p>
+              <p class="mt-1 text-gray-900">{{ selectedTask?.createdAt ? new Date(selectedTask.createdAt).toISOString().substring(0, 10) : '-' }}</p>
             </div>
             <div>
               <h4 class="text-sm font-medium text-gray-500">Due Date</h4>
-              <p class="mt-1 text-gray-900">{{ selectedTask?.dueDate ? new Date(selectedTask.dueDate).toLocaleDateString() : 'No due date' }}</p>
+              <p class="mt-1 text-gray-900">{{ selectedTask?.dueDate ? new Date(selectedTask.dueDate).toISOString().substring(0, 10) : 'No due date' }}</p>
             </div>
             <div>
               <h4 class="text-sm font-medium text-gray-500">Estimated Pomodoros</h4>
@@ -967,7 +967,7 @@ function editTask(task: Task) {
   // Format the date for the input field (YYYY-MM-DD)
   const formattedTask = {
     ...task,
-    dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : null
+    dueDate: task.dueDate ? new Date(task.dueDate).toISOString().substring(0, 10) : null
   }
   editingTask.value = formattedTask
   showEditModal.value = true

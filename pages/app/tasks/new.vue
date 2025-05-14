@@ -70,6 +70,8 @@
                 v-model="task.dueDate"
                 type="date"
                 required
+                pattern="\d{4}-\d{2}-\d{2}"
+                placeholder="YYYY-MM-DD"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
               />
             </div>
@@ -122,7 +124,7 @@ const task = ref<NewTask>({
   notes: '',
   estimatedPomodoros: 1,
   status: 'BACKLOG',
-  dueDate: ''
+  dueDate: new Date().toISOString().substring(0, 10)
 })
 
 // Fetch user data on component mount
@@ -148,17 +150,15 @@ async function createTask() {
   }
 
   try {
-    let dueDate = task.value.dueDate !== '' ? new Date(task.value.dueDate) : null;
-
-    // If dueDate is set, convert to ISO string at midnight UTC
-    const dueDateISO = dueDate ? new Date(Date.UTC(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate())).toISOString() : undefined;
-    console.log(dueDate, task.value.dueDate, dueDateISO);
+    // Ensure date is in ISO format
+    const dueDate = task.value.dueDate ? new Date(task.value.dueDate).toISOString() : null;
+    
     await $fetch('/api/tasks', {
       method: 'POST',
       body: {
         userId: user.value.id,
         ...task.value,
-        dueDate: dueDateISO
+        dueDate: dueDate
       }
     })
     
