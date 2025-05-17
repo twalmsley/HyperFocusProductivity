@@ -15,16 +15,23 @@
             HyperFocus helps you stay productive with smart time management and distraction blocking.
           </p>
           <div class="flex justify-center gap-4">
-            <button class="w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-4 rounded-lg transition-colors">
-              Start Free Trial
-            </button>
+            <NuxtLink to="/signup" class="inline-block">
+              <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-8 rounded-lg transition-colors">
+                Start Free Trial
+              </button>
+            </NuxtLink>
           </div>
         </div>
       </div>
       <!-- Hero Illustration Placeholder -->
-      <div class="max-w-4xl mx-auto px-4">
-        <div class="bg-bg-dark rounded-xl p-8 aspect-video flex items-center justify-center">
-          <span class="text-muted">Hero Illustration Placeholder</span>
+      <div class="max-w-6xl mx-auto px-4 mb-12 py-8 bg-gray-100 dark:bg-gray-800 rounded-xl">
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="flex-1 bg-bg-dark rounded-xl p-6 flex items-center justify-center">
+            <img src="/tasks.png" alt="Task Management" class="w-full h-auto object-contain">
+          </div>
+          <div class="md:w-2/5 bg-bg-dark rounded-xl p-6 flex items-center justify-center">
+            <img src="/pomodoro.png" alt="Pomodoro Timer" class="w-4/5 mx-auto h-auto object-contain">
+          </div>
         </div>
       </div>
     </section>
