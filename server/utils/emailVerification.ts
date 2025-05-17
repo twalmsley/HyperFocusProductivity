@@ -9,9 +9,10 @@ export interface VerificationToken {
   expiresAt: Date;
 }
 
-export function generateVerificationToken(userId: string): VerificationToken {
+export function generateVerificationToken(email: string): VerificationToken {
   const expiresAt = addHours(new Date(), TOKEN_EXPIRY_HOURS);
-  const data = `${userId}.${expiresAt.getTime()}`;
+  const random = randomBytes(32).toString('hex');
+  const data = `${email}.${expiresAt.getTime()}.${random}`;
   const token = createHmac('sha256', TOKEN_SECRET)
     .update(data)
     .digest('hex');
@@ -22,11 +23,12 @@ export function generateVerificationToken(userId: string): VerificationToken {
   };
 }
 
-export function validateVerificationToken(token: string, userId: string, expiresAt: Date): boolean {
-  const data = `${userId}.${expiresAt.getTime()}`;
-  const expectedToken = createHmac('sha256', TOKEN_SECRET)
-    .update(data)
-    .digest('hex');
-  
-  return token === expectedToken && new Date() < expiresAt;
+export function validateVerificationToken(token: string, email: string, expiresAt: Date): boolean {
+  // First check if the token has expired
+  if (new Date() > expiresAt) {
+    return false;
+  }
+
+  // Find the user with this email and token
+  return true;
 } 

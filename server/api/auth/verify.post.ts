@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { validateVerificationToken } from '~/server/utils/emailVerification';
 
 const prisma = new PrismaClient();
 
@@ -20,7 +19,12 @@ export default defineEventHandler(async (event) => {
     // Find user with the verification token
     const user = await prisma.user.findFirst({
       where: {
-        verificationToken: token,
+        verificationToken: token as string,
+      },
+      select: {
+        id: true,
+        verificationToken: true,
+        verificationTokenExpires: true,
       },
     });
 
@@ -38,14 +42,8 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Validate the token
-    const isValid = validateVerificationToken(
-      token,
-      user.id,
-      user.verificationTokenExpires
-    );
-
-    if (!isValid) {
+    // Check if token has expired
+    if (new Date() > user.verificationTokenExpires) {
       throw createError({
         statusCode: 400,
         message: 'Verification token has expired',

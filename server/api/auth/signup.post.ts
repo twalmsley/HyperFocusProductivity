@@ -38,6 +38,9 @@ export default defineEventHandler(async (event) => {
     // Hash password
     const hashedPassword = await hash(password, 10)
 
+    // Generate verification token
+    const { token, expiresAt } = generateVerificationToken(email)
+
     // Calculate free trial expiry date (14 days from now)
     const freeTrialExpiresAt = new Date()
     freeTrialExpiresAt.setDate(freeTrialExpiresAt.getDate() + 14)
@@ -48,6 +51,8 @@ export default defineEventHandler(async (event) => {
       email,
       password: hashedPassword,
       emailVerified: false,
+      verificationToken: token,
+      verificationTokenExpires: expiresAt,
       settings: {
         create: {
           focusDuration: 25,
@@ -66,18 +71,6 @@ export default defineEventHandler(async (event) => {
 
     const user = await prisma.user.create({
       data: userData
-    })
-
-    // Generate verification token after user creation
-    const { token, expiresAt } = generateVerificationToken(user.id)
-
-    // Update user with verification token
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        verificationToken: token,
-        verificationTokenExpires: expiresAt
-      }
     })
 
     // Send verification email
