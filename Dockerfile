@@ -9,6 +9,7 @@ RUN apk add --no-cache git libc6-compat wget
 # Copy files
 COPY package.json yarn.lock ./
 COPY . .
+COPY .env.docker.dev .env
 
 # Install dependencies
 RUN yarn install
