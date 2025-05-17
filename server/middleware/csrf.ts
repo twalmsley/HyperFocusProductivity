@@ -5,7 +5,12 @@ const CSRF_COOKIE_NAME = 'csrf-token'
 const CSRF_HEADER_NAME = 'X-CSRF-Token'
 
 // Public routes that don't need CSRF protection
-const PUBLIC_ROUTES = ['/api/auth/login', '/api/auth/signup', '/api/auth/verify']
+const PUBLIC_ROUTES = [
+  '/api/auth/login',
+  '/api/auth/signup',
+  '/api/auth/verify',
+  '/api/contact'  // Add contact API endpoint
+]
 
 export default defineEventHandler(async (event) => {
   // Skip CSRF check for public routes

@@ -1,4 +1,5 @@
 import { prisma } from '../utils/db'
+import { checkRateLimit } from '../utils/rateLimiter'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -11,6 +12,15 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Get client IP for rate limiting
+  const ip = getRequestIP(event, { xForwardedFor: true })
+  if (!ip) {
+    throw createError({
+      statusCode: 400,
+      message: 'Could not determine client IP'
+    })
+  }
+
   switch (method) {
     case 'GET':
       // Get user settings or create default settings if they don't exist
@@ -19,6 +29,9 @@ export default defineEventHandler(async (event) => {
       })
 
       if (!settings) {
+        // Check rate limit for database operations
+        await checkRateLimit(ip, 'dbUpdate')
+        
         settings = await prisma.userSettings.create({
           data: {
             userId: user.id,
@@ -33,6 +46,9 @@ export default defineEventHandler(async (event) => {
       return settings
 
     case 'PATCH':
+      // Check rate limit for database operations
+      await checkRateLimit(ip, 'dbUpdate')
+
       const updateData = await readBody(event)
       
       return await prisma.userSettings.update({

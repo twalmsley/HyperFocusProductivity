@@ -20,7 +20,8 @@ const PUBLIC_ROUTES = [
   '/cookies',
   '/api/auth/login',
   '/api/auth/signup',
-  '/api/auth/verify'
+  '/api/auth/verify',
+  '/api/contact'
 ]
 
 export default defineEventHandler(async (event) => {

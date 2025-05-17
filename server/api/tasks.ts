@@ -1,4 +1,5 @@
 import { prisma } from '../utils/db'
+import { checkRateLimit } from '../utils/rateLimiter'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
@@ -8,6 +9,15 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 401,
       message: 'Not authenticated'
+    })
+  }
+
+  // Get client IP for rate limiting
+  const ip = getRequestIP(event, { xForwardedFor: true })
+  if (!ip) {
+    throw createError({
+      statusCode: 400,
+      message: 'Could not determine client IP'
     })
   }
 
@@ -26,6 +36,9 @@ export default defineEventHandler(async (event) => {
       })
     
     case 'POST':
+      // Check rate limit for database operations
+      await checkRateLimit(ip, 'dbUpdate')
+
       const body = await readBody(event)
       const { title, notes, estimatedPomodoros, status = 'BACKLOG', dueDate } = body
 
@@ -60,6 +73,9 @@ export default defineEventHandler(async (event) => {
       })
     
     case 'PATCH':
+      // Check rate limit for database operations
+      await checkRateLimit(ip, 'dbUpdate')
+
       const { id, ...updateData } = await readBody(event)
       
       if (!id) {
@@ -90,6 +106,9 @@ export default defineEventHandler(async (event) => {
       })
 
     case 'DELETE':
+      // Check rate limit for database operations
+      await checkRateLimit(ip, 'dbUpdate')
+
       const taskId = getQuery(event).id as string
       
       if (!taskId) {

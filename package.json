@@ -34,6 +34,7 @@
     "nodemailer": "^7.0.3",
     "nuxt": "^3.17.2",
     "pinia": "^3.0.2",
+    "rate-limiter-flexible": "^7.1.0",
     "typescript": "^5.6.3",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1"

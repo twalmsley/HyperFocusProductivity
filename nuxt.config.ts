@@ -44,9 +44,7 @@ export default defineNuxtConfig({
         cors: true,
         headers: {
           'Access-Control-Allow-Credentials': 'true',
-          'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
-            ? 'https://hyperfocus.aosd.co.uk'
-            : 'http://localhost:3000',
+          'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
           'Access-Control-Max-Age': '3600'
         }

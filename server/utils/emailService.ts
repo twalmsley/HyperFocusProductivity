@@ -1,5 +1,14 @@
 import nodemailer from 'nodemailer';
 
+// Validate required environment variables
+const requiredEnvVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD']
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName])
+
+if (missingEnvVars.length > 0) {
+  console.error('Missing required environment variables:', missingEnvVars.join(', '))
+  throw new Error('Missing required SMTP configuration')
+}
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT),
@@ -10,11 +19,20 @@ const transporter = nodemailer.createTransport({
   }
 })
 
+// Verify SMTP connection on startup
+transporter.verify(function(error, success) {
+  if (error) {
+    console.error('SMTP connection error:', error)
+  } else {
+    console.log('SMTP server is ready to take our messages')
+  }
+})
+
 export async function sendVerificationEmail(email: string, token: string) {
   const verificationUrl = `${process.env.APP_URL}/verify?token=${token}`;
   
   const mailOptions = {
-    from: 'noreply@aosd.co.uk',
+    from: process.env.SMTP_USER,
     to: email,
     subject: 'Verify your email address',
     html: `
@@ -28,9 +46,9 @@ export async function sendVerificationEmail(email: string, token: string) {
 
   try {
     await transporter.sendMail(mailOptions);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending verification email:', error);
-    throw new Error('Failed to send verification email');
+    throw new Error(`Failed to send verification email: ${error.message || 'Unknown error'}`);
   }
 }
 
@@ -58,8 +76,8 @@ export async function sendContactEmail(data: ContactFormData) {
 
   try {
     await transporter.sendMail(mailOptions);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending contact email:', error);
-    throw new Error('Failed to send contact email');
+    throw new Error(`Failed to send contact email: ${error.message || 'Unknown error'}`);
   }
 } 
