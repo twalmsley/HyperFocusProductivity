@@ -96,6 +96,24 @@
         </form>
       </div>
     </div>
+
+    <!-- Verification Message Modal -->
+    <div v-if="showVerificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-8 rounded-lg max-w-md w-full mx-4">
+        <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-4">Verify Your Email</h2>
+        <p class="text-[var(--text-secondary)] mb-6">
+          We've sent a verification link to your email address. Please check your inbox and click the link to verify your account.
+        </p>
+        <div class="flex justify-end">
+          <button
+            @click="showVerificationModal = false"
+            class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-2 px-4 rounded-lg transition-colors"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -109,6 +127,7 @@ const form = ref({
 
 const error = ref('')
 const loading = ref(false)
+const showVerificationModal = ref(false)
 
 // Add user state
 const user = useState('user')
@@ -165,8 +184,13 @@ async function handleSubmit() {
     // Wait a moment for the cookie to be set
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    // Navigate to the app page
-    await navigateTo('/app', { replace: true })
+    // Show verification message
+    showVerificationModal.value = true
+
+    // Navigate to the app page after a delay
+    setTimeout(() => {
+      navigateTo('/app', { replace: true })
+    }, 3000)
   } catch (e: any) {
     // Handle errors gracefully
     if (e.response) {

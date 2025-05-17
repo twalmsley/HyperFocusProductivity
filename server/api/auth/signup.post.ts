@@ -2,6 +2,8 @@ import { Prisma } from '@prisma/client'
 import { hash } from 'bcrypt'
 import type { SubscriptionStatus } from '~/server/types'
 import { prisma } from '~/server/utils/db'
+import { generateVerificationToken } from '~/server/utils/emailVerification'
+import { sendVerificationEmail } from '~/server/utils/emailService'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -45,6 +47,7 @@ export default defineEventHandler(async (event) => {
       name: username,
       email,
       password: hashedPassword,
+      emailVerified: false,
       settings: {
         create: {
           focusDuration: 25,
@@ -64,6 +67,26 @@ export default defineEventHandler(async (event) => {
     const user = await prisma.user.create({
       data: userData
     })
+
+    // Generate verification token after user creation
+    const { token, expiresAt } = generateVerificationToken(user.id)
+
+    // Update user with verification token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        verificationToken: token,
+        verificationTokenExpires: expiresAt
+      }
+    })
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, token)
+    } catch (error) {
+      console.error('Failed to send verification email:', error)
+      // Don't throw error here, as the user is already created
+    }
 
     // Create session
     const session = await prisma.session.create({
@@ -87,7 +110,8 @@ export default defineEventHandler(async (event) => {
       user: {
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        emailVerified: user.emailVerified
       }
     }
   } catch (error: any) {

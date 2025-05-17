@@ -41,6 +41,28 @@ export default defineEventHandler(async (event: H3Event) => {
       })
     }
 
+    // Check if email is verified
+    if (!user.emailVerified) {
+      // Generate new verification token if the old one has expired
+      if (!user.verificationTokenExpires || user.verificationTokenExpires < new Date()) {
+        const { token, expiresAt } = generateVerificationToken(user.email)
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            verificationToken: token,
+            verificationTokenExpires: expiresAt
+          }
+        })
+        // Send new verification email
+        await sendVerificationEmail(user.email, token)
+      }
+      
+      throw createError({
+        statusCode: 403,
+        message: 'Please verify your email address before logging in'
+      })
+    }
+
     // Check subscription status
     let subscriptionStatus = user.subscription?.status || 'FREE_TRIAL'
     const now = new Date()
@@ -102,6 +124,7 @@ export default defineEventHandler(async (event: H3Event) => {
         id: user.id,
         email: user.email,
         name: user.name,
+        emailVerified: user.emailVerified,
         subscription: {
           status: subscriptionStatus,
           freeTrialExpiresAt: user.subscription?.freeTrialExpiresAt,

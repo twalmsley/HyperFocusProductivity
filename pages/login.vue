@@ -116,8 +116,14 @@ async function handleSubmit() {
     await navigateTo(redirectPath, { replace: true })
   } catch (e: any) {
     // Handle authentication errors more gracefully
-    if (e.response && e.response.status === 401) {
-      error.value = 'Invalid email or password'
+    if (e.response) {
+      if (e.response.status === 401) {
+        error.value = 'Invalid email or password'
+      } else if (e.response.status === 403 && e.response._data.message === 'Please verify your email address before logging in') {
+        error.value = 'Please check your email for a verification link. A new verification email has been sent.'
+      } else {
+        error.value = e.response._data.message || 'An error occurred while logging in. Please try again.'
+      }
     } else {
       error.value = 'An error occurred while logging in. Please try again.'
     }
