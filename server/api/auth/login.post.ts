@@ -2,6 +2,7 @@ import { H3Event } from 'h3'
 import { prisma } from '~/server/utils/db'
 import bcrypt from 'bcryptjs'
 import { Prisma } from '@prisma/client'
+import { compare } from 'bcrypt'
 
 type UserWithSubscription = Prisma.UserGetPayload<{
   include: { subscription: true }
@@ -14,13 +15,25 @@ export default defineEventHandler(async (event: H3Event) => {
     
     console.log('Login attempt received:', { email })
 
-    // Find user by email
+    // Validate input
+    if (!email || !password) {
+      throw createError({
+        statusCode: 400,
+        message: 'Email and password are required'
+      })
+    }
+
+    // Find user
     const user = await prisma.user.findUnique({
       where: { email },
-      include: {
-        subscription: true
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        emailVerified: true
       }
-    }) as UserWithSubscription | null
+    })
 
     if (!user) {
       console.log('Login failed: User not found')
@@ -30,36 +43,21 @@ export default defineEventHandler(async (event: H3Event) => {
       })
     }
 
+    // Check if email is verified
+    if (!user.emailVerified) {
+      throw createError({
+        statusCode: 403,
+        message: 'Please verify your email before logging in'
+      })
+    }
+
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password)
-    
+    const isValidPassword = await compare(password, user.password)
     if (!isValidPassword) {
       console.log('Login failed: Invalid password')
       throw createError({
         statusCode: 401,
         message: 'Invalid email or password'
-      })
-    }
-
-    // Check if email is verified
-    if (!user.emailVerified) {
-      // Generate new verification token if the old one has expired
-      if (!user.verificationTokenExpires || user.verificationTokenExpires < new Date()) {
-        const { token, expiresAt } = generateVerificationToken(user.email)
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            verificationToken: token,
-            verificationTokenExpires: expiresAt
-          }
-        })
-        // Send new verification email
-        await sendVerificationEmail(user.email, token)
-      }
-      
-      throw createError({
-        statusCode: 403,
-        message: 'Please verify your email address before logging in'
       })
     }
 

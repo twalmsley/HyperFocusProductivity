@@ -80,17 +80,6 @@ onMounted(async () => {
 
 async function handleSubmit() {
   error.value = ''
-  
-  // Validate all fields are filled
-  if (!form.value.email.trim()) {
-    error.value = 'Email is required'
-    return
-  }
-  if (!form.value.password) {
-    error.value = 'Password is required'
-    return
-  }
-
   loading.value = true
 
   try {
@@ -105,29 +94,20 @@ async function handleSubmit() {
     // Update user state
     user.value = response.user
 
-    // Wait a moment for the cookie to be set
-    await new Promise(resolve => setTimeout(resolve, 100))
-
-    // Get the redirect URL from the query parameters, default to /app
-    const route = useRoute()
-    const redirectPath = route.query.redirect as string || '/app'
-
-    // Navigate to the redirect path or default to app page
-    await navigateTo(redirectPath, { replace: true })
+    // Navigate to the app page
+    navigateTo('/app', { replace: true })
   } catch (e: any) {
-    // Handle authentication errors more gracefully
     if (e.response) {
-      if (e.response.status === 401) {
+      if (e.response.status === 403 && e.response._data.message === 'Please verify your email before logging in') {
+        error.value = 'Please verify your email before logging in. Check your inbox for the verification link.'
+      } else if (e.response.status === 401) {
         error.value = 'Invalid email or password'
-      } else if (e.response.status === 403 && e.response._data.message === 'Please verify your email address before logging in') {
-        error.value = 'Please check your email for a verification link. A new verification email has been sent.'
       } else {
-        error.value = e.response._data.message || 'An error occurred while logging in. Please try again.'
+        error.value = e.response._data.message || 'An error occurred during login'
       }
     } else {
-      error.value = 'An error occurred while logging in. Please try again.'
+      error.value = 'An error occurred during login'
     }
-    console.error('Login error:', e)
   } finally {
     loading.value = false
   }

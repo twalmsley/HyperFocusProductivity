@@ -178,18 +178,12 @@ async function handleSubmit() {
       }
     })
 
-    // Update user state
-    user.value = response.user
-
-    // Wait a moment for the cookie to be set
-    await new Promise(resolve => setTimeout(resolve, 100))
-
     // Show verification message
     showVerificationModal.value = true
 
-    // Navigate to the app page after a delay
+    // Redirect to login page after a delay
     setTimeout(() => {
-      navigateTo('/app', { replace: true })
+      navigateTo('/login', { replace: true })
     }, 3000)
   } catch (e: any) {
     // Handle errors gracefully
@@ -200,9 +194,8 @@ async function handleSubmit() {
         error.value = e.response._data.message || 'An error occurred during signup'
       }
     } else {
-      error.value = 'An error occurred during signup. Please try again.'
+      error.value = 'An error occurred during signup'
     }
-    console.error('Signup error:', e)
   } finally {
     loading.value = false
   }

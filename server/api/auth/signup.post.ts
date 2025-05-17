@@ -81,25 +81,9 @@ export default defineEventHandler(async (event) => {
       // Don't throw error here, as the user is already created
     }
 
-    // Create session
-    const session = await prisma.session.create({
-      data: {
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-        duration: 7 * 24 * 60, // 10080 minutes
-        type: 'auth'
-      }
-    })
-
-    // Set session cookie
-    setCookie(event, 'session', session.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV !== 'development',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 // 7 days
-    })
-
     return {
+      success: true,
+      message: 'Account created successfully. Please check your email to verify your account.',
       user: {
         id: user.id,
         name: user.name,
