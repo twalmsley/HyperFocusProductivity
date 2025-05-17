@@ -23,7 +23,7 @@
             <div class="bg-white p-8 rounded-lg shadow-md">
               <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-6">Send us a message</h2>
               
-              <form class="space-y-6">
+              <form class="space-y-6" @submit.prevent="submitContactForm">
                 <div>
                   <label for="name" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Name</label>
                   <input type="text" id="name" name="name" v-model="contactForm.name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required />
@@ -52,8 +52,13 @@
                 </div>
                 
                 <div>
-                  <button type="submit" @click.prevent="submitContactForm" class="w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-4 rounded-lg transition-colors">
-                    Send Message
+                  <button 
+                    type="submit" 
+                    :disabled="isSubmitting"
+                    class="w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span v-if="isSubmitting">Sending...</span>
+                    <span v-else>Send Message</span>
                   </button>
                 </div>
               </form>
@@ -61,6 +66,11 @@
               <!-- Success message -->
               <div v-if="formSubmitted" class="mt-6 p-4 bg-green-100 text-green-700 rounded-md">
                 Thank you for your message! We'll get back to you as soon as possible.
+              </div>
+
+              <!-- Error message -->
+              <div v-if="errorMessage" class="mt-6 p-4 bg-red-100 text-red-700 rounded-md">
+                {{ errorMessage }}
               </div>
             </div>
             
@@ -160,26 +170,37 @@ const contactForm = reactive({
 
 // Form submission state
 const formSubmitted = ref(false)
+const isSubmitting = ref(false)
+const errorMessage = ref('')
 
 // Form submission handler
-function submitContactForm() {
-  // Here you would typically send the form data to your backend
-  // For now, we'll just simulate a successful submission
-  
-  // Reset form after "submission"
-  setTimeout(() => {
-    formSubmitted.value = true
+async function submitContactForm() {
+  try {
+    isSubmitting.value = true
+    errorMessage.value = ''
     
-    // Reset form
+    // Send form data to API
+    await $fetch('/api/contact', {
+      method: 'POST',
+      body: contactForm
+    })
+    
+    // Reset form after successful submission
     contactForm.name = ''
     contactForm.email = ''
     contactForm.subject = ''
     contactForm.message = ''
     
+    formSubmitted.value = true
+    
     // Hide success message after 5 seconds
     setTimeout(() => {
       formSubmitted.value = false
     }, 5000)
-  }, 500)
+  } catch (error: any) {
+    errorMessage.value = error.message || 'Failed to send message. Please try again.'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script> 

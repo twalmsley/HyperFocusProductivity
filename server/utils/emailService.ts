@@ -32,4 +32,34 @@ export async function sendVerificationEmail(email: string, token: string) {
     console.error('Error sending verification email:', error);
     throw new Error('Failed to send verification email');
   }
+}
+
+interface ContactFormData {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+export async function sendContactEmail(data: ContactFormData) {
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to: process.env.CONTACT_EMAIL || 'support@hyperfocusproductivity.com',
+    subject: `Contact Form: ${data.subject}`,
+    html: `
+      <h2>New Contact Form Submission</h2>
+      <p><strong>Name:</strong> ${data.name}</p>
+      <p><strong>Email:</strong> ${data.email}</p>
+      <p><strong>Subject:</strong> ${data.subject}</p>
+      <p><strong>Message:</strong></p>
+      <p>${data.message.replace(/\n/g, '<br>')}</p>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Error sending contact email:', error);
+    throw new Error('Failed to send contact email');
+  }
 } 
