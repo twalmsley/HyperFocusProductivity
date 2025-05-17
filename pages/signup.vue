@@ -44,6 +44,7 @@
                 placeholder="Enter your full name"
                 required
               />
+              <p class="text-xs text-[var(--text-secondary)] mt-1">Username must be between 4 and 50 characters</p>
             </div>
             <div>
               <label for="email" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Email Address</label>
@@ -66,6 +67,9 @@
                 placeholder="Create a password"
                 required
               />
+              <p class="text-xs text-[var(--text-secondary)] mt-1">
+                Password must be 8-50 characters and include uppercase, lowercase, number, and special character
+              </p>
             </div>
             <div>
               <label for="confirmPassword" class="block text-sm font-medium text-[var(--text-primary)] mb-2">Confirm Password</label>
@@ -160,14 +164,40 @@ async function handleSubmit() {
     error.value = 'Name is required'
     return
   }
+  
+  // Validate username length (4-50 characters)
+  if (form.value.username.trim().length < 4 || form.value.username.trim().length > 50) {
+    error.value = 'Username must be between 4 and 50 characters'
+    return
+  }
+  
   if (!form.value.email.trim()) {
     error.value = 'Email is required'
     return
   }
+  
   if (!form.value.password) {
     error.value = 'Password is required'
     return
   }
+  
+  // Validate password length and security
+  if (form.value.password.length < 8 || form.value.password.length > 50) {
+    error.value = 'Password must be between 8 and 50 characters'
+    return
+  }
+  
+  // Password security validation
+  const hasUpperCase = /[A-Z]/.test(form.value.password)
+  const hasLowerCase = /[a-z]/.test(form.value.password)
+  const hasNumbers = /\d/.test(form.value.password)
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(form.value.password)
+  
+  if (!(hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar)) {
+    error.value = 'Password must include at least one uppercase letter, one lowercase letter, one number, and one special character'
+    return
+  }
+  
   if (form.value.password !== form.value.confirmPassword) {
     error.value = 'Passwords do not match'
     return

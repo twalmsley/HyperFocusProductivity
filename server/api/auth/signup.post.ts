@@ -18,6 +18,35 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Validate username length (4-50 characters)
+    if (username.trim().length < 4 || username.trim().length > 50) {
+      throw createError({
+        statusCode: 400,
+        message: 'Username must be between 4 and 50 characters'
+      })
+    }
+
+    // Validate password length and security
+    if (password.length < 8 || password.length > 50) {
+      throw createError({
+        statusCode: 400,
+        message: 'Password must be between 8 and 50 characters'
+      })
+    }
+
+    // Password security validation
+    const hasUpperCase = /[A-Z]/.test(password)
+    const hasLowerCase = /[a-z]/.test(password)
+    const hasNumbers = /\d/.test(password)
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    
+    if (!(hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar)) {
+      throw createError({
+        statusCode: 400,
+        message: 'Password must include at least one uppercase letter, one lowercase letter, one number, and one special character'
+      })
+    }
+
     // Check if username or email already exists
     const existingUser = await prisma.user.findFirst({
       where: {
