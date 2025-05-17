@@ -63,11 +63,18 @@ const loading = ref(false)
 // Add user state and auth composable
 const user = useState('user')
 const { login } = useAuth()
+const { csrfToken, fetchCsrfToken } = useCsrf()
 
 // Check if user is already logged in
 onMounted(async () => {
+  await fetchCsrfToken()
+  
   try {
-    const response = await $fetch('/api/auth/me')
+    const response = await $fetch('/api/auth/me', {
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
+      }
+    })
     if (response) {
       user.value = response
       const route = useRoute()

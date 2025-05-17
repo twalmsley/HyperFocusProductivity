@@ -1,70 +1,52 @@
 import { prisma } from '~/server/utils/db'
 import { Prisma } from '@prisma/client'
+import { useCsrf } from '~/composables/useCsrf'
 
 type UserWithSubscription = Prisma.UserGetPayload<{
   select: { subscription: true }
 }>
 
-export default defineNuxtRouteMiddleware(async (to) => {
-  // Skip middleware for auth pages and public pages
-  const publicRoutes = ['/login', '/signup', '/subscription', '/about', '/features', '/pricing', '/contact', '/terms', '/privacy', '/cookies']
-  if (publicRoutes.includes(to.path)) {
-    return
-  }
+// Routes that require subscription check
+const SUBSCRIPTION_ROUTES = [
+  '/app/tasks',
+  '/app/stats',
+  '/app/settings'
+]
 
-  const { data: session } = await useFetch('/api/auth/me')
+export default defineNuxtRouteMiddleware(async (to) => {
+  // Only check on client-side
+  if (process.server) return
+  
+  // Only check subscription for specific routes
+  if (!SUBSCRIPTION_ROUTES.some(route => to.path.startsWith(route))) return
+  
+  // Get CSRF token
+  const { csrfToken, fetchCsrfToken } = useCsrf()
+  await fetchCsrfToken()
+  
+  // Fetch user data
+  const { data: session } = await useFetch('/api/auth/me', {
+    headers: {
+      'X-CSRF-Token': csrfToken.value || ''
+    }
+  })
   
   if (!session.value) {
     return navigateTo('/login')
   }
-
-  // Fetch user's subscription status
-  const user = await prisma.user.findUnique({
-    where: { id: session.value.id },
-    select: {
-      subscription: true
+  
+  const subscription = session.value.subscription
+  
+  // Handle expired free trial
+  if (subscription?.status === 'FREE_TRIAL') {
+    const trialExpiresAt = new Date(subscription.freeTrialExpiresAt)
+    if (trialExpiresAt < new Date()) {
+      return navigateTo('/subscription?expired=true')
     }
-  }) as UserWithSubscription | null
-
-  const subscription = user?.subscription
-  const now = new Date()
-
-  // Check if subscription is expired or needs attention
-  if (!subscription) {
-    return navigateTo('/subscription')
   }
-
-  if (subscription.status === 'FREE_TRIAL' && subscription.freeTrialExpiresAt < now) {
-    // Free trial expired
-    await prisma.user.update({
-      where: { id: session.value.id },
-      data: {
-        subscription: {
-          update: {
-            status: 'EXPIRED'
-          }
-        }
-      }
-    })
-    return navigateTo('/subscription?trial=expired')
-  }
-
-  if (subscription.status === 'ACTIVE' && subscription.currentPeriodEnd && subscription.currentPeriodEnd < now) {
-    // Paid subscription expired
-    await prisma.user.update({
-      where: { id: session.value.id },
-      data: {
-        subscription: {
-          update: {
-            status: 'EXPIRED'
-          }
-        }
-      }
-    })
-    return navigateTo('/subscription?subscription=expired')
-  }
-
-  if (['EXPIRED', 'CANCELED', 'PAST_DUE'].includes(subscription.status)) {
-    return navigateTo('/subscription')
+  
+  // Handle expired or canceled subscription
+  if (['EXPIRED', 'CANCELED', 'PAST_DUE'].includes(subscription?.status)) {
+    return navigateTo('/subscription?expired=true')
   }
 }) 

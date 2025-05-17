@@ -6,10 +6,10 @@
           Email Verification
         </h2>
       </div>
-      <div v-if="loading" class="text-center">
+      <div v-if="status === 'verifying'" class="text-center">
         <p class="text-gray-600">Verifying your email...</p>
       </div>
-      <div v-else-if="error" class="text-center">
+      <div v-else-if="status === 'error'" class="text-center">
         <p class="text-red-600">{{ error }}</p>
         <button
           @click="retryVerification"
@@ -18,7 +18,7 @@
           Retry
         </button>
       </div>
-      <div v-else-if="success" class="text-center">
+      <div v-else-if="status === 'success'" class="text-center">
         <p class="text-green-600">Email verified successfully!</p>
         <NuxtLink
           to="/login"
@@ -32,49 +32,54 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
+import { useCsrf } from '~/composables/useCsrf';
+
 const route = useRoute();
-const loading = ref(true);
+const token = computed(() => route.query.token as string);
+
+const status = ref<'verifying' | 'success' | 'error'>('verifying');
 const error = ref('');
-const success = ref(false);
 
-const verifyEmail = async () => {
+const { csrfToken, fetchCsrfToken } = useCsrf();
+
+onMounted(async () => {
+  await fetchCsrfToken();
+  await verifyToken();
+});
+
+async function verifyToken() {
+  if (!token.value) {
+    status.value = 'error';
+    error.value = 'Verification token is missing';
+    return;
+  }
+
   try {
-    const token = route.query.token as string;
-    if (!token) {
-      throw new Error('No verification token provided');
-    }
-
     const response = await $fetch('/api/auth/verify', {
       method: 'POST',
-      body: { token },
+      body: { token: token.value },
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
+      }
     });
 
     if (response.success) {
-      success.value = true;
+      status.value = 'success';
     } else {
-      throw new Error(response.message || 'Failed to verify email');
+      status.value = 'error';
+      error.value = 'Verification failed';
     }
-  } catch (err: any) {
-    console.error('Verification error:', err);
-    if (err.response?._data?.message) {
-      error.value = err.response._data.message;
-    } else if (err.message) {
-      error.value = err.message;
-    } else {
-      error.value = 'Failed to verify email. Please try again.';
-    }
-  } finally {
-    loading.value = false;
+  } catch (e: any) {
+    status.value = 'error';
+    error.value = e.response?._data?.message || 'An error occurred during verification';
   }
-};
+}
 
 const retryVerification = () => {
-  loading.value = true;
+  status.value = 'verifying';
   error.value = '';
-  verifyEmail();
+  verifyToken();
 };
-
-onMounted(() => {
-  verifyEmail();
-});
 </script> 

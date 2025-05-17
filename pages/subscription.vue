@@ -106,16 +106,44 @@
 </template>
 
 <script setup lang="ts">
+import { useCsrf } from '~/composables/useCsrf'
+import { useRoute } from 'vue-router'
+
 const subscription = ref(null)
 const isLoading = ref(false)
 
-// Fetch current user's subscription
-const fetchSubscription = async () => {
-  const { data: session } = await useFetch('/api/auth/me')
-  if (session.value) {
-    subscription.value = session.value.subscription
-  }
+// Get csrf token
+const { csrfToken, fetchCsrfToken } = useCsrf()
+
+// Get query params
+const route = useRoute()
+const expired = computed(() => route.query.expired === 'true')
+
+// Fetch user data with CSRF token
+const fetchUserData = async () => {
+  await fetchCsrfToken()
+  
+  const { data: session } = await useFetch('/api/auth/me', {
+    headers: {
+      'X-CSRF-Token': csrfToken.value || ''
+    }
+  })
+  
+  return session
 }
+
+// Fetch current user's subscription
+onMounted(async () => {
+  isLoading.value = true
+  try {
+    const session = await fetchUserData()
+    subscription.value = session.value?.subscription || null
+  } catch (error) {
+    console.error('Failed to fetch subscription:', error)
+  } finally {
+    isLoading.value = false
+  }
+})
 
 // Format subscription status for display
 const formatStatus = (status: string) => {
@@ -152,7 +180,4 @@ const subscribe = async (type: 'MONTHLY' | 'YEARLY') => {
     isLoading.value = false
   }
 }
-
-// Fetch subscription on component mount
-onMounted(fetchSubscription)
 </script> 

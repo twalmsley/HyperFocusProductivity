@@ -558,6 +558,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import SortIndicator from '~/components/SortIndicator.vue'
 import { useAuth } from '~/composables/useAuth'
 import PomodoroTimer from '~/components/PomodoroTimer.vue'
+import { useCsrf } from '~/composables/useCsrf'
 
 definePageMeta({
   middleware: ['auth']
@@ -577,6 +578,7 @@ interface PomodoroTemplate {
 }
 
 const { user, isLoading } = useAuth()
+const { csrfToken, fetchCsrfToken } = useCsrf()
 const templates = ref<PomodoroTemplate[]>([])
 const currentTemplate = ref<Partial<PomodoroTemplate>>({
   focusDuration: 25 * 60,
@@ -886,6 +888,9 @@ async function updateTaskStatus(task: typeof tasks.value[0]) {
         id: task.id,
         status: newStatus,
         completedAt: newStatus === 'DONE' ? new Date().toISOString() : null
+      },
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
       }
     }) as typeof tasks.value[0]
 
@@ -919,6 +924,9 @@ async function confirmDeleteTask() {
       method: 'DELETE',
       query: {
         id: taskToDelete.value.id
+      },
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
       }
     })
     
@@ -937,12 +945,21 @@ async function fetchTasks() {
   if (!user.value) return
   
   try {
-    const response = await $fetch<Task[]>(`/api/tasks?userId=${user.value.id}`)
+    const response = await $fetch<Task[]>(`/api/tasks?userId=${user.value.id}`, {
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
+      }
+    })
     tasks.value = response
   } catch (error) {
     console.error('Failed to fetch tasks:', error)
   }
 }
+
+// Fetch CSRF token when component mounts
+onMounted(async () => {
+  await fetchCsrfToken()
+})
 
 // Fetch tasks when component mounts and when user changes
 watch([isLoading, user], ([loading, currentUser]) => {
@@ -998,6 +1015,9 @@ async function saveTask() {
         estimatedPomodoros: taskToUpdate.estimatedPomodoros,
         dueDate: taskToUpdate.dueDate,
         completedAt: taskToUpdate.status === 'DONE' ? new Date().toISOString() : null
+      },
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
       }
     })
 
@@ -1027,7 +1047,11 @@ async function fetchUserSettings() {
   if (!user.value) return
   
   try {
-    const response = await $fetch('/api/settings')
+    const response = await $fetch('/api/settings', {
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
+      }
+    })
     userSettings.value = response || {
       focusDuration: 25,
       shortBreakDuration: 5,
@@ -1058,6 +1082,9 @@ async function updateCompletedPomodoros(value: number) {
       body: {
         id: selectedTask.value.id,
         completedPomodoros: value
+      },
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
       }
     }) as Task
 

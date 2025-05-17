@@ -110,6 +110,7 @@ const user = ref<{
   } | null;
 } | null>(null)
 const router = useRouter()
+const { csrfToken, fetchCsrfToken, withCsrf } = useCsrf()
 
 interface NewTask {
   title: string;
@@ -129,8 +130,14 @@ const task = ref<NewTask>({
 
 // Fetch user data on component mount
 onMounted(async () => {
+  await fetchCsrfToken() // Ensure we have a CSRF token
+  
   try {
-    const response = await $fetch('/api/auth/me')
+    const response = await $fetch('/api/auth/me', {
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
+      }
+    })
     user.value = response
   } catch (error) {
     console.error('Failed to fetch user data:', error)
@@ -159,6 +166,9 @@ async function createTask() {
         userId: user.value.id,
         ...task.value,
         dueDate: dueDate
+      },
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
       }
     })
     

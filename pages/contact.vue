@@ -23,20 +23,20 @@
             <div class="bg-white p-8 rounded-lg shadow-md">
               <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-6">Send us a message</h2>
               
-              <form class="space-y-6" @submit.prevent="submitContactForm">
+              <form class="space-y-6" @submit.prevent="handleSubmit">
                 <div>
                   <label for="name" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Name</label>
-                  <input type="text" id="name" name="name" v-model="contactForm.name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required />
+                  <input type="text" id="name" name="name" v-model="form.name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required />
                 </div>
                 
                 <div>
                   <label for="email" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Email</label>
-                  <input type="email" id="email" name="email" v-model="contactForm.email" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required />
+                  <input type="email" id="email" name="email" v-model="form.email" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required />
                 </div>
                 
                 <div>
                   <label for="subject" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Subject</label>
-                  <select id="subject" name="subject" v-model="contactForm.subject" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required>
+                  <select id="subject" name="subject" v-model="form.subject" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required>
                     <option value="" disabled>Select a subject</option>
                     <option value="general">General Inquiry</option>
                     <option value="support">Technical Support</option>
@@ -48,29 +48,29 @@
                 
                 <div>
                   <label for="message" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Message</label>
-                  <textarea id="message" name="message" v-model="contactForm.message" rows="6" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required></textarea>
+                  <textarea id="message" name="message" v-model="form.message" rows="6" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required></textarea>
                 </div>
                 
                 <div>
                   <button 
                     type="submit" 
-                    :disabled="isSubmitting"
+                    :disabled="loading"
                     class="w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span v-if="isSubmitting">Sending...</span>
+                    <span v-if="loading">Sending...</span>
                     <span v-else>Send Message</span>
                   </button>
                 </div>
               </form>
               
               <!-- Success message -->
-              <div v-if="formSubmitted" class="mt-6 p-4 bg-green-100 text-green-700 rounded-md">
+              <div v-if="success" class="mt-6 p-4 bg-green-100 text-green-700 rounded-md">
                 Thank you for your message! We'll get back to you as soon as possible.
               </div>
 
               <!-- Error message -->
-              <div v-if="errorMessage" class="mt-6 p-4 bg-red-100 text-red-700 rounded-md">
-                {{ errorMessage }}
+              <div v-if="error" class="mt-6 p-4 bg-red-100 text-red-700 rounded-md">
+                {{ error }}
               </div>
             </div>
             
@@ -157,50 +157,85 @@
 </template>
 
 <script setup lang="ts">
+import { useCsrf } from '~/composables/useCsrf'
+
 // Get user state
 const user = useState('user')
 
-// Contact form state
-const contactForm = reactive({
+// Form state
+const form = ref({
   name: '',
   email: '',
   subject: '',
   message: ''
 })
 
-// Form submission state
-const formSubmitted = ref(false)
-const isSubmitting = ref(false)
-const errorMessage = ref('')
+// Feedback states
+const loading = ref(false)
+const success = ref(false)
+const error = ref<string | null>(null)
 
-// Form submission handler
-async function submitContactForm() {
+// CSRF token
+const { csrfToken, fetchCsrfToken } = useCsrf()
+
+// Fetch CSRF token on component mount
+onMounted(async () => {
+  await fetchCsrfToken()
+})
+
+async function handleSubmit() {
+  loading.value = true
+  error.value = null
+  success.value = false
+  
+  // Client-side validation
+  if (!form.value.name.trim()) {
+    error.value = 'Name is required'
+    loading.value = false
+    return
+  }
+  
+  if (!form.value.email.trim()) {
+    error.value = 'Email is required'
+    loading.value = false
+    return
+  }
+  
+  // Simple email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(form.value.email)) {
+    error.value = 'Please enter a valid email address'
+    loading.value = false
+    return
+  }
+  
+  if (!form.value.message.trim()) {
+    error.value = 'Message is required'
+    loading.value = false
+    return
+  }
+  
   try {
-    isSubmitting.value = true
-    errorMessage.value = ''
-    
-    // Send form data to API
     await $fetch('/api/contact', {
       method: 'POST',
-      body: contactForm
+      body: form.value,
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
+      }
     })
     
-    // Reset form after successful submission
-    contactForm.name = ''
-    contactForm.email = ''
-    contactForm.subject = ''
-    contactForm.message = ''
+    // Reset form on success
+    form.value.name = ''
+    form.value.email = ''
+    form.value.subject = ''
+    form.value.message = ''
     
-    formSubmitted.value = true
-    
-    // Hide success message after 5 seconds
-    setTimeout(() => {
-      formSubmitted.value = false
-    }, 5000)
-  } catch (error: any) {
-    errorMessage.value = error.message || 'Failed to send message. Please try again.'
+    success.value = true
+  } catch (e: any) {
+    console.error('Error submitting contact form:', e)
+    error.value = e.data?.message || 'An error occurred while sending your message. Please try again.'
   } finally {
-    isSubmitting.value = false
+    loading.value = false
   }
 }
 </script> 

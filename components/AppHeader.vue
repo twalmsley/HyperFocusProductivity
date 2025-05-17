@@ -66,6 +66,8 @@
 <script setup lang="ts">
 const user = useState('user')
 const router = useRouter()
+const { csrfToken, fetchCsrfToken } = useCsrf()
+
 const showSubscriptionAlert = computed(() => {
   if (!user.value?.subscription) return false
   
@@ -94,8 +96,14 @@ const trialDaysLeft = computed(() => {
 
 // Fetch user data on component mount
 onMounted(async () => {
+  await fetchCsrfToken()
+  
   try {
-    const response = await fetch('/api/auth/me')
+    const response = await fetch('/api/auth/me', {
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
+      }
+    })
     if (response.ok) {
       user.value = await response.json()
     }
@@ -106,7 +114,12 @@ onMounted(async () => {
 
 async function handleLogout() {
   try {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await fetch('/api/auth/logout', { 
+      method: 'POST',
+      headers: {
+        'X-CSRF-Token': csrfToken.value || ''
+      }
+    })
     user.value = null
     router.push('/')
   } catch (error) {
