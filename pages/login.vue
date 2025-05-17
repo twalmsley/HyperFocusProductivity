@@ -60,8 +60,9 @@ const form = ref({
 const error = ref('')
 const loading = ref(false)
 
-// Add user state
+// Add user state and auth composable
 const user = useState('user')
+const { login } = useAuth()
 
 // Check if user is already logged in
 onMounted(async () => {
@@ -83,14 +84,8 @@ async function handleSubmit() {
   loading.value = true
 
   try {
-    const response = await $fetch('/api/auth/login', {
-      method: 'POST',
-      body: {
-        email: form.value.email,
-        password: form.value.password
-      }
-    })
-
+    const response = await login(form.value.email, form.value.password)
+    
     // Update user state
     user.value = response.user
 

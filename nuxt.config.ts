@@ -21,6 +21,9 @@ export default defineNuxtConfig({
     '@nuxt/scripts',
     '@nuxt/test-utils',
     '@nuxt/ui',
+    '@pinia/nuxt',
+    '@vueuse/nuxt',
+    '@nuxtjs/color-mode'
   ],
   app: {
     head: {
@@ -30,6 +33,24 @@ export default defineNuxtConfig({
           href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
         }
       ]
+    }
+  },
+  colorMode: {
+    classSuffix: ''
+  },
+  nitro: {
+    routeRules: {
+      '/api/**': {
+        cors: true,
+        headers: {
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
+            ? 'https://hyperfocus.aosd.co.uk'
+            : 'http://localhost:3000',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+          'Access-Control-Max-Age': '3600'
+        }
+      }
     }
   }
 })

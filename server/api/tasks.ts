@@ -2,22 +2,20 @@ import { prisma } from '../utils/db'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
+  const user = event.context.user
+
+  if (!user) {
+    throw createError({
+      statusCode: 401,
+      message: 'Not authenticated'
+    })
+  }
 
   switch (method) {
     case 'GET':
-      const query = getQuery(event)
-      const userId = query.userId as string
-      
-      if (!userId) {
-        throw createError({
-          statusCode: 400,
-          message: 'userId is required'
-        })
-      }
-
       return await prisma.task.findMany({
         where: {
-          userId,
+          userId: user.id,
         },
         include: {
           user: true
@@ -29,18 +27,18 @@ export default defineEventHandler(async (event) => {
     
     case 'POST':
       const body = await readBody(event)
-      const { userId: newTaskUserId, title, notes, estimatedPomodoros, status = 'BACKLOG', dueDate } = body
+      const { title, notes, estimatedPomodoros, status = 'BACKLOG', dueDate } = body
 
-      if (!newTaskUserId || !title || !notes || !estimatedPomodoros || !status || !dueDate) {
+      if (!title || !notes || !estimatedPomodoros || !status || !dueDate) {
         throw createError({
           statusCode: 400,
-          message: 'All fields (userId, title, notes, estimatedPomodoros, status, dueDate) are required'
+          message: 'All fields (title, notes, estimatedPomodoros, status, dueDate) are required'
         })
       }
 
       // Get the highest position value
       const lastTask = await prisma.task.findFirst({
-        where: { userId: newTaskUserId },
+        where: { userId: user.id },
         orderBy: { position: 'desc' }
       })
 
@@ -48,7 +46,7 @@ export default defineEventHandler(async (event) => {
 
       return await prisma.task.create({
         data: {
-          userId: newTaskUserId,
+          userId: user.id,
           title,
           notes,
           estimatedPomodoros,
@@ -71,6 +69,18 @@ export default defineEventHandler(async (event) => {
         })
       }
 
+      // Verify task belongs to user
+      const task = await prisma.task.findUnique({
+        where: { id }
+      })
+
+      if (!task || task.userId !== user.id) {
+        throw createError({
+          statusCode: 403,
+          message: 'Not authorized to update this task'
+        })
+      }
+
       return await prisma.task.update({
         where: { id },
         data: updateData,
@@ -86,6 +96,18 @@ export default defineEventHandler(async (event) => {
         throw createError({
           statusCode: 400,
           message: 'Task id is required'
+        })
+      }
+
+      // Verify task belongs to user
+      const taskToDelete = await prisma.task.findUnique({
+        where: { id: taskId }
+      })
+
+      if (!taskToDelete || taskToDelete.userId !== user.id) {
+        throw createError({
+          statusCode: 403,
+          message: 'Not authorized to delete this task'
         })
       }
 

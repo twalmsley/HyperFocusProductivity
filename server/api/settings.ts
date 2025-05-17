@@ -2,28 +2,26 @@ import { prisma } from '../utils/db'
 
 export default defineEventHandler(async (event) => {
   const method = event.method
+  const user = event.context.user
+
+  if (!user) {
+    throw createError({
+      statusCode: 401,
+      message: 'Not authenticated'
+    })
+  }
 
   switch (method) {
     case 'GET':
-      const query = getQuery(event)
-      const userId = query.userId as string
-      
-      if (!userId) {
-        throw createError({
-          statusCode: 400,
-          message: 'userId is required'
-        })
-      }
-
       // Get user settings or create default settings if they don't exist
       let settings = await prisma.userSettings.findUnique({
-        where: { userId }
+        where: { userId: user.id }
       })
 
       if (!settings) {
         settings = await prisma.userSettings.create({
           data: {
-            userId,
+            userId: user.id,
             focusDuration: 25,
             shortBreakDuration: 5,
             longBreakDuration: 15,
@@ -35,18 +33,17 @@ export default defineEventHandler(async (event) => {
       return settings
 
     case 'PATCH':
-      const { userId: updateUserId, ...updateData } = await readBody(event)
+      const updateData = await readBody(event)
       
-      if (!updateUserId) {
-        throw createError({
-          statusCode: 400,
-          message: 'userId is required'
-        })
-      }
-
       return await prisma.userSettings.update({
-        where: { userId: updateUserId },
+        where: { userId: user.id },
         data: updateData
+      })
+
+    default:
+      throw createError({
+        statusCode: 405,
+        message: 'Method not allowed'
       })
   }
 }) 
