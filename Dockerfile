@@ -4,38 +4,38 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install development tools
-RUN apk add --no-cache git libc6-compat wget
+RUN apk add --no-cache git libc6-compat wget openssl
 
-# Copy files
+# Copy package files first for better layer caching
 COPY package.json yarn.lock ./
-COPY . .
-COPY .env.docker.prod .env
+COPY prisma ./prisma/
 
-# Install dependencies
+# Install dependencies with the right order
 RUN yarn install
 
-# Set environment
-ENV NODE_ENV=development
-ENV HOST=127.0.0.1
+# Add wait-on for PostgreSQL readiness
+RUN yarn add wait-on --non-interactive
 
-# Generate Prisma client
+# Copy the rest of the app
+COPY . .
+
+# Set environment
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+
+# Clean and regenerate Prisma client
+RUN rm -rf node_modules/.prisma
 RUN npx prisma generate
 
-# Initialize database
-RUN npx prisma db push
-
-RUN yarn build
-
+# Build application
 EXPOSE 3000
 
 # Create the startup script with correct permissions and line endings
 RUN printf '#!/bin/sh\n\
 cd /app\n\
-if [ ! -f /app/prisma/dev.db ]; then\n\
-  echo "Database not found, initializing..."\n\
-  npx prisma db push\n\
-fi\n\
-echo "Starting application in development mode..."\n\
+echo "Starting database initialization..."\n\
+bash /app/scripts/docker-init-db.sh\n\
+echo "Starting application..."\n\
 node .output/server/index.mjs\n' > /app/start.sh && chmod +x /app/start.sh
 
 CMD ["/app/start.sh"] 

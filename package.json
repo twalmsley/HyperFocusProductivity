@@ -7,10 +7,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
+    "postinstall": "nuxt prepare && prisma generate",
     "prisma:generate": "prisma generate",
-    "prisma:db-push": "prisma db push",
-    "docker:start": "./start-docker.sh"
+    "prisma:db-push": "prisma db push"
   },
   "dependencies": {
     "@nuxt/content": "3.5.1",
