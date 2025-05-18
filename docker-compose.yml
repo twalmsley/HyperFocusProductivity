@@ -9,7 +9,7 @@ services:
     ports:
       - "8888:3000"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - HOST=0.0.0.0
     healthcheck:
       test: ["CMD", "wget", "--spider", "http://localhost:3000/"]
@@ -17,3 +17,12 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
+
+  db:
+    image: postgres:17.5
+    restart: always
+    # set shared memory limit when using docker compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    environment:
+      POSTGRES_PASSWORD: "Password123!"
