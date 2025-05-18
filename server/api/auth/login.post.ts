@@ -112,7 +112,7 @@ export default defineEventHandler(async (event: H3Event) => {
       httpOnly: true,
       path: '/',
       sameSite: 'strict',
-      secure: process.env.NODE_ENV !== 'development',
+      secure: false,
       maxAge: 7 * 24 * 60 * 60 // 7 days
     })
 
