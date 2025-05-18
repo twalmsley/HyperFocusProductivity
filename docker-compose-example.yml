@@ -11,6 +11,12 @@ services:
       - NODE_ENV=production
       - HOST=0.0.0.0
       - DATABASE_URL=postgresql://postgres:Password123!@db:5432/hyperfocus?schema=public
+      - SMTP_HOST=smtp.example.com
+      - SMTP_PORT=465
+      - SMTP_USER=user@example.com
+      - SMTP_PASSWORD=password
+      - APP_URL=http://localhost:3000
+      - CONTACT_EMAIL=contact@example.com
     depends_on:
       db:
         condition: service_healthy
