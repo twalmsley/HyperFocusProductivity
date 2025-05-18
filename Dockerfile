@@ -19,6 +19,10 @@ RUN yarn add wait-on --non-interactive
 # Copy the rest of the app
 COPY . .
 
+RUN yarn build
+
+COPY .env.docker.prod .output/server/.env
+
 # Set environment
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0

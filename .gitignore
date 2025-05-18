@@ -28,3 +28,5 @@ logs
 /generated/
 /prisma/*.db
 /prisma/*.db-journal
+
+docker-compose.yml
