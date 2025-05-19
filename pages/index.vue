@@ -1,4 +1,6 @@
 <template>
+  <!-- AppNavHeader when user is logged in -->
+  <AppNavHeader v-if="user" />
   <div class="min-h-screen bg-bg">
     <!-- Hero Section -->
     <section class="relative overflow-hidden">
@@ -122,7 +124,10 @@
 </template>
 
 <script setup lang="ts">
-// Component logic can be added here
+import AppNavHeader from '~/components/AppNavHeader.vue';
+
+// Get user state
+const user = useState('user')
 </script>
 
 <style>
