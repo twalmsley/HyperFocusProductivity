@@ -24,7 +24,7 @@
               <!-- Subscription Status -->
               <NuxtLink 
                 v-if="showSubscriptionAlert"
-                to="/subscription" 
+                to="/app/subscription" 
                 class="text-yellow-300 hover:text-yellow-200 transition-colors flex items-center"
               >
                 <span class="mr-1">⚠️</span>

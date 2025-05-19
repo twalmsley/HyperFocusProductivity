@@ -278,7 +278,7 @@
 import { useAuth } from '~/composables/useAuth'
 
 definePageMeta({
-  middleware: ['auth']
+  middleware: ['auth', 'subscription']
 })
 
 interface Task {

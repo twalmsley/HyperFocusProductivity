@@ -326,7 +326,7 @@ import { useAuth } from '~/composables/useAuth'
 import { useCsrf } from '~/composables/useCsrf'
 
 definePageMeta({
-  middleware: ['auth']
+  middleware: ['auth', 'subscription']
 })
 
 interface UserSettings {

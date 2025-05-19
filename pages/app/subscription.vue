@@ -45,7 +45,6 @@
               v-if="plan.isPopular"
               class="absolute -top-4 right-8 bg-[var(--primary)] text-white text-sm font-bold px-3 py-1 rounded-full"
             >
-              Popular
             </div>
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">{{ plan.name }}</h2>
             <p class="text-[var(--text-secondary)] mb-6">{{ plan.description }}</p>

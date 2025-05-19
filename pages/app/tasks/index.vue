@@ -567,7 +567,7 @@ import PomodoroTimer from '~/components/PomodoroTimer.vue'
 import { useCsrf } from '~/composables/useCsrf'
 
 definePageMeta({
-  middleware: ['auth']
+  middleware: ['auth', 'subscription']
 })
 
 interface PomodoroTemplate {
