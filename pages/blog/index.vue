@@ -32,6 +32,21 @@
               Read More →
             </NuxtLink>
           </div>
+
+          <!-- Task Planning Post -->
+          <div class="bg-white p-8 rounded-lg shadow-md">
+            <div class="text-[var(--primary)] text-4xl mb-4">⏱️</div>
+            <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-4">The Power of Task Planning and Pomodoro Timers</h3>
+            <p class="text-[var(--text-secondary)] mb-4">
+              How structured time management can transform your productivity and well-being.
+            </p>
+            <NuxtLink 
+              to="/blog/task-planning-pomodoro" 
+              class="inline-block text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
+            >
+              Read More →
+            </NuxtLink>
+          </div>
         </div>
       </div>
     </section>
