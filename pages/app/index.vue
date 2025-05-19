@@ -49,8 +49,11 @@
               <tbody class="bg-white divide-y divide-gray-200">
                 <tr v-for="task in dueTasks" :key="task.id"
                   :class="{
-                    'bg-red-50': isOverdue(task),
-                    'bg-amber-50': isDueToday(task)
+                    'bg-orange-50 hover:bg-orange-100': task.status === 'BACKLOG',
+                    'bg-blue-50 hover:bg-blue-100': task.status === 'IN_PROGRESS',
+                    'bg-green-50 hover:bg-green-100': task.status === 'DONE',
+                    'bg-orange-100': isOverdue(task) && task.status === 'BACKLOG',
+                    'bg-blue-100': isOverdue(task) && task.status === 'IN_PROGRESS'
                   }"
                 >
                   <td class="px-4 py-3 whitespace-nowrap">
@@ -139,7 +142,9 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="task in completedTasks" :key="task.id" class="bg-green-50">
+              <tr v-for="task in completedTasks" :key="task.id" 
+                class="bg-green-50 hover:bg-green-100"
+              >
                 <td class="px-4 py-3 whitespace-nowrap">
                   <div class="font-medium text-gray-900">{{ task.title }}</div>
                 </td>

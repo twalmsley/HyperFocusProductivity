@@ -126,8 +126,14 @@
               v-for="task in paginatedTasks" 
               :key="task.id" 
               :class="{
-                'hover:bg-gray-50': !isTaskOverdue(task),
-                'bg-orange-50 hover:bg-orange-100': isTaskOverdue(task)
+                'hover:bg-orange-100': task.status === 'BACKLOG',
+                'hover:bg-blue-100': task.status === 'IN_PROGRESS',
+                'hover:bg-green-100': task.status === 'DONE',
+                'bg-orange-50': task.status === 'BACKLOG',
+                'bg-blue-50': task.status === 'IN_PROGRESS',
+                'bg-green-50': task.status === 'DONE',
+                'bg-orange-100': isTaskOverdue(task) && task.status === 'BACKLOG',
+                'bg-blue-100': isTaskOverdue(task) && task.status === 'IN_PROGRESS'
               }"
             >
               <td class="px-6 py-4 whitespace-nowrap">
