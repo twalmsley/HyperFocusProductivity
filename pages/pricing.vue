@@ -77,7 +77,6 @@
 
           <!-- Premium Plan -->
           <div class="bg-white p-8 rounded-lg shadow-md border-t-4 border-[var(--primary-dark)]">
-            <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Coming Soon!</h3>
             <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Premium Plan</h3>
             <p class="text-[var(--text-secondary)] mb-6">For power users who want it all</p>
             <div class="text-4xl font-bold text-[var(--text-primary)] mb-6">£10<span class="text-lg text-[var(--text-secondary)]">/month</span></div>
@@ -103,11 +102,8 @@
                 <span>Early access to new features</span>
               </li>
             </ul>
-            <NuxtLink to="/signup">
-              <button class="w-full bg-[var(--primary-dark)] hover:bg-[var(--primary)] text-white font-bold py-3 px-4 rounded-lg transition-colors">
-                Choose Premium
-              </button>
-            </NuxtLink>
+            <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Coming Soon!</h3>
+            
           </div>
         </div>
       </div>
