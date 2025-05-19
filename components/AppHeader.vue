@@ -10,6 +10,7 @@
         <!-- Navigation -->
         <div class="hidden md:flex space-x-8">
           <NuxtLink to="/features" class="text-white hover:text-[var(--primary-light)] transition-colors">Features</NuxtLink>
+          <NuxtLink to="/blog" class="text-white hover:text-[var(--primary-light)] transition-colors">Blog</NuxtLink>
           <NuxtLink to="/pricing" class="text-white hover:text-[var(--primary-light)] transition-colors">Pricing</NuxtLink>
           <NuxtLink to="/about" class="text-white hover:text-[var(--primary-light)] transition-colors">About</NuxtLink>
         </div>

@@ -15,6 +15,7 @@
           <h3 class="text-lg font-semibold text-white mb-4">Quick Links</h3>
           <ul class="space-y-2">
             <li><NuxtLink to="/features" class="text-gray-200 hover:text-[var(--primary-light)] transition-colors">Features</NuxtLink></li>
+            <li><NuxtLink to="/blog" class="text-gray-200 hover:text-[var(--primary-light)] transition-colors">Blog</NuxtLink></li>
             <li><NuxtLink to="/pricing" class="text-gray-200 hover:text-[var(--primary-light)] transition-colors">Pricing</NuxtLink></li>
             <li><NuxtLink to="/about" class="text-gray-200 hover:text-[var(--primary-light)] transition-colors">About</NuxtLink></li>
             <li><NuxtLink to="/contact" class="text-gray-200 hover:text-[var(--primary-light)] transition-colors">Contact Us</NuxtLink></li>
