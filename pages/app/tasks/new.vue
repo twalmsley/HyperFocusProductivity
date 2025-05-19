@@ -64,6 +64,21 @@
             </div>
 
             <div>
+              <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+              <select
+                id="priority"
+                v-model="task.priority"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+              >
+                <option value="URGENT">Urgent</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
+
+            <div>
               <label for="dueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
               <input
                 id="dueDate"
@@ -117,6 +132,7 @@ interface NewTask {
   notes: string;
   estimatedPomodoros: number;
   status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE';
+  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
   dueDate: string;
 }
 
@@ -125,6 +141,7 @@ const task = ref<NewTask>({
   notes: '',
   estimatedPomodoros: 1,
   status: 'BACKLOG',
+  priority: 'MEDIUM',
   dueDate: new Date().toISOString().substring(0, 10)
 })
 

@@ -41,6 +41,7 @@
                 <tr>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
                   <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
                   <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -68,6 +69,19 @@
                       }"
                     >
                       {{ task.status.replace('_', ' ') }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <span 
+                      class="px-2 py-1 text-xs rounded-full font-medium"
+                      :class="{
+                        'bg-red-100 text-red-800': task.priority === 'URGENT',
+                        'bg-orange-100 text-orange-800': task.priority === 'HIGH',
+                        'bg-yellow-100 text-yellow-800': task.priority === 'MEDIUM',
+                        'bg-green-100 text-green-800': task.priority === 'LOW'
+                      }"
+                    >
+                      {{ task.priority }}
                     </span>
                   </td>
                   <td class="px-4 py-3 whitespace-nowrap">
@@ -231,6 +245,21 @@
             </select>
           </div>
           
+          <!-- Priority -->
+          <div>
+            <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+            <select
+              id="priority"
+              v-model="editingTask.priority"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            >
+              <option value="URGENT">Urgent</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
+          </div>
+          
           <!-- Due Date -->
           <div>
             <label for="dueDate" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
@@ -287,6 +316,7 @@ interface Task {
   title: string;
   notes: string;
   status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE';
+  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
   estimatedPomodoros: number | null;
   completedPomodoros: number | null;
   position: number;
@@ -452,6 +482,13 @@ async function fetchTasks() {
         task.status = 'BACKLOG'
       }
       
+      // Ensure priority is valid
+      if (!['URGENT', 'HIGH', 'MEDIUM', 'LOW'].includes(task.priority)) {
+        console.error(`Task ${task.id} has invalid priority: ${task.priority}`)
+        // Default to MEDIUM if invalid
+        task.priority = 'MEDIUM'
+      }
+      
       // Make sure notes exists
       if (!task.notes) {
         task.notes = ''
@@ -561,6 +598,7 @@ async function saveTask() {
         title: taskToUpdate.title,
         notes: taskToUpdate.notes,
         status: taskToUpdate.status,
+        priority: taskToUpdate.priority,
         estimatedPomodoros: taskToUpdate.estimatedPomodoros,
         dueDate: taskToUpdate.dueDate,
         completedAt: taskToUpdate.status === 'DONE' ? new Date().toISOString() : null

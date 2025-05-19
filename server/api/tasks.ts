@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
       await checkRateLimit(ip, 'dbUpdate')
 
       const body = await readBody(event)
-      const { title, notes, estimatedPomodoros, status = 'BACKLOG', dueDate } = body
+      const { title, notes, estimatedPomodoros, status = 'BACKLOG', dueDate, priority = 'MEDIUM' } = body
 
       if (!title || !notes || !estimatedPomodoros || !status || !dueDate) {
         throw createError({
@@ -64,6 +64,7 @@ export default defineEventHandler(async (event) => {
           notes,
           estimatedPomodoros,
           status,
+          priority,
           dueDate,
           position: newPosition
         },

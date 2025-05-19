@@ -42,6 +42,22 @@
             </select>
           </div>
 
+          <!-- Priority filter -->
+          <div class="w-40">
+            <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+            <select
+              id="priority"
+              v-model="filters.priority"
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            >
+              <option value="">All Priorities</option>
+              <option value="URGENT">URGENT</option>
+              <option value="HIGH">HIGH</option>
+              <option value="MEDIUM">MEDIUM</option>
+              <option value="LOW">LOW</option>
+            </select>
+          </div>
+
           <!-- Due date filter -->
           <div>
             <label for="dueDate" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
@@ -74,13 +90,13 @@
           <p v-if="tasks.length === 0">Your tasks will appear here.</p>
           <p v-else>No tasks match your current filters.</p>
         </div>
-        <table v-else class="min-w-full divide-y divide-gray-200">
+        <table v-else class="w-full divide-y divide-gray-200 text-sm">
           <thead class="bg-gray-50">
             <tr>
               <th 
                 @click="sortTasks('title')" 
                 scope="col" 
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-1/4"
               >
                 Title
                 <SortIndicator :active="sortColumn === 'title'" :direction="sortDirection" />
@@ -88,37 +104,37 @@
               <th 
                 @click="sortTasks('status')" 
                 scope="col" 
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[100px]"
               >
                 Status
                 <SortIndicator :active="sortColumn === 'status'" :direction="sortDirection" />
               </th>
               <th 
+                @click="sortTasks('priority')" 
+                scope="col" 
+                class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[100px]"
+              >
+                Priority
+                <SortIndicator :active="sortColumn === 'priority'" :direction="sortDirection" />
+              </th>
+              <th 
                 @click="sortTasks('estimatedPomodoros')" 
                 scope="col" 
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[100px] hidden sm:table-cell"
               >
                 Pomodoros
                 <SortIndicator :active="sortColumn === 'estimatedPomodoros'" :direction="sortDirection" />
               </th>
               <th 
-                @click="sortTasks('createdAt')" 
-                scope="col" 
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-              >
-                Created
-                <SortIndicator :active="sortColumn === 'createdAt'" :direction="sortDirection" />
-              </th>
-              <th 
                 @click="sortTasks('dueDate')" 
                 scope="col" 
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[100px]"
               >
                 Due Date
                 <SortIndicator :active="sortColumn === 'dueDate'" :direction="sortDirection" />
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">Notes</th>
-              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[160px]">Actions</th>
+              <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Notes</th>
+              <th scope="col" class="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[120px]">Actions</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -136,10 +152,10 @@
                 'bg-blue-100': isTaskOverdue(task) && task.status === 'IN_PROGRESS'
               }"
             >
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">{{ task.title }}</div>
+              <td class="px-2 py-2">
+                <div class="text-xs font-medium text-gray-900 truncate">{{ task.title }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-2 py-2">
                 <span 
                   class="px-2 py-1 text-xs rounded-full"
                   :class="{
@@ -151,8 +167,21 @@
                   {{ task.status.replace('_', ' ') }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm flex items-center">
+              <td class="px-2 py-2">
+                <span 
+                  class="px-2 py-1 text-xs rounded-full font-medium"
+                  :class="{
+                    'bg-red-100 text-red-800': task.priority === 'URGENT',
+                    'bg-orange-100 text-orange-800': task.priority === 'HIGH',
+                    'bg-yellow-100 text-yellow-800': task.priority === 'MEDIUM',
+                    'bg-green-100 text-green-800': task.priority === 'LOW'
+                  }"
+                >
+                  {{ task.priority }}
+                </span>
+              </td>
+              <td class="px-2 py-2 hidden sm:table-cell">
+                <div class="text-xs flex items-center">
                   <span 
                     :class="{
                       'text-green-600 font-medium': task.completedPomodoros && task.estimatedPomodoros && task.completedPomodoros >= task.estimatedPomodoros,
@@ -166,22 +195,17 @@
                   <span class="text-gray-500">{{ task.estimatedPomodoros || '-' }}</span>
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-500">
-                  {{ new Date(task.createdAt).toISOString().substring(0, 10) }}
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-500">
+              <td class="px-2 py-2">
+                <div class="text-xs text-gray-500">
                   {{ task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : '-' }}
                 </div>
               </td>
-              <td class="px-6 py-4">
-                <div class="text-sm text-gray-500 max-w-[200px] min-w-0 truncate">
+              <td class="px-2 py-2 hidden sm:table-cell">
+                <div class="text-xs text-gray-500 truncate">
                   {{ task.notes || '-' }}
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium w-[160px]">
+              <td class="px-2 py-2 text-right text-xs font-medium">
                 <div class="flex justify-end space-x-2">
                   <button 
                     v-if="task.status === 'IN_PROGRESS' && (!task.estimatedPomodoros || task.completedPomodoros < task.estimatedPomodoros)"
@@ -362,6 +386,22 @@
               <option value="BACKLOG">Backlog</option>
               <option value="IN_PROGRESS">In Progress</option>
               <option value="DONE">Done</option>
+            </select>
+          </div>
+
+          <!-- Priority -->
+          <div>
+            <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+            <select
+              id="priority"
+              v-model="editingTask.priority"
+              required
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            >
+              <option value="URGENT">Urgent</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
             </select>
           </div>
 
@@ -669,6 +709,7 @@ type Task = {
     durationMinutes: number;
     notes: string | null;
   }>;
+  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
 const tasks = ref<Task[]>([])
@@ -681,6 +722,7 @@ const sortDirection = ref<'asc' | 'desc'>('desc')
 const filters = ref({
   search: '',
   status: '',
+  priority: '',
   dueDate: ''
 })
 
@@ -704,6 +746,11 @@ const filteredTasks = computed(() => {
     
     // Filter by status
     if (filters.value.status && task.status !== filters.value.status) {
+      return false
+    }
+    
+    // Filter by priority
+    if (filters.value.priority && task.priority !== filters.value.priority) {
       return false
     }
     
@@ -772,6 +819,12 @@ const sortedTasks = computed(() => {
         const statusOrder = { 'BACKLOG': 1, 'IN_PROGRESS': 2, 'DONE': 3 }
         valA = statusOrder[a.status] || 0
         valB = statusOrder[b.status] || 0
+        break
+      case 'priority':
+        // Custom order for priority: URGENT, HIGH, MEDIUM, LOW
+        const priorityOrder = { 'URGENT': 1, 'HIGH': 2, 'MEDIUM': 3, 'LOW': 4 }
+        valA = priorityOrder[a.priority] || 0
+        valB = priorityOrder[b.priority] || 0
         break
       case 'estimatedPomodoros':
         valA = a.estimatedPomodoros || 0
@@ -874,7 +927,7 @@ function sortTasks(column: string) {
   } else {
     // Otherwise switch to the new column with default desc direction
     sortColumn.value = column
-    sortDirection.value = 'desc'
+    sortDirection.value = 'asc'
   }
 }
 
@@ -1018,6 +1071,7 @@ async function saveTask() {
         title: taskToUpdate.title,
         notes: taskToUpdate.notes,
         status: taskToUpdate.status,
+        priority: taskToUpdate.priority,
         estimatedPomodoros: taskToUpdate.estimatedPomodoros,
         dueDate: taskToUpdate.dueDate,
         completedAt: taskToUpdate.status === 'DONE' ? new Date().toISOString() : null
@@ -1044,6 +1098,7 @@ function clearFilters() {
   filters.value = {
     search: '',
     status: '',
+    priority: '',
     dueDate: ''
   }
 }

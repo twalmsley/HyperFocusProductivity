@@ -38,6 +38,7 @@ model Task {
   estimatedPomodoros Int?
   completedPomodoros Int      @default(0)
   status            TaskStatus @default(BACKLOG)
+  priority          Priority   @default(MEDIUM)
   createdAt         DateTime  @default(now())
   completedAt       DateTime?
   dueDate           DateTime?
@@ -88,6 +89,13 @@ enum TaskStatus {
   BACKLOG
   IN_PROGRESS
   DONE
+}
+
+enum Priority {
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
 }
 
 enum SessionType {
