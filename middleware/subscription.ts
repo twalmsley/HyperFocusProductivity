@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware(async (to) => {
   // Skip check for subscription page
   if (to.path === '/app/subscription') return
 
@@ -8,7 +8,7 @@ export default defineNuxtRouteMiddleware((to) => {
   const { checkSubscription } = useSubscription()
   
   // If subscription check fails, it will redirect to subscription page
-  const isValid = checkSubscription()
+  const isValid = await checkSubscription()
   
   // If subscription is invalid, abort navigation
   if (!isValid) {

@@ -76,29 +76,33 @@ export default defineEventHandler(async (event) => {
 
   // Check subscription status for app routes and dashboard
   if ((path.startsWith('/app/') || path === '/app') && !SUBSCRIPTION_EXEMPT_ROUTES.includes(path)) {
-    const subscription = session.user.subscription
+    // Fetch fresh subscription data
+    const freshSubscription = await prisma.userSubscription.findUnique({
+      where: { userId: session.user.id }
+    })
+    
     const now = new Date()
 
     // Check if subscription has expired
-    if (!subscription || 
-        subscription.status === 'EXPIRED' || 
-        subscription.status === 'CANCELED' || 
-        subscription.status === 'PAST_DUE' ||
-        (subscription.status === 'FREE_TRIAL' && subscription.freeTrialExpiresAt < now) ||
-        (subscription.status === 'ACTIVE' && subscription.currentPeriodEnd && subscription.currentPeriodEnd < now)) {
+    if (!freshSubscription || 
+        freshSubscription.status === 'EXPIRED' || 
+        freshSubscription.status === 'CANCELED' || 
+        freshSubscription.status === 'PAST_DUE' ||
+        (freshSubscription.status === 'FREE_TRIAL' && freshSubscription.freeTrialExpiresAt < now) ||
+        (freshSubscription.status === 'ACTIVE' && freshSubscription.currentPeriodEnd && freshSubscription.currentPeriodEnd < now)) {
       
       // Update subscription status if needed
-      if (subscription) {
-        let newStatus = subscription.status
-        if (subscription.status === 'FREE_TRIAL' && subscription.freeTrialExpiresAt < now) {
+      if (freshSubscription) {
+        let newStatus = freshSubscription.status
+        if (freshSubscription.status === 'FREE_TRIAL' && freshSubscription.freeTrialExpiresAt < now) {
           newStatus = 'EXPIRED'
-        } else if (subscription.status === 'ACTIVE' && subscription.currentPeriodEnd && subscription.currentPeriodEnd < now) {
+        } else if (freshSubscription.status === 'ACTIVE' && freshSubscription.currentPeriodEnd && freshSubscription.currentPeriodEnd < now) {
           newStatus = 'EXPIRED'
         }
 
-        if (newStatus !== subscription.status) {
+        if (newStatus !== freshSubscription.status) {
           await prisma.userSubscription.update({
-            where: { id: subscription.id },
+            where: { id: freshSubscription.id },
             data: { status: newStatus }
           })
         }
@@ -112,6 +116,9 @@ export default defineEventHandler(async (event) => {
         data: { redirect: '/app/subscription' }
       }
     }
+
+    // Update the session's user object with fresh subscription data
+    session.user.subscription = freshSubscription
   }
 
   // Attach user to event context
