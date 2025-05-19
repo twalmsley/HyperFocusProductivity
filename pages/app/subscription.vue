@@ -28,74 +28,44 @@
           </div>
         </div>
 
+        <!-- Loading State -->
+        <div v-if="isLoading" class="flex justify-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]"></div>
+        </div>
+
         <!-- Subscription Plans -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          <!-- Basic Plan -->
-          <div class="bg-white p-8 rounded-lg shadow-md border-t-4 border-[var(--primary)] relative">
-            <div class="absolute -top-4 right-8 bg-[var(--primary)] text-white text-sm font-bold px-3 py-1 rounded-full">Popular</div>
-            <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Basic Plan</h2>
-            <p class="text-[var(--text-secondary)] mb-6">Perfect for individual users</p>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div
+            v-for="plan in plans"
+            :key="plan.id"
+            class="bg-white p-8 rounded-lg shadow-md border-t-4"
+            :class="plan.isPopular ? 'border-[var(--primary)]' : 'border-[var(--primary-dark)]'"
+          >
+            <div
+              v-if="plan.isPopular"
+              class="absolute -top-4 right-8 bg-[var(--primary)] text-white text-sm font-bold px-3 py-1 rounded-full"
+            >
+              Popular
+            </div>
+            <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">{{ plan.name }}</h2>
+            <p class="text-[var(--text-secondary)] mb-6">{{ plan.description }}</p>
             <p class="text-4xl font-bold text-[var(--text-primary)] mb-6">
-              £5<span class="text-lg text-[var(--text-secondary)]">/month</span>
+              £{{ plan.price }}<span class="text-lg text-[var(--text-secondary)]">/month</span>
             </p>
             <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
-              <li class="flex items-start">
+              <li
+                v-for="feature in plan.features"
+                :key="feature"
+                class="flex items-start"
+              >
                 <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
-                <span>Unlimited Pomodoro sessions</span>
-              </li>
-              <li class="flex items-start">
-                <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
-                <span>Advanced task management</span>
-              </li>
-              <li class="flex items-start">
-                <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
-                <span>Basic productivity analytics</span>
-              </li>
-              <li class="flex items-start">
-                <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
-                <span>Email support</span>
+                <span>{{ feature }}</span>
               </li>
             </ul>
             <NuxtLink
               to="/signup"
               class="block w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-4 rounded-lg transition-colors text-center"
-            >
-              {{ subscription?.status === 'ACTIVE' ? 'Change Plan' : 'Subscribe Now' }}
-            </NuxtLink>
-          </div>
-
-          <!-- Premium Plan -->
-          <div class="bg-white p-8 rounded-lg shadow-md border-t-4 border-[var(--primary-dark)]">
-            <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Premium Plan</h2>
-            <p class="text-[var(--text-secondary)] mb-6">For power users who want it all</p>
-            <p class="text-4xl font-bold text-[var(--text-primary)] mb-6">
-              £10<span class="text-lg text-[var(--text-secondary)]">/month</span>
-            </p>
-            <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
-              <li class="flex items-start">
-                <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
-                <span>Everything in Basic</span>
-              </li>
-              <li class="flex items-start">
-                <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
-                <span>Advanced analytics and insights</span>
-              </li>
-              <li class="flex items-start">
-                <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
-                <span>Team collaboration features</span>
-              </li>
-              <li class="flex items-start">
-                <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
-                <span>Priority support</span>
-              </li>
-              <li class="flex items-start">
-                <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
-                <span>Early access to new features</span>
-              </li>
-            </ul>
-            <NuxtLink
-              to="/signup"
-              class="block w-full bg-[var(--primary-dark)] hover:bg-[var(--primary)] text-white font-bold py-3 px-4 rounded-lg transition-colors text-center"
+              :class="plan.isPopular ? 'bg-[var(--primary)]' : 'bg-[var(--primary-dark)]'"
             >
               {{ subscription?.status === 'ACTIVE' ? 'Change Plan' : 'Subscribe Now' }}
             </NuxtLink>
@@ -113,18 +83,30 @@ definePageMeta({
   middleware: ['auth']
 })
 
+interface SubscriptionPlan {
+  id: string
+  name: string
+  description: string
+  price: number
+  type: 'MONTHLY' | 'YEARLY'
+  features: string[]
+  isPopular?: boolean
+}
+
 const subscription = ref(null)
+const plans = ref<SubscriptionPlan[]>([])
 const isLoading = ref(false)
 
 // Get csrf token
 const { csrfToken, fetchCsrfToken } = useCsrf()
 
-// Fetch current user's subscription
+// Fetch current user's subscription and plans
 onMounted(async () => {
   isLoading.value = true
   try {
     await fetchCsrfToken()
     
+    // Fetch user subscription
     const { data: session } = await useFetch('/api/auth/me', {
       headers: {
         'X-CSRF-Token': csrfToken.value || ''
@@ -132,8 +114,12 @@ onMounted(async () => {
     })
     
     subscription.value = session.value?.subscription || null
+
+    // Fetch subscription plans
+    const { data: plansData } = await useFetch<SubscriptionPlan[]>('/api/subscription/plans')
+    plans.value = plansData.value || []
   } catch (error) {
-    console.error('Failed to fetch subscription:', error)
+    console.error('Failed to fetch subscription data:', error)
   } finally {
     isLoading.value = false
   }

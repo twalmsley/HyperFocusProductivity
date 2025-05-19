@@ -245,7 +245,7 @@
                 to="/app/subscription"
                 class="inline-block px-4 py-2 bg-[var(--primary)] text-white rounded-md hover:bg-[var(--button-hover)]"
               >
-                View Subscription
+                My Subscription
               </NuxtLink>
             </div>
           </div>
