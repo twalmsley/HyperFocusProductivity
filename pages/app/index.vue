@@ -149,6 +149,7 @@
             <thead class="bg-gray-50">
               <tr>
                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
                 <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
@@ -161,6 +162,19 @@
               >
                 <td class="px-4 py-3 whitespace-nowrap">
                   <div class="font-medium text-gray-900">{{ task.title }}</div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <span 
+                    class="px-2 py-1 text-xs rounded-full font-medium"
+                    :class="{
+                      'bg-red-100 text-red-800': task.priority === 'URGENT',
+                      'bg-orange-100 text-orange-800': task.priority === 'HIGH',
+                      'bg-yellow-100 text-yellow-800': task.priority === 'MEDIUM',
+                      'bg-green-100 text-green-800': task.priority === 'LOW'
+                    }"
+                  >
+                    {{ task.priority }}
+                  </span>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap">
                   {{ task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date' }}
@@ -337,7 +351,7 @@ const dueTasks = computed(() => {
   const endOfToday = new Date(now)
   endOfToday.setHours(23, 59, 59, 999)
   
-  const filteredTasks = tasks.value
+  return tasks.value
     .filter(task => {
       // Filter for incomplete tasks (BACKLOG or IN_PROGRESS)
       if (task.status === 'DONE') {
@@ -350,9 +364,7 @@ const dueTasks = computed(() => {
       }
       
       const dueDate = new Date(task.dueDate)
-      const isDueToday = dueDate <= endOfToday
-      
-      return isDueToday
+      return dueDate <= endOfToday
     })
     // Sort by due date (ascending)
     .sort((a, b) => {
@@ -360,9 +372,6 @@ const dueTasks = computed(() => {
       if (!b.dueDate) return -1
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
     })
-    
-  
-  return filteredTasks
 })
 
 // Format due date with relative terms
@@ -424,7 +433,7 @@ function isDueToday(task: Task): boolean {
 // Mark task as in progress
 async function markInProgress(task: Task) {
   try {
-    const updatedTask = await $fetch<Task>('/api/tasks', {
+    await $fetch<Task>('/api/tasks', {
       method: 'PATCH',
       body: {
         id: task.id,
@@ -432,7 +441,7 @@ async function markInProgress(task: Task) {
       }
     })
     
-    // Refresh all tasks to ensure computed properties update correctly
+    // Refresh tasks to update both lists
     await fetchTasks()
   } catch (error) {
     console.error('Failed to update task:', error)
@@ -442,16 +451,27 @@ async function markInProgress(task: Task) {
 // Mark task as done
 async function markDone(task: Task) {
   try {
-    const updatedTask = await $fetch<Task>('/api/tasks', {
+    const completedAt = new Date().toISOString()
+    await $fetch<Task>('/api/tasks', {
       method: 'PATCH',
       body: {
         id: task.id,
         status: 'DONE',
-        completedAt: new Date().toISOString()
+        completedAt
       }
     })
     
-    // Refresh all tasks to ensure computed properties update correctly
+    // Update the task in the local state immediately
+    const index = tasks.value.findIndex(t => t.id === task.id)
+    if (index !== -1) {
+      tasks.value[index] = {
+        ...task,
+        status: 'DONE',
+        completedAt
+      }
+    }
+    
+    // Then refresh all tasks to ensure everything is in sync
     await fetchTasks()
   } catch (error) {
     console.error('Failed to update task:', error)
@@ -529,7 +549,7 @@ const completedTasks = computed(() => {
   if (!tasks.value || tasks.value.length === 0) return []
   
   return tasks.value
-    .filter(task => task.status === 'DONE' && task.completedAt)
+    .filter(task => task.status === 'DONE')
     // Sort by completion date (most recent first)
     .sort((a, b) => {
       if (!a.completedAt) return 1
@@ -543,7 +563,7 @@ const completedTasks = computed(() => {
 // Reopen a completed task
 async function reopenTask(task: Task) {
   try {
-    const updatedTask = await $fetch<Task>('/api/tasks', {
+    await $fetch<Task>('/api/tasks', {
       method: 'PATCH',
       body: {
         id: task.id,
@@ -552,7 +572,7 @@ async function reopenTask(task: Task) {
       }
     })
     
-    // Refresh all tasks to ensure computed properties update correctly
+    // Refresh tasks to update both lists
     await fetchTasks()
   } catch (error) {
     console.error('Failed to reopen task:', error)
@@ -605,7 +625,7 @@ async function saveTask() {
       }
     })
 
-    // Refresh tasks and close modal
+    // Refresh tasks to update both lists
     await fetchTasks()
     closeEditModal()
   } catch (error) {
