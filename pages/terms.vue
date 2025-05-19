@@ -43,8 +43,6 @@
             
             <p>Our Service allows you to post, store, and share content, including tasks, notes, and other materials ("User Content"). You retain all rights to your User Content, and you are responsible for it.</p>
             
-            <p>By posting User Content, you grant HyperFocusProductivity a license to use, modify, publicly display, reproduce, and distribute such content solely for the purpose of providing and improving the Service.</p>
-            
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-8 mb-4">6. Prohibited Activities</h2>
             
             <p>You agree not to use the Service:</p>
@@ -59,7 +57,7 @@
             
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-8 mb-4">7. Intellectual Property</h2>
             
-            <p>The Service and its original content (excluding User Content), features, and functionality are and will remain the exclusive property of HyperFocusProductivity and its licensors. The Service is protected by copyright, trademark, and other laws.</p>
+            <p>The Service and its original content (excluding User Content), features, and functionality are and will remain the exclusive property of AOSD Ltd and its licensors. The Service is protected by copyright, trademark, and other laws.</p>
             
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-8 mb-4">8. Termination</h2>
             
@@ -67,7 +65,7 @@
             
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-8 mb-4">9. Limitation of Liability</h2>
             
-            <p>In no event shall HyperFocusProductivity, its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, or goodwill, arising out of or in connection with your access to or use of the Service.</p>
+            <p>In no event shall AOSD Ltd, its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, or goodwill, arising out of or in connection with your access to or use of the Service.</p>
             
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-8 mb-4">10. Changes to Terms</h2>
             
@@ -75,9 +73,7 @@
             
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-8 mb-4">11. Contact Us</h2>
             
-            <p>If you have any questions about these Terms, please contact us at:</p>
-            <p class="mb-6">Email: legal@hyperfocusproductivity.com</p>
-            <p>Or visit our <NuxtLink to="/contact" class="text-[var(--primary)] hover:underline">Contact Page</NuxtLink>.</p>
+            <p>If you have any questions about these Terms, please visit our <NuxtLink to="/contact" class="text-[var(--primary)] hover:underline">Contact Page</NuxtLink>.</p>
           </div>
         </div>
       </div>

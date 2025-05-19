@@ -8,7 +8,7 @@
             Start Your Productivity Journey Today
           </h1>
           <p class="text-xl text-[var(--text-secondary)] mb-8">
-            Join thousands of successful professionals who have transformed their work habits with HyperFocusProductivity. Your future self will thank you.
+            Join our many existing users who have transformed their work habits with HyperFocusProductivity. Your future self will thank you.
           </p>
           <div class="bg-[var(--primary-light)] p-6 rounded-lg mb-8">
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-4">
@@ -17,11 +17,11 @@
             <ul class="text-left space-y-3 text-[var(--text-secondary)]">
               <li class="flex items-center">
                 <span class="text-[var(--primary)] mr-2">✓</span>
-                Boost your productivity by up to 40%
+                Boost your productivity by managing tasks and making better use of your time
               </li>
               <li class="flex items-center">
                 <span class="text-[var(--primary)] mr-2">✓</span>
-                Join a community of focused achievers
+                Pomodoro timers are a proven way to increase productivity
               </li>
               <li class="flex items-center">
                 <span class="text-[var(--primary)] mr-2">✓</span>

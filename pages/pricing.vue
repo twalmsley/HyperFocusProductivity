@@ -49,7 +49,7 @@
             <div class="absolute -top-4 right-8 bg-[var(--primary)] text-white text-sm font-bold px-3 py-1 rounded-full">Popular</div>
             <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Basic Plan</h3>
             <p class="text-[var(--text-secondary)] mb-6">Perfect for individual users</p>
-            <div class="text-4xl font-bold text-[var(--text-primary)] mb-6">£10<span class="text-lg text-[var(--text-secondary)]">/month</span></div>
+            <div class="text-4xl font-bold text-[var(--text-primary)] mb-6">£5<span class="text-lg text-[var(--text-secondary)]">/month</span></div>
             <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
               <li class="flex items-start">
                 <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
@@ -77,9 +77,10 @@
 
           <!-- Premium Plan -->
           <div class="bg-white p-8 rounded-lg shadow-md border-t-4 border-[var(--primary-dark)]">
+            <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Coming Soon!</h3>
             <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Premium Plan</h3>
             <p class="text-[var(--text-secondary)] mb-6">For power users who want it all</p>
-            <div class="text-4xl font-bold text-[var(--text-primary)] mb-6">£20<span class="text-lg text-[var(--text-secondary)]">/month</span></div>
+            <div class="text-4xl font-bold text-[var(--text-primary)] mb-6">£10<span class="text-lg text-[var(--text-secondary)]">/month</span></div>
             <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
               <li class="flex items-start">
                 <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
@@ -135,10 +136,6 @@
             <p class="text-[var(--text-secondary)]">At the end of your free trial, you'll need to choose a paid plan to continue using HyperFocusProductivity. We'll send you a reminder before your trial expires.</p>
           </div>
           
-          <div class="bg-white p-6 rounded-lg shadow-sm">
-            <h3 class="text-xl font-bold text-[var(--text-primary)] mb-2">Do you offer refunds?</h3>
-            <p class="text-[var(--text-secondary)]">Yes, we offer a 30-day money-back guarantee if you're not satisfied with our service.</p>
-          </div>
         </div>
       </div>
     </section>

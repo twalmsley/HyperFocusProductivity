@@ -36,7 +36,7 @@
               <li>Name and email address</li>
               <li>Username and password</li>
               <li>Profile information</li>
-              <li>Payment information (processed securely through our payment processors)</li>
+              <li>Payment information (processed securely through our payment processors, not stored on our servers)</li>
               <li>Task and productivity data</li>
               <li>Communication preferences</li>
             </ul>
@@ -96,9 +96,7 @@
             
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-8 mb-4">Contact Us</h2>
             
-            <p>If you have questions or concerns about this Privacy Policy, please contact us at:</p>
-            <p class="mb-6">Email: privacy@hyperfocusproductivity.com</p>
-            <p>Or visit our <NuxtLink to="/contact" class="text-[var(--primary)] hover:underline">Contact Page</NuxtLink>.</p>
+            <p>If you have questions or concerns about this Privacy Policy, please visit our <NuxtLink to="/contact" class="text-[var(--primary)] hover:underline">Contact Page</NuxtLink>.</p>
           </div>
         </div>
       </div>

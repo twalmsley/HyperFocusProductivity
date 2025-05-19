@@ -34,7 +34,7 @@
           <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Basic Plan</h2>
           <p class="text-[var(--text-secondary)] mb-6">Perfect for individual users</p>
           <p class="text-4xl font-bold text-[var(--text-primary)] mb-6">
-            £10<span class="text-lg text-[var(--text-secondary)]">/month</span>
+            £5<span class="text-lg text-[var(--text-secondary)]">/month</span>
           </p>
           <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
             <li class="flex items-start">
@@ -68,7 +68,7 @@
           <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">Premium Plan</h2>
           <p class="text-[var(--text-secondary)] mb-6">For power users who want it all</p>
           <p class="text-4xl font-bold text-[var(--text-primary)] mb-6">
-            £20<span class="text-lg text-[var(--text-secondary)]">/month</span>
+            £10<span class="text-lg text-[var(--text-secondary)]">/month</span>
           </p>
           <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
             <li class="flex items-start">

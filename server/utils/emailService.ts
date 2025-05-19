@@ -62,7 +62,7 @@ interface ContactFormData {
 export async function sendContactEmail(data: ContactFormData) {
   const mailOptions = {
     from: process.env.SMTP_USER,
-    to: process.env.CONTACT_EMAIL || 'support@hyperfocusproductivity.com',
+    to: process.env.CONTACT_EMAIL,
     subject: `Contact Form: ${data.subject}`,
     html: `
       <h2>New Contact Form Submission</h2>

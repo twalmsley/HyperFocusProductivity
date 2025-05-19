@@ -12,7 +12,7 @@
             Break free from procrastination and overwhelm.
           </p>
           <p class="text-xl text-muted max-w-2xl mx-auto mb-8">
-            HyperFocus helps you stay productive with smart time management and distraction blocking.
+            HyperFocus helps you stay productive with smart time management and tools to help you stay focused.
           </p>
           <div class="flex justify-center gap-4">
             <NuxtLink to="/signup" class="inline-block">
@@ -46,21 +46,21 @@
               <span class="text-primary text-2xl">⏱️</span>
             </div>
             <h3 class="text-xl font-semibold mb-2">Smart Pomodoro Timer</h3>
-            <p class="text-muted">Customizable work and break intervals with smart notifications to keep you on track.</p>
+            <p class="text-muted">Customizable work and break intervals with notifications to keep you on track.</p>
+          </div>
+          <div class="bg-bg p-6 rounded-xl">
+            <div class="w-12 h-12 bg-primary bg-opacity-10 rounded-lg flex items-center justify-center mb-4">
+              <span class="text-primary text-2xl">📝</span>
+            </div>
+            <h3 class="text-xl font-semibold mb-2">Task Management</h3>
+            <p class="text-muted">Create, edit, and delete tasks to help you stay on track.</p>
           </div>
           <div class="bg-bg p-6 rounded-xl">
             <div class="w-12 h-12 bg-primary bg-opacity-10 rounded-lg flex items-center justify-center mb-4">
               <span class="text-primary text-2xl">📊</span>
             </div>
             <h3 class="text-xl font-semibold mb-2">Detailed Analytics</h3>
-            <p class="text-muted">Track your productivity patterns and get insights to improve your workflow.</p>
-          </div>
-          <div class="bg-bg p-6 rounded-xl">
-            <div class="w-12 h-12 bg-primary bg-opacity-10 rounded-lg flex items-center justify-center mb-4">
-              <span class="text-primary text-2xl">🚫</span>
-            </div>
-            <h3 class="text-xl font-semibold mb-2">Distraction Blocker</h3>
-            <p class="text-muted">Block distracting websites and apps during your focus sessions.</p>
+            <p class="text-muted">Coming soon: Track your productivity patterns and get insights to improve your workflow.</p>
           </div>
         </div>
       </div>
@@ -72,22 +72,22 @@
         <h2 class="text-3xl font-bold text-center text-text mb-16">How It Works</h2>
         <div class="grid md:grid-cols-3 gap-8">
           <div class="text-center">
-            <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-              <span class="text-white text-2xl">1</span>
+            <div class="w-48 h-48 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+              <span><img src="/set_goals.png" alt="Task Management" class="w-full h-auto object-contain"></span>
             </div>
             <h3 class="text-xl font-semibold mb-2">Set Your Goals</h3>
             <p class="text-muted">Break down your tasks into manageable chunks and set your focus duration.</p>
           </div>
           <div class="text-center">
-            <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-              <span class="text-white text-2xl">2</span>
+            <div class="w-48 h-48 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+              <span><img src="/work_on_task.png" alt="Task Management" class="w-full h-auto object-contain"></span>
             </div>
             <h3 class="text-xl font-semibold mb-2">Start Your Session</h3>
-            <p class="text-muted">Begin your focused work period with our smart timer and distraction blocking.</p>
+            <p class="text-muted">Begin your focused work period with our smart timer.</p>
           </div>
           <div class="text-center">
-            <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-              <span class="text-white text-2xl">3</span>
+            <div class="w-48 h-48 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+              <span><img src="/review_tasks.png" alt="Task Management" class="w-full h-auto object-contain"></span>
             </div>
             <h3 class="text-xl font-semibold mb-2">Track Progress</h3>
             <p class="text-muted">Review your productivity metrics and improve your workflow over time.</p>
@@ -96,34 +96,6 @@
       </div>
     </section>
 
-    <!-- Testimonials -->
-    <section class="py-24 bg-bg-dark">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl font-bold text-center text-text mb-16">What Our Users Say</h2>
-        <div class="grid md:grid-cols-2 gap-8">
-          <div class="bg-bg p-6 rounded-xl">
-            <p class="text-muted mb-4">"HyperFocus has completely transformed how I work. I'm now able to complete tasks that used to take days in just hours."</p>
-            <div class="flex items-center">
-              <div class="w-12 h-12 bg-muted rounded-full mr-4"></div>
-              <div>
-                <h4 class="font-semibold">Sarah Johnson</h4>
-                <p class="text-sm text-muted">Software Developer</p>
-              </div>
-            </div>
-          </div>
-          <div class="bg-bg p-6 rounded-xl">
-            <p class="text-muted mb-4">"The distraction blocking feature is a game-changer. I've never been more productive in my life."</p>
-            <div class="flex items-center">
-              <div class="w-12 h-12 bg-muted rounded-full mr-4"></div>
-              <div>
-                <h4 class="font-semibold">Michael Chen</h4>
-                <p class="text-sm text-muted">Content Writer</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- FAQ Section -->
     <section class="py-24">
@@ -146,43 +118,6 @@
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-bg-dark py-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid md:grid-cols-4 gap-8">
-          <div>
-            <h3 class="text-xl font-bold text-text mb-4">HyperFocus</h3>
-            <p class="text-muted">Your personal productivity companion</p>
-          </div>
-          <div>
-            <h4 class="font-semibold mb-4">Product</h4>
-            <ul class="space-y-2">
-              <li><a href="#" class="text-muted hover:text-primary">Features</a></li>
-              <li><a href="#" class="text-muted hover:text-primary">Pricing</a></li>
-              <li><a href="#" class="text-muted hover:text-primary">FAQ</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 class="font-semibold mb-4">Company</h4>
-            <ul class="space-y-2">
-              <li><a href="#" class="text-muted hover:text-primary">About</a></li>
-              <li><a href="#" class="text-muted hover:text-primary">Contact</a></li>
-              <li><a href="#" class="text-muted hover:text-primary">Blog</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 class="font-semibold mb-4">Legal</h4>
-            <ul class="space-y-2">
-              <li><a href="#" class="text-muted hover:text-primary">Privacy Policy</a></li>
-              <li><a href="#" class="text-muted hover:text-primary">Terms of Service</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="border-t border-muted mt-12 pt-8 text-center">
-          <p class="text-muted">&copy; 2024 HyperFocus. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>
 
