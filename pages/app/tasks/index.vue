@@ -370,6 +370,7 @@
               v-model="editingTask.title"
               type="text"
               required
+              maxlength="200"
               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
             />
           </div>
@@ -412,6 +413,8 @@
               id="notes"
               v-model="editingTask.notes"
               rows="4"
+              maxlength="2000"
+              required
               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
             ></textarea>
           </div>

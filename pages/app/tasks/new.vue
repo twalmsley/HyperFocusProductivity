@@ -21,29 +21,7 @@
                 id="title"
                 v-model="task.title"
                 type="text"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              />
-            </div>
-
-            <div>
-              <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
-              <textarea
-                id="notes"
-                v-model="task.notes"
-                rows="3"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              ></textarea>
-            </div>
-
-            <div>
-              <label for="estimatedPomodoros" class="block text-sm font-medium text-gray-700">Estimated Pomodoros</label>
-              <input
-                id="estimatedPomodoros"
-                v-model.number="task.estimatedPomodoros"
-                type="number"
-                min="1"
+                maxlength="200"
                 required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
               />
@@ -76,6 +54,30 @@
                 <option value="MEDIUM">Medium</option>
                 <option value="LOW">Low</option>
               </select>
+            </div>
+
+            <div>
+              <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
+              <textarea
+                id="notes"
+                v-model="task.notes"
+                rows="3"
+                required
+                maxlength="2000"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+              ></textarea>
+            </div>
+
+            <div>
+              <label for="estimatedPomodoros" class="block text-sm font-medium text-gray-700">Estimated Pomodoros</label>
+              <input
+                id="estimatedPomodoros"
+                v-model.number="task.estimatedPomodoros"
+                type="number"
+                min="1"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+              />
             </div>
 
             <div>

@@ -60,8 +60,8 @@ export default defineEventHandler(async (event) => {
       return await prisma.task.create({
         data: {
           userId: user.id,
-          title,
-          notes,
+          title: title.slice(0, 200),
+          notes: notes.slice(0, 2000),
           estimatedPomodoros,
           status,
           priority,
@@ -96,6 +96,14 @@ export default defineEventHandler(async (event) => {
           statusCode: 403,
           message: 'Not authorized to update this task'
         })
+      }
+
+      // Truncate title and notes if they are being updated
+      if (updateData.title) {
+        updateData.title = updateData.title.slice(0, 200)
+      }
+      if (updateData.notes) {
+        updateData.notes = updateData.notes.slice(0, 2000)
       }
 
       return await prisma.task.update({
