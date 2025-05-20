@@ -61,13 +61,7 @@
                 <span>{{ feature }}</span>
               </li>
             </ul>
-            <NuxtLink
-              to="/signup"
-              class="block w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-4 rounded-lg transition-colors text-center"
-              :class="plan.isPopular ? 'bg-[var(--primary)]' : 'bg-[var(--primary-dark)]'"
-            >
-              {{ subscription?.status === 'ACTIVE' ? 'Change Plan' : 'Subscribe Now' }}
-            </NuxtLink>
+            
           </div>
         </div>
       </div>
