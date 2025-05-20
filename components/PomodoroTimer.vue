@@ -1,5 +1,6 @@
 <template>
   <div class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
+    <audio ref="bellSound" src="/sounds/bell.mp3" preload="auto"></audio>
     <div class="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
       <div class="flex justify-between items-start mb-4">
         <h3 class="text-xl font-medium text-gray-900">Pomodoro Timer</h3>
@@ -138,6 +139,7 @@ const timeRemaining = ref(props.focusDuration * 60)
 const currentRound = ref(1)
 const currentPhase = ref('Focus')
 const timerInterval = ref<number | null>(null)
+const bellSound = ref<HTMLAudioElement | null>(null)
 
 // Calculate remaining rounds based on total and already completed
 const totalRemainingRounds = computed(() => {
@@ -212,7 +214,19 @@ function pauseTimer() {
   }
 }
 
+async function playBellSound() {
+  if (bellSound.value) {
+    for (let i = 0; i < 3; i++) {
+      bellSound.value.currentTime = 0
+      await bellSound.value.play()
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+  }
+}
+
 function handlePhaseComplete() {
+  playBellSound()
+  
   if (currentPhase.value === 'Focus') {
     emit('update:completedPomodoros', props.completedPomodoros + 1)
     
