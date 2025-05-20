@@ -103,31 +103,13 @@
                   <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex justify-end space-x-2">
                       <button 
-                        @click="editTask(task)"
+                        @click="viewTask(task)"
                         class="text-gray-400 hover:text-[var(--primary)]"
-                        title="Edit Task"
+                        title="View Task"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                      </button>
-                      <button 
-                        @click="markInProgress(task)"
-                        v-if="task.status === 'BACKLOG'"
-                        class="text-gray-400 hover:text-blue-600"
-                        title="Mark as In Progress"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
-                        </svg>
-                      </button>
-                      <button 
-                        @click="markDone(task)"
-                        class="text-gray-400 hover:text-green-600"
-                        title="Mark as Done"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
                         </svg>
                       </button>
                     </div>
@@ -191,15 +173,16 @@
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex justify-end">
-                    <button 
-                      @click="reopenTask(task)"
-                      class="text-gray-400 hover:text-blue-600"
-                      title="Reopen Task"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-                      </svg>
-                    </button>
+                      <button 
+                        @click="viewTask(task)"
+                        class="text-gray-400 hover:text-[var(--primary)]"
+                        title="View Task"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
                   </div>
                 </td>
               </tr>
@@ -209,12 +192,12 @@
       </div>
     </main>
     
-    <!-- Edit Task Modal -->
-    <div v-if="showEditModal" class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+    <!-- View Task Modal -->
+    <div v-if="showViewModal" class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
       <div class="bg-white/95 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
         <div class="flex justify-between items-start mb-4">
-          <h3 class="text-xl font-medium text-gray-900">Edit Task</h3>
-          <button @click="closeEditModal" class="text-gray-400 hover:text-gray-500">
+          <h3 class="text-xl font-medium text-gray-900">View Task</h3>
+          <button @click="closeViewModal" class="text-gray-400 hover:text-gray-500">
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -224,92 +207,59 @@
         <div class="space-y-4">
           <!-- Title -->
           <div>
-            <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-            <input
-              id="title"
-              v-model="editingTask.title"
-              type="text"
-              required
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <div class="w-full p-2 bg-gray-50 rounded-md border border-gray-200">
+              {{ viewingTask.title }}
+            </div>
           </div>
           
           <!-- Notes -->
           <div>
-            <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea
-              id="notes"
-              v-model="editingTask.notes"
-              rows="3"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            ></textarea>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <div class="w-full p-2 bg-gray-50 rounded-md border border-gray-200 whitespace-pre-wrap">
+              {{ viewingTask.notes }}
+            </div>
           </div>
           
           <!-- Status -->
           <div>
-            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select
-              id="status"
-              v-model="editingTask.status"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            >
-              <option value="BACKLOG">Backlog</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="DONE">Done</option>
-            </select>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <div class="w-full p-2 bg-gray-50 rounded-md border border-gray-200">
+              {{ viewingTask.status ? viewingTask.status.replace('_', ' ') : 'Not set' }}
+            </div>
           </div>
           
           <!-- Priority -->
           <div>
-            <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-            <select
-              id="priority"
-              v-model="editingTask.priority"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            >
-              <option value="URGENT">Urgent</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
-            </select>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+            <div class="w-full p-2 bg-gray-50 rounded-md border border-gray-200">
+              {{ viewingTask.priority }}
+            </div>
           </div>
           
           <!-- Due Date -->
           <div>
-            <label for="dueDate" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-            <input
-              id="dueDate"
-              v-model="editingTask.dueDate"
-              type="date"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+            <div class="w-full p-2 bg-gray-50 rounded-md border border-gray-200">
+              {{ viewingTask.dueDate ? new Date(viewingTask.dueDate).toLocaleDateString() : 'No due date' }}
+            </div>
           </div>
           
           <!-- Estimated Pomodoros -->
           <div>
-            <label for="estimatedPomodoros" class="block text-sm font-medium text-gray-700 mb-1">Estimated Pomodoros</label>
-            <input
-              id="estimatedPomodoros"
-              v-model.number="editingTask.estimatedPomodoros"
-              type="number"
-              min="0"
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Estimated Pomodoros</label>
+            <div class="w-full p-2 bg-gray-50 rounded-md border border-gray-200">
+              {{ viewingTask.estimatedPomodoros || 'Not set' }}
+            </div>
           </div>
         </div>
         
-        <div class="mt-6 flex justify-end space-x-3">
+        <div class="mt-6 flex justify-end">
           <button
-            @click="closeEditModal"
-            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            @click="saveTask"
+            @click="closeViewModal"
             class="px-4 py-2 bg-[var(--primary)] text-white rounded-md shadow-sm text-sm font-medium hover:bg-[var(--button-hover)]"
           >
-            Save Task
+            Close
           </button>
         </div>
       </div>
@@ -579,57 +529,19 @@ async function reopenTask(task: Task) {
   }
 }
 
-// Add state for edit modal
-const showEditModal = ref(false)
-const editingTask = ref<Partial<Task>>({})
+// Add state for view modal
+const showViewModal = ref(false)
+const viewingTask = ref<Partial<Task>>({})
 
-// Function to open edit modal
-function editTask(task: Task) {
-  // Format the date for the input field (YYYY-MM-DD)
-  const formattedTask = {
-    ...task,
-    dueDate: task.dueDate ? new Date(task.dueDate).toISOString().substring(0, 10) : null
-  }
-  editingTask.value = formattedTask
-  showEditModal.value = true
+// Function to open view modal
+function viewTask(task: Task) {
+  viewingTask.value = task
+  showViewModal.value = true
 }
 
-// Function to close edit modal
-function closeEditModal() {
-  showEditModal.value = false
-  editingTask.value = {}
-}
-
-// Function to save edited task
-async function saveTask() {
-  if (!user.value || !editingTask.value.id) return
-
-  try {
-    // Format the date for the API (ISO string)
-    const taskToUpdate = {
-      ...editingTask.value,
-      dueDate: editingTask.value.dueDate ? new Date(editingTask.value.dueDate + 'T00:00:00').toISOString() : null
-    }
-
-    await $fetch<Task>('/api/tasks', {
-      method: 'PATCH',
-      body: {
-        id: taskToUpdate.id,
-        title: taskToUpdate.title,
-        notes: taskToUpdate.notes,
-        status: taskToUpdate.status,
-        priority: taskToUpdate.priority,
-        estimatedPomodoros: taskToUpdate.estimatedPomodoros,
-        dueDate: taskToUpdate.dueDate,
-        completedAt: taskToUpdate.status === 'DONE' ? new Date().toISOString() : null
-      }
-    })
-
-    // Refresh tasks to update both lists
-    await fetchTasks()
-    closeEditModal()
-  } catch (error) {
-    console.error('Failed to update task:', error)
-  }
+// Function to close view modal
+function closeViewModal() {
+  showViewModal.value = false
+  viewingTask.value = {}
 }
 </script> 
