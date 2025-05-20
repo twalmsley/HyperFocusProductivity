@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     },
     {
       id: 'premium',
-      name: 'Premium Plan',
+      name: 'Premium Plan - Coming Soon!',
       description: 'For power users who want it all',
       price: 10,
       type: 'MONTHLY',
