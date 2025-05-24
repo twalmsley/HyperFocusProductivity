@@ -67,7 +67,6 @@
 <script setup lang="ts">
 const user = useState('user')
 const router = useRouter()
-const { csrfToken, fetchCsrfToken } = useCsrf()
 
 const showSubscriptionAlert = computed(() => {
   if (!user.value?.subscription) return false

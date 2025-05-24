@@ -605,9 +605,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import SortIndicator from '~/components/SortIndicator.vue'
-import { useAuth } from '~/composables/useAuth'
 import PomodoroTimer from '~/components/PomodoroTimer.vue'
-import { useCsrf } from '~/composables/useCsrf'
 
 definePageMeta({
   middleware: ['auth', 'subscription']
@@ -626,8 +624,6 @@ interface PomodoroTemplate {
   updatedAt: Date;
 }
 
-const { user, isLoading } = useAuth()
-const { csrfToken, fetchCsrfToken } = useCsrf()
 const templates = ref<PomodoroTemplate[]>([])
 const currentTemplate = ref<Partial<PomodoroTemplate>>({
   focusDuration: 25 * 60,

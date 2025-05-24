@@ -62,8 +62,6 @@ const loading = ref(false)
 
 // Add user state and auth composable
 const user = useState('user')
-const { login } = useAuth()
-const { csrfToken, fetchCsrfToken } = useCsrf()
 
 // Check if user is already logged in
 onMounted(async () => {

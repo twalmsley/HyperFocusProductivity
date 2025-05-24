@@ -268,7 +268,6 @@
 </template>
 
 <script setup lang="ts">
-import { useAuth } from '~/composables/useAuth'
 
 definePageMeta({
   middleware: ['auth', 'subscription']
@@ -289,7 +288,6 @@ interface Task {
   completedAt: string | null;
 }
 
-const { user, isLoading } = useAuth()
 const tasks = ref<Task[]>([])
 const dueTasks = computed(() => {
   if (!tasks.value || tasks.value.length === 0) return []

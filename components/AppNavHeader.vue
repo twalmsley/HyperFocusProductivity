@@ -32,7 +32,6 @@
 </template>
 
 <script setup lang="ts">
-import { useAuth } from '~/composables/useAuth'
 
 const route = useRoute()
 </script> 

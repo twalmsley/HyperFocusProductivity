@@ -135,7 +135,6 @@ const showVerificationModal = ref(false)
 
 // Add user state
 const user = useState('user')
-const { csrfToken, fetchCsrfToken } = useCsrf()
 
 // Check if user is already logged in
 onMounted(async () => {

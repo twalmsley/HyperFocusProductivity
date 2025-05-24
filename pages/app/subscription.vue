@@ -70,7 +70,6 @@
 </template>
 
 <script setup lang="ts">
-import { useCsrf } from '~/composables/useCsrf'
 
 definePageMeta({
   middleware: ['auth']
@@ -89,9 +88,6 @@ interface SubscriptionPlan {
 const subscription = ref(null)
 const plans = ref<SubscriptionPlan[]>([])
 const isLoading = ref(false)
-
-// Get csrf token
-const { csrfToken, fetchCsrfToken } = useCsrf()
 
 // Fetch current user's subscription and plans
 onMounted(async () => {

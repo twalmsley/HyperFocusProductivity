@@ -133,7 +133,6 @@
 </template>
 
 <script setup lang="ts">
-import { useCsrf } from '~/composables/useCsrf'
 
 // Get user state
 const user = useState('user')
@@ -150,9 +149,6 @@ const form = ref({
 const loading = ref(false)
 const success = ref(false)
 const error = ref<string | null>(null)
-
-// CSRF token
-const { csrfToken, fetchCsrfToken } = useCsrf()
 
 // Fetch CSRF token on component mount
 onMounted(async () => {

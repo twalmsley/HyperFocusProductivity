@@ -127,7 +127,6 @@ const user = ref<{
   } | null;
 } | null>(null)
 const router = useRouter()
-const { csrfToken, fetchCsrfToken, withCsrf } = useCsrf()
 
 interface NewTask {
   title: string;

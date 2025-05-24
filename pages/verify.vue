@@ -34,7 +34,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { useCsrf } from '~/composables/useCsrf';
 
 const route = useRoute();
 const token = computed(() => route.query.token as string);
@@ -42,7 +41,6 @@ const token = computed(() => route.query.token as string);
 const status = ref<'verifying' | 'success' | 'error'>('verifying');
 const error = ref('');
 
-const { csrfToken, fetchCsrfToken } = useCsrf();
 
 onMounted(async () => {
   await fetchCsrfToken();

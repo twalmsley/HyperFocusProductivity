@@ -322,8 +322,6 @@
 </template>
 
 <script setup lang="ts">
-import { useAuth } from '~/composables/useAuth'
-import { useCsrf } from '~/composables/useCsrf'
 
 definePageMeta({
   middleware: ['auth', 'subscription']
@@ -338,8 +336,6 @@ interface UserSettings {
   theme: string;
 }
 
-const { user, isLoading: authLoading } = useAuth()
-const { csrfToken, fetchCsrfToken } = useCsrf()
 
 const isLoading = ref(true)
 const isSaving = ref(false)
