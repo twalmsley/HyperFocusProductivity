@@ -124,10 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import AppNavHeader from '~/components/AppNavHeader.vue';
 
-// Get user state
-const user = useState('user')
 </script>
 
 <style>
