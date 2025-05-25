@@ -29,7 +29,6 @@ export default defineNuxtConfig({
     isEnabled: true,
     disableServerSideAuth: false,
     originEnvKey: 'AUTH_ORIGIN',
-    baseURL: 'http://localhost:8888/api/auth',
     globalAppMiddleware: true,
     provider: {
       type: 'authjs',
@@ -38,7 +37,6 @@ export default defineNuxtConfig({
       addDefaultCallbackUrl: '/app'
     },
     sessionRefresh: {
-      enablePeriodically: true,
       enableOnWindowFocus: true,
     }
   },

@@ -1,6 +1,6 @@
 <template>
   <!-- AppNavHeader when user is logged in -->
-  <AppNavHeader v-if="user" />
+  <AppNavHeader/>
   <div class="min-h-screen bg-bg">
     <!-- Hero Section -->
     <section class="relative overflow-hidden">

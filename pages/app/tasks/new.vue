@@ -148,7 +148,6 @@ const task = ref<NewTask>({
 
 // Fetch user data on component mount
 onMounted(async () => {
-  await fetchCsrfToken() // Ensure we have a CSRF token
   
   try {
     const response = await $fetch('/api/auth/me', {

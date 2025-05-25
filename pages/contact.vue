@@ -152,7 +152,6 @@ const error = ref<string | null>(null)
 
 // Fetch CSRF token on component mount
 onMounted(async () => {
-  await fetchCsrfToken()
 })
 
 async function handleSubmit() {

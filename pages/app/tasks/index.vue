@@ -608,7 +608,7 @@ import SortIndicator from '~/components/SortIndicator.vue'
 import PomodoroTimer from '~/components/PomodoroTimer.vue'
 
 definePageMeta({
-  middleware: ['auth', 'subscription']
+  middleware: ['subscription']
 })
 
 interface PomodoroTemplate {
@@ -1016,7 +1016,6 @@ async function fetchTasks() {
 
 // Fetch CSRF token when component mounts
 onMounted(async () => {
-  await fetchCsrfToken()
 })
 
 // Fetch tasks when component mounts and when user changes

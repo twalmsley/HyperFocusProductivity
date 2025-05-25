@@ -43,7 +43,6 @@ const error = ref('');
 
 
 onMounted(async () => {
-  await fetchCsrfToken();
   await verifyToken();
 });
 
@@ -59,7 +58,6 @@ async function verifyToken() {
       method: 'POST',
       body: { token: token.value },
       headers: {
-        'X-CSRF-Token': csrfToken.value || ''
       }
     });
 

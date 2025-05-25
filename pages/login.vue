@@ -65,12 +65,10 @@ const user = useState('user')
 
 // Check if user is already logged in
 onMounted(async () => {
-  await fetchCsrfToken()
   
   try {
     const response = await $fetch('/api/auth/me', {
       headers: {
-        'X-CSRF-Token': csrfToken.value || ''
       }
     })
     if (response) {

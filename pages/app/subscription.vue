@@ -93,12 +93,10 @@ const isLoading = ref(false)
 onMounted(async () => {
   isLoading.value = true
   try {
-    await fetchCsrfToken()
     
     // Fetch user subscription
     const { data: session } = await useFetch('/api/auth/me', {
       headers: {
-        'X-CSRF-Token': csrfToken.value || ''
       }
     })
     
