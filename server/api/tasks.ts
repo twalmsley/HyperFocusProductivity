@@ -1,9 +1,18 @@
+import { getServerSession } from '#auth'
 import { prisma } from '../utils/db'
 import { checkRateLimit } from '../utils/rateLimiter'
 
 export default defineEventHandler(async (event) => {
+  const session = await getServerSession(event)
+  if (!session) {
+    throw createError({
+      statusCode: 401,
+      message: 'Not authenticated'
+    })
+  }
+
   const method = event.method
-  const user = event.context.user
+  const user = session.user
 
   if (!user) {
     throw createError({
@@ -34,7 +43,7 @@ export default defineEventHandler(async (event) => {
           position: 'asc'
         }
       })
-    
+
     case 'POST':
       // Check rate limit for database operations
       await checkRateLimit(ip, 'dbUpdate')
@@ -72,13 +81,13 @@ export default defineEventHandler(async (event) => {
           user: true
         }
       })
-    
+
     case 'PATCH':
       // Check rate limit for database operations
       await checkRateLimit(ip, 'dbUpdate')
 
       const { id, ...updateData } = await readBody(event)
-      
+
       if (!id) {
         throw createError({
           statusCode: 400,
@@ -119,7 +128,7 @@ export default defineEventHandler(async (event) => {
       await checkRateLimit(ip, 'dbUpdate')
 
       const taskId = getQuery(event).id as string
-      
+
       if (!taskId) {
         throw createError({
           statusCode: 400,
@@ -145,7 +154,7 @@ export default defineEventHandler(async (event) => {
           user: true
         }
       })
-    
+
     default:
       throw createError({
         statusCode: 405,

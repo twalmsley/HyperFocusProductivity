@@ -40,20 +40,25 @@ export default NuxtAuthHandler({
     },
     /* on session retrieval */
     async session({ session, token }) {
-      if (session?.user) {
-        const userInDatabase = await prisma.user.findUnique({
-          where: {
-            email: session.user.email as string
-          }
-        })
-        token.sub = userInDatabase?.id;
+      const userId = token.sub;
+
+      const result = {
+        ...session,
+        user: {
+          ...session.user,
+          id: userId
+        }
       }
-      console.log(session)
-      console.log(token)
-      return session
+      return result
   },
   /* on JWT token creation or mutation */
   async jwt({ token, user, account, profile, isNewUser }) {
+    const userInDatabase = await prisma.user.findUnique({
+      where: {
+        email: token.email as string
+      }
+    })
+    token.sub = userInDatabase?.id;
     return token
   }
 }

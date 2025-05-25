@@ -37,12 +37,6 @@
             >
               Login
             </NuxtLink>
-            <NuxtLink 
-              to="/signup" 
-              class="bg-white hover:bg-[var(--primary-light)] text-[var(--primary)] hover:text-[var(--primary)] px-4 py-2 rounded-lg transition-colors"
-            >
-              Sign Up
-            </NuxtLink>
           </template>
         </div>
       </div>

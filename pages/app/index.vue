@@ -269,9 +269,19 @@
 
 <script setup lang="ts">
 
-definePageMeta({
-  middleware: ['auth', 'subscription']
-})
+const {
+  status,
+  data,
+  lastRefreshedAt,
+  getCsrfToken,
+  getProviders,
+  getSession,
+  signIn,
+  signOut
+} = useAuth()
+
+const userSession = await getSession()
+const user = userSession?.user;
 
 interface Task {
   id: string;
@@ -288,6 +298,7 @@ interface Task {
   completedAt: string | null;
 }
 
+const isLoading = ref(false)
 const tasks = ref<Task[]>([])
 const dueTasks = computed(() => {
   if (!tasks.value || tasks.value.length === 0) return []
@@ -428,13 +439,13 @@ async function markDone(task: Task) {
 
 // Fetch tasks on component mount
 async function fetchTasks() {
-  if (!user.value) {
+  if (!user) {
     console.error('No user available for fetching tasks')
     return
   }
   
   try {
-    const response = await $fetch<Task[]>(`/api/tasks?userId=${user.value.id}`)
+    const response = await $fetch<Task[]>(`/api/tasks?userId=${user?.id}`)
     
     // Sanitize and validate tasks
     const sanitizedTasks = response.map(task => {
@@ -471,18 +482,9 @@ async function fetchTasks() {
   }
 }
 
-// Redirect to login if not authenticated
-watch([isLoading, user], ([loading, currentUser]) => {
-  if (!loading && !currentUser) {
-    navigateTo('/login')
-  } else if (!loading && currentUser) {
-    fetchTasks()
-  }
-})
-
 // Fetch templates on component mount
 onMounted(() => {
-  if (user.value) {
+  if (user) {
     fetchTasks()
   }
 })
