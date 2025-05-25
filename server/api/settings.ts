@@ -1,9 +1,18 @@
+import { getServerSession } from '#auth'
 import { prisma } from '../utils/db'
 import { checkRateLimit } from '../utils/rateLimiter'
 
 export default defineEventHandler(async (event) => {
+  const session = await getServerSession(event)
+  if (!session) {
+    throw createError({
+      statusCode: 401,
+      message: 'Not authenticated'
+    })
+  }
+
   const method = event.method
-  const user = event.context.user
+  const user = session.user
 
   if (!user) {
     throw createError({

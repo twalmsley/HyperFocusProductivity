@@ -109,24 +109,20 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({
-  middleware: ['auth']
-})
 
-const user = ref<{
-  id: string;
-  email: string;
-  name: string | null;
-  subscription: {
-    type: string | null;
-    status: string;
-    freeTrialExpiresAt: string;
-    currentPeriodStart: string | null;
-    currentPeriodEnd: string | null;
-    cancelAtPeriodEnd: boolean;
-  } | null;
-} | null>(null)
-const router = useRouter()
+const {
+  status,
+  data,
+  lastRefreshedAt,
+  getCsrfToken,
+  getProviders,
+  getSession,
+  signIn,
+  signOut
+} = useAuth()
+
+const userSession = await getSession()
+const user = userSession?.user;const router = useRouter()
 
 interface NewTask {
   title: string;
@@ -146,23 +142,9 @@ const task = ref<NewTask>({
   dueDate: new Date().toISOString().substring(0, 10)
 })
 
-// Fetch user data on component mount
-onMounted(async () => {
-  
-  try {
-    const response = await $fetch('/api/auth/me', {
-      headers: {
-        'X-CSRF-Token': csrfToken.value || ''
-      }
-    })
-    user.value = response
-  } catch (error) {
-    console.error('Failed to fetch user data:', error)
-  }
-})
 
 async function createTask() {
-  if (!user.value) {
+  if (!user) {
     console.error('User not found')
     return
   }
@@ -180,12 +162,9 @@ async function createTask() {
     await $fetch('/api/tasks', {
       method: 'POST',
       body: {
-        userId: user.value.id,
+        userId: user.id,
         ...task.value,
         dueDate: dueDate
-      },
-      headers: {
-        'X-CSRF-Token': csrfToken.value || ''
       }
     })
     

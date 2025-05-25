@@ -606,10 +606,19 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import SortIndicator from '~/components/SortIndicator.vue'
 import PomodoroTimer from '~/components/PomodoroTimer.vue'
+const {
+  status,
+  data,
+  lastRefreshedAt,
+  getCsrfToken,
+  getProviders,
+  getSession,
+  signIn,
+  signOut
+} = useAuth()
 
-definePageMeta({
-  middleware: ['subscription']
-})
+const userSession = await getSession()
+const user = userSession?.user;const router = useRouter()
 
 interface PomodoroTemplate {
   id: string;
@@ -931,7 +940,7 @@ function sortTasks(column: string) {
 }
 
 async function updateTaskStatus(task: typeof tasks.value[0]) {
-  if (!user.value) return
+  if (!user) return
 
   try {
     const newStatus = task.status === 'BACKLOG' 
@@ -946,9 +955,6 @@ async function updateTaskStatus(task: typeof tasks.value[0]) {
         id: task.id,
         status: newStatus,
         completedAt: newStatus === 'DONE' ? new Date().toISOString() : null
-      },
-      headers: {
-        'X-CSRF-Token': csrfToken.value || ''
       }
     }) as typeof tasks.value[0]
 
@@ -975,16 +981,13 @@ function cancelDelete() {
 
 // Confirm and execute task deletion
 async function confirmDeleteTask() {
-  if (!user.value || !taskToDelete.value) return
+  if (!user || !taskToDelete.value) return
   
   try {
     await $fetch('/api/tasks', {
       method: 'DELETE',
       query: {
         id: taskToDelete.value.id
-      },
-      headers: {
-        'X-CSRF-Token': csrfToken.value || ''
       }
     })
     
@@ -1000,32 +1003,15 @@ async function confirmDeleteTask() {
 
 // Fetch tasks
 async function fetchTasks() {
-  if (!user.value) return
+  if (!user) return
   
   try {
-    const response = await $fetch<Task[]>(`/api/tasks?userId=${user.value.id}`, {
-      headers: {
-        'X-CSRF-Token': csrfToken.value || ''
-      }
-    })
+    const response = await $fetch<Task[]>(`/api/tasks?userId=${user.id}`)
     tasks.value = response
   } catch (error) {
     console.error('Failed to fetch tasks:', error)
   }
 }
-
-// Fetch CSRF token when component mounts
-onMounted(async () => {
-})
-
-// Fetch tasks when component mounts and when user changes
-watch([isLoading, user], ([loading, currentUser]) => {
-  if (!loading && !currentUser) {
-    navigateTo('/login')
-  } else if (!loading && currentUser) {
-    fetchTasks()
-  }
-})
 
 function viewTask(task: Task) {
   selectedTask.value = task
@@ -1053,7 +1039,7 @@ function closeEditModal() {
 }
 
 async function saveTask() {
-  if (!user.value || !editingTask.value.id) return
+  if (!user || !editingTask.value.id) return
 
   try {
     // Format the date for the API (ISO string)
@@ -1073,9 +1059,6 @@ async function saveTask() {
         estimatedPomodoros: taskToUpdate.estimatedPomodoros,
         dueDate: taskToUpdate.dueDate,
         completedAt: taskToUpdate.status === 'DONE' ? new Date().toISOString() : null
-      },
-      headers: {
-        'X-CSRF-Token': csrfToken.value || ''
       }
     })
 
@@ -1103,14 +1086,10 @@ function clearFilters() {
 
 // Fetch user settings
 async function fetchUserSettings() {
-  if (!user.value) return
+  if (!user) return
   
   try {
-    const response = await $fetch('/api/settings', {
-      headers: {
-        'X-CSRF-Token': csrfToken.value || ''
-      }
-    })
+    const response = await $fetch('/api/settings')
     userSettings.value = response || {
       focusDuration: 25,
       shortBreakDuration: 5,
@@ -1141,9 +1120,6 @@ async function updateCompletedPomodoros(value: number) {
       body: {
         id: selectedTask.value.id,
         completedPomodoros: value
-      },
-      headers: {
-        'X-CSRF-Token': csrfToken.value || ''
       }
     }) as Task
 
@@ -1159,8 +1135,9 @@ async function updateCompletedPomodoros(value: number) {
 }
 
 // Fetch user settings when component mounts
-onMounted(() => {
+onMounted(async() => {
   fetchUserSettings()
+  await fetchTasks()
 })
 
 // Add isTaskOverdue helper function
