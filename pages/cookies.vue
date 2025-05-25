@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-[var(--background)]">
     <!-- AppNavHeader when user is logged in -->
-    <AppNavHeader v-if="user" />
+  <AppNavHeader v-if="status === 'authenticated'" />
     <!-- Cookie Policy Header -->
     <section class="bg-[var(--primary-light)] py-16">
       <div class="container mx-auto px-4 text-center">
@@ -75,6 +75,21 @@
 </template>
 
 <script setup lang="ts">
+const {
+  status,
+  data,
+  lastRefreshedAt,
+  getCsrfToken,
+  getProviders,
+  getSession,
+  signIn,
+  signOut
+} = useAuth()
+
+definePageMeta({
+  auth: false
+})
+
 // Get user state
 const user = useState('user')
 </script> 

@@ -1,6 +1,6 @@
 <template>
   <!-- AppNavHeader when user is logged in -->
-  <AppNavHeader/>
+  <AppNavHeader v-if="status === 'authenticated'" />
   <div class="min-h-screen bg-bg">
     <!-- Hero Section -->
     <section class="relative overflow-hidden">
@@ -119,11 +119,24 @@
         </div>
       </div>
     </section>
-
   </div>
 </template>
 
 <script setup lang="ts">
+const {
+  status,
+  data,
+  lastRefreshedAt,
+  getCsrfToken,
+  getProviders,
+  getSession,
+  signIn,
+  signOut
+} = useAuth()
+
+definePageMeta({
+  auth: false
+})
 
 </script>
 

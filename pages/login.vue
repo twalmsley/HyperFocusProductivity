@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-  middleware: ['auth']
+  auth: false
 })
 
 const form = ref({

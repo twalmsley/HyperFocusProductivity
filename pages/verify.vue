@@ -35,10 +35,24 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+const {
+  status,
+  data,
+  lastRefreshedAt,
+  getCsrfToken,
+  getProviders,
+  getSession,
+  signIn,
+  signOut
+} = useAuth()
+
+definePageMeta({
+  auth: false
+})
+
 const route = useRoute();
 const token = computed(() => route.query.token as string);
 
-const status = ref<'verifying' | 'success' | 'error'>('verifying');
 const error = ref('');
 
 
@@ -48,7 +62,6 @@ onMounted(async () => {
 
 async function verifyToken() {
   if (!token.value) {
-    status.value = 'error';
     error.value = 'Verification token is missing';
     return;
   }
@@ -62,19 +75,15 @@ async function verifyToken() {
     });
 
     if (response.success) {
-      status.value = 'success';
     } else {
-      status.value = 'error';
       error.value = 'Verification failed';
     }
   } catch (e: any) {
-    status.value = 'error';
     error.value = e.response?._data?.message || 'An error occurred during verification';
   }
 }
 
 const retryVerification = () => {
-  status.value = 'verifying';
   error.value = '';
   verifyToken();
 };

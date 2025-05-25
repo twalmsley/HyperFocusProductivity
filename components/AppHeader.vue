@@ -17,24 +17,10 @@
 
         <!-- Auth Buttons -->
         <div class="flex items-center space-x-4">
-          <template v-if="user">
+          <template v-if="status === 'authenticated'">
             <div class="flex items-center space-x-4">
-              <span class="text-white">Welcome, {{ user.name }}</span>
+              <span class="text-white">Welcome, {{ data?.user?.name }} </span>
               
-              <!-- Subscription Status -->
-              <NuxtLink 
-                v-if="showSubscriptionAlert"
-                to="/app/subscription" 
-                class="text-yellow-300 hover:text-yellow-200 transition-colors flex items-center"
-              >
-                <span class="mr-1">⚠️</span>
-                <span v-if="user.subscription?.status === 'FREE_TRIAL'">
-                  Trial expires in {{ trialDaysLeft }} days
-                </span>
-                <span v-else>
-                  Subscription needed
-                </span>
-              </NuxtLink>
               
               <button 
                 @click="handleLogout" 
@@ -63,3 +49,19 @@
     </nav>
   </header>
 </template>
+<script lang="ts" setup>
+const {
+  status,
+  data,
+  lastRefreshedAt,
+  getCsrfToken,
+  getProviders,
+  getSession,
+  signIn,
+  signOut
+} = useAuth()
+
+async function handleLogout() {
+  await signOut()
+}
+</script>

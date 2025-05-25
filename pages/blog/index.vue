@@ -71,6 +71,10 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  auth: false
+})
+
 // Get user state
 const user = useState('user')
 </script> 
