@@ -62,6 +62,6 @@ const {
 } = useAuth()
 
 async function handleLogout() {
-  await signOut()
+  await signOut({ callbackUrl: '/' })
 }
 </script>
