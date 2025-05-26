@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-[var(--background)]">
     <!-- AppNavHeader when user is logged in -->
-    <AppNavHeader v-if="user" />
+    <AppNavHeader v-if="status === 'authenticated'" />
     <!-- Hero Section -->
     <section class="bg-[var(--primary-light)] py-20">
       <div class="container mx-auto px-4 text-center">
