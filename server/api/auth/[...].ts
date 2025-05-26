@@ -53,6 +53,15 @@ export default NuxtAuthHandler({
             freeTrialExpiresAt: new Date(new Date().setDate(new Date().getDate() + 14))
           }
         })
+      } else if (subscription.status === 'FREE_TRIAL' && subscription.freeTrialExpiresAt < new Date()) {
+        await prisma.userSubscription.update({
+          where: {
+            id: subscription.id
+          },
+          data: {
+            status: 'EXPIRED'
+          }
+        })
       }
       return true
     },
@@ -63,13 +72,16 @@ export default NuxtAuthHandler({
     /* on session retrieval */
     async session({ session, token }) {
       const userId = token.sub;
+      const subscriptionState = token.subscriptionState;
 
       const result = {
         ...session,
         user: {
           ...session.user,
           id: userId
-        }
+        },
+        subscriptionState: subscriptionState,
+        blocked: token.blocked
       }
       return result
   },
@@ -80,7 +92,14 @@ export default NuxtAuthHandler({
         email: token.email as string
       }
     })
+    const subscription = await prisma.userSubscription.findUnique({
+      where: {
+        userId: userInDatabase?.id
+      }
+    })
     token.sub = userInDatabase?.id;
+    token.subscriptionState = subscription?.status
+    token.blocked = subscription?.status !== 'FREE_TRIAL' && subscription?.status !== 'ACTIVE'
     return token
   }
 }
