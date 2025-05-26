@@ -181,12 +181,12 @@
               </li>
             </ol>
 
-            <div class="bg-[var(--primary-light)] p-8 rounded-lg mt-12">
+            <div v-if="status === 'unauthenticated'" class="bg-[var(--primary-light)] p-8 rounded-lg mt-12">
               <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-4">Ready to Boost Your Productivity?</h3>
               <p class="mb-6">
                 Try HyperFocusProductivity's task planning and Pomodoro features with our 14-day free trial. No credit card required.
               </p>
-              <NuxtLink to="/signup">
+              <NuxtLink to="/login">
                 <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-8 rounded-lg transition-colors">
                   Start Free Trial
                 </button>
@@ -200,6 +200,21 @@
 </template>
 
 <script setup lang="ts">
+const {
+  status,
+  data,
+  lastRefreshedAt,
+  getCsrfToken,
+  getProviders,
+  getSession,
+  signIn,
+  signOut
+} = useAuth()
+
+definePageMeta({
+  auth: false
+})
+
 // Get user state
 const user = useState('user')
 </script> 

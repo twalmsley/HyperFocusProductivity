@@ -15,20 +15,42 @@ export default NuxtAuthHandler({
   callbacks: {
     /* on before signin */
     async signIn({ user, account, profile }) {
-      // Check the user is already in the database
+      // Check if the user has an email
+      if (!user.email) {
+        return false
+      }
+      // Check the user is already in the database and if not, create a new user
       const email = user.email as string;
       const name = user.name as string;
 
-      const userInDatabase = await prisma.user.findUnique({
+      var userInDatabase = await prisma.user.findUnique({
         where: {
           email: email
         }
       })
       if (!userInDatabase) {
-        const newUser = await prisma.user.create({
+        userInDatabase = await prisma.user.create({
           data: {
             email: email,
             name: name,
+          }
+        })
+      }
+      // Check for a subscription and if not, create a new subscription for a free trial
+      const subscription = await prisma.userSubscription.findUnique({
+        where: {
+          userId: userInDatabase.id
+        }
+      })
+      if (!subscription) {
+        const newSubscription = await prisma.userSubscription.create({
+          data: {
+            userId: userInDatabase.id,
+            status: 'FREE_TRIAL',
+            type: 'MONTHLY',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            freeTrialExpiresAt: new Date(new Date().setDate(new Date().getDate() + 14))
           }
         })
       }

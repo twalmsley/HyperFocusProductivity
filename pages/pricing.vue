@@ -37,7 +37,7 @@
                 <span>14 days of unlimited usage</span>
               </li>
             </ul>
-            <NuxtLink to="/signup">
+            <NuxtLink v-if="status === 'unauthenticated'" to="/login">
               <button class="w-full bg-gray-100 hover:bg-gray-200 text-[var(--text-primary)] font-bold py-3 px-4 rounded-lg transition-colors">
                 Start Free Trial
               </button>
@@ -68,7 +68,7 @@
                 <span>Email support</span>
               </li>
             </ul>
-            <NuxtLink to="/signup">
+            <NuxtLink v-if="status === 'unauthenticated'" to="/login">
               <button class="w-full bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-4 rounded-lg transition-colors">
                 Choose Basic
               </button>

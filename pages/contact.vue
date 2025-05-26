@@ -204,10 +204,7 @@ async function handleSubmit() {
   try {
     await $fetch('/api/contact', {
       method: 'POST',
-      body: form.value,
-      headers: {
-        'X-CSRF-Token': csrfToken.value || ''
-      }
+      body: form.value
     })
     
     // Reset form on success

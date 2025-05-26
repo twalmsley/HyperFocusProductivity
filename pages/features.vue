@@ -94,6 +94,23 @@
       </div>
     </section>
 
+    <!-- CTA Section -->
+    <section v-if="status === 'unauthenticated'" class="py-20">
+      <div class="container mx-auto px-4 text-center">
+        <h2 class="text-3xl font-bold text-[var(--text-primary)] mb-6">
+          Ready to boost your productivity?
+        </h2>
+        <p class="text-xl text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto">
+          Join thousands of users who have transformed their work habits with HyperFocusProductivity.
+        </p>
+        <NuxtLink to="/login">
+          <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg">
+            Start Your Free Trial
+          </button>
+        </NuxtLink>
+      </div>
+    </section>
+
     <!-- Upcoming Features -->
     <section class="py-20 bg-[var(--primary-light)]">
       <div class="container mx-auto px-4">
@@ -210,22 +227,6 @@
       </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="py-20">
-      <div class="container mx-auto px-4 text-center">
-        <h2 class="text-3xl font-bold text-[var(--text-primary)] mb-6">
-          Ready to boost your productivity?
-        </h2>
-        <p class="text-xl text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto">
-          Join thousands of users who have transformed their work habits with HyperFocusProductivity.
-        </p>
-        <NuxtLink to="/signup">
-          <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg">
-            Start Your Free Trial
-          </button>
-        </NuxtLink>
-      </div>
-    </section>
   </div>
 </template>
 

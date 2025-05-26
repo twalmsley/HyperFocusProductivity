@@ -52,7 +52,7 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="py-20">
+    <section v-if="status === 'unauthenticated'" class="py-20">
       <div class="container mx-auto px-4 text-center">
         <h2 class="text-3xl font-bold text-[var(--text-primary)] mb-6">
           Ready to boost your productivity?
@@ -60,7 +60,7 @@
         <p class="text-xl text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto">
           Join thousands of users who have transformed their work habits with HyperFocusProductivity.
         </p>
-        <NuxtLink to="/signup">
+        <NuxtLink to="/login">
           <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg">
             Start Your Free Trial
           </button>
@@ -71,6 +71,17 @@
 </template>
 
 <script setup lang="ts">
+const {
+  status,
+  data,
+  lastRefreshedAt,
+  getCsrfToken,
+  getProviders,
+  getSession,
+  signIn,
+  signOut
+} = useAuth()
+
 definePageMeta({
   auth: false
 })

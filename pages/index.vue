@@ -16,8 +16,8 @@
           <p class="text-xl text-muted max-w-2xl mx-auto mb-8">
             HyperFocus helps you stay productive with smart time management and tools to help you stay focused.
           </p>
-          <div class="flex justify-center gap-4">
-            <NuxtLink to="/signup" class="inline-block">
+          <div v-if="status === 'unauthenticated'" class="flex justify-center gap-4">
+            <NuxtLink to="/login" class="inline-block">
               <button class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white font-bold py-3 px-8 rounded-lg transition-colors">
                 Start Free Trial
               </button>
