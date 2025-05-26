@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AppNavHeader />
+    <AppNavHeader v-if="status === 'authenticated'" />
     <div class="min-h-screen bg-[var(--background)] py-12 px-4 sm:px-6 lg:px-8">
       <div class="max-w-7xl mx-auto">
         <!-- Subscription Status -->
@@ -17,13 +17,17 @@
                 {{ formatStatus(subscription.status) }}
               </p>
             </div>
-            <div v-if="subscription.status === 'FREE_TRIAL'">
-              <p class="text-gray-600">Free Trial Expires</p>
-              <p class="font-semibold">{{ formatDate(subscription.freeTrialExpiresAt) }}</p>
+            <div>
+              <p class="text-gray-600">Type</p>
+              <p class="font-semibold">
+                {{ subscription.type }}
+              </p>
             </div>
-            <div v-if="subscription.status === 'ACTIVE'">
-              <p class="text-gray-600">Current Period Ends</p>
-              <p class="font-semibold">{{ formatDate(subscription.currentPeriodEnd) }}</p>
+            <div>
+              <p class="text-gray-600">Level</p>
+              <p class="font-semibold">
+                {{ subscription.level }}
+              </p>
             </div>
           </div>
         </div>
@@ -70,10 +74,17 @@
 </template>
 
 <script setup lang="ts">
-
-definePageMeta({
-  middleware: ['auth']
-})
+const {
+  status,
+  data,
+  lastRefreshedAt,
+  getCsrfToken,
+  getProviders,
+  getSession,
+  signIn,
+  signOut
+} = useAuth()
+const session = await getSession()
 
 interface SubscriptionPlan {
   id: string
@@ -85,7 +96,17 @@ interface SubscriptionPlan {
   isPopular?: boolean
 }
 
-const subscription = ref(null)
+interface Subscription {
+  id: string
+  name: string
+  status: string
+  description: string
+  price: number
+  type: 'MONTHLY' | 'YEARLY'
+  level: 'BASIC' | 'PREMIUM'
+}
+
+const subscription = ref<Subscription | null>(null)
 const plans = ref<SubscriptionPlan[]>([])
 const isLoading = ref(false)
 
@@ -95,12 +116,9 @@ onMounted(async () => {
   try {
     
     // Fetch user subscription
-    const { data: session } = await useFetch('/api/auth/me', {
-      headers: {
-      }
-    })
+    const { data: sub }= await useFetch<Subscription>('/api/subscription/current')
     
-    subscription.value = session.value?.subscription || null
+    subscription.value = sub.value
 
     // Fetch subscription plans
     const { data: plansData } = await useFetch<SubscriptionPlan[]>('/api/subscription/plans')
@@ -113,23 +131,15 @@ onMounted(async () => {
 })
 
 // Format subscription status for display
-const formatStatus = (status: string) => {
+const formatStatus = (status: string):string => {
   const statusMap = {
     'FREE_TRIAL': 'Free Trial',
     'ACTIVE': 'Active',
     'PAST_DUE': 'Past Due',
-    'CANCELED': 'Canceled',
+    'CANCELED': 'Cancelled',
     'EXPIRED': 'Expired'
   }
   return statusMap[status] || status
 }
 
-// Format date for display
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
 </script> 

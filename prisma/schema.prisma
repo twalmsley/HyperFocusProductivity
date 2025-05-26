@@ -58,6 +58,7 @@ model UserSubscription {
   userId            String            @unique
   status            SubscriptionStatus @default(FREE_TRIAL)
   type              SubscriptionType?
+  level             SubscriptionLevel @default(BASIC)
   freeTrialExpiresAt DateTime
   currentPeriodStart DateTime?
   currentPeriodEnd   DateTime?
@@ -117,4 +118,9 @@ enum SubscriptionStatus {
 enum SubscriptionType {
   MONTHLY
   YEARLY
+}
+
+enum SubscriptionLevel {
+  BASIC
+  PREMIUM
 }
