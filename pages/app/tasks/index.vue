@@ -24,493 +24,49 @@
         </div>
 
         <!-- Filter controls -->
-        <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
-          <div class="flex flex-wrap gap-4 items-end">
-            <!-- Search by title/notes -->
-            <div class="flex-1 min-w-[200px]">
-              <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-              <input id="search" v-model="filters.search" type="text" placeholder="Search in title & notes"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
-            </div>
+        <TaskFilters v-model:filters="filters" />
 
-            <!-- Status filter -->
-            <div class="w-40">
-              <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select id="status" v-model="filters.status"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-                <option value="">All Statuses</option>
-                <option value="BACKLOG">Backlog</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="DONE">Done</option>
-              </select>
-            </div>
+        <!-- Task table -->
+        <TaskTable :tasks="paginatedTasks" :total-tasks="tasks.length" :sort-column="sortColumn"
+          :sort-direction="sortDirection" @sort="sortTasks" @view="viewTask" @edit="editTask" @delete="confirmDelete"
+          @update-status="updateTaskStatus" @start-pomodoro="startPomodoro" />
 
-            <!-- Priority filter -->
-            <div class="w-40">
-              <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-              <select id="priority" v-model="filters.priority"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-                <option value="">All Priorities</option>
-                <option value="URGENT">URGENT</option>
-                <option value="HIGH">HIGH</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="LOW">LOW</option>
-              </select>
-            </div>
+        <!-- Pagination -->
+        <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredTasks.length" />
 
-            <!-- Due date filter -->
-            <div>
-              <label for="dueDate" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-              <select id="dueDate" v-model="filters.dueDate"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-                <option value="">All</option>
-                <option value="overdue">Overdue</option>
-                <option value="today">Due Today</option>
-                <option value="week">Due This Week</option>
-                <option value="month">Due This Month</option>
-                <option value="none">No Due Date</option>
-              </select>
-            </div>
+        <!-- Edit Task Modal -->
+        <TaskEditModal v-if="showEditModal" :show="showEditModal" :task="editingTask" @close="closeEditModal"
+          @save="saveTask" />
 
-            <!-- Clear filters button -->
-            <button @click="clearFilters"
-              class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100">
-              Clear Filters
-            </button>
-          </div>
-        </div>
+        <!-- View Task Modal -->
+        <TaskViewModal v-if="showViewModal" :show="showViewModal" :task="selectedTask" @close="closeViewModal" />
 
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div v-if="paginatedTasks.length === 0" class="p-6 text-gray-600">
-            <p v-if="tasks.length === 0">Your tasks will appear here.</p>
-            <p v-else>No tasks match your current filters.</p>
-          </div>
-          <table v-else class="w-full divide-y divide-gray-200 text-sm">
-            <thead class="bg-gray-50">
-              <tr>
-                <th @click="sortTasks('title')" scope="col"
-                  class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-1/4">
-                  Title
-                  <SortIndicator :active="sortColumn === 'title'" :direction="sortDirection" />
-                </th>
-                <th @click="sortTasks('status')" scope="col"
-                  class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[100px]">
-                  Status
-                  <SortIndicator :active="sortColumn === 'status'" :direction="sortDirection" />
-                </th>
-                <th @click="sortTasks('priority')" scope="col"
-                  class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[100px]">
-                  Priority
-                  <SortIndicator :active="sortColumn === 'priority'" :direction="sortDirection" />
-                </th>
-                <th @click="sortTasks('estimatedPomodoros')" scope="col"
-                  class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[100px] hidden sm:table-cell">
-                  Pomodoros
-                  <SortIndicator :active="sortColumn === 'estimatedPomodoros'" :direction="sortDirection" />
-                </th>
-                <th @click="sortTasks('dueDate')" scope="col"
-                  class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[100px]">
-                  Due Date
-                  <SortIndicator :active="sortColumn === 'dueDate'" :direction="sortDirection" />
-                </th>
-                <th scope="col"
-                  class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                  Notes</th>
-                <th scope="col"
-                  class="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[120px]">
-                  Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="task in paginatedTasks" :key="task.id" :class="{
-                'hover:bg-orange-100': task.status === 'BACKLOG',
-                'hover:bg-blue-100': task.status === 'IN_PROGRESS',
-                'hover:bg-green-100': task.status === 'DONE',
-                'bg-orange-50': task.status === 'BACKLOG',
-                'bg-blue-50': task.status === 'IN_PROGRESS',
-                'bg-green-50': task.status === 'DONE',
-                'bg-orange-100': isTaskOverdue(task) && task.status === 'BACKLOG',
-                'bg-blue-100': isTaskOverdue(task) && task.status === 'IN_PROGRESS'
-              }">
-                <td class="px-2 py-2">
-                  <div class="text-xs font-medium text-gray-900 truncate">{{ task.title }}</div>
-                </td>
-                <td class="px-2 py-2">
-                  <span class="px-2 py-1 text-xs rounded-full" :class="{
-                    'bg-yellow-100 text-yellow-800': task.status === 'BACKLOG',
-                    'bg-blue-100 text-blue-800': task.status === 'IN_PROGRESS',
-                    'bg-green-100 text-green-800': task.status === 'DONE'
-                  }">
-                    {{ task.status.replace('_', ' ') }}
-                  </span>
-                </td>
-                <td class="px-2 py-2">
-                  <span class="px-2 py-1 text-xs rounded-full font-medium" :class="{
-                    'bg-red-100 text-red-800': task.priority === 'URGENT',
-                    'bg-orange-100 text-orange-800': task.priority === 'HIGH',
-                    'bg-yellow-100 text-yellow-800': task.priority === 'MEDIUM',
-                    'bg-green-100 text-green-800': task.priority === 'LOW'
-                  }">
-                    {{ task.priority }}
-                  </span>
-                </td>
-                <td class="px-2 py-2 hidden sm:table-cell">
-                  <div class="text-xs flex items-center">
-                    <span :class="{
-                      'text-green-600 font-medium': task.completedPomodoros && task.estimatedPomodoros && task.completedPomodoros >= task.estimatedPomodoros,
-                      'text-orange-500': task.completedPomodoros && task.estimatedPomodoros && task.completedPomodoros < task.estimatedPomodoros,
-                      'text-gray-500': !task.completedPomodoros || !task.estimatedPomodoros
-                    }">
-                      {{ task.completedPomodoros || 0 }}
-                    </span>
-                    <span class="text-gray-400 mx-0.5">/</span>
-                    <span class="text-gray-500">{{ task.estimatedPomodoros || '-' }}</span>
-                  </div>
-                </td>
-                <td class="px-2 py-2">
-                  <div class="text-xs text-gray-500">
-                    {{ task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : '-' }}
-                  </div>
-                </td>
-                <td class="px-2 py-2 hidden sm:table-cell">
-                  <div class="text-xs text-gray-500 truncate">
-                    {{ task.notes || '-' }}
-                  </div>
-                </td>
-                <td class="px-2 py-2 text-right text-xs font-medium">
-                  <div class="flex justify-end space-x-2">
-                    <button
-                      v-if="task.status === 'IN_PROGRESS' && (!task.estimatedPomodoros || task.completedPomodoros < task.estimatedPomodoros)"
-                      @click="startPomodoro(task)" class="text-gray-400 hover:text-[var(--primary)]"
-                      title="Start Pomodoro Timer">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                          clip-rule="evenodd" />
-                      </svg>
-                    </button>
-                    <button @click="viewTask(task)" class="text-gray-400 hover:text-[var(--primary)]"
-                      title="View Details">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                        <path fill-rule="evenodd"
-                          d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                          clip-rule="evenodd" />
-                      </svg>
-                    </button>
-                    <button @click="editTask(task)" class="text-gray-400 hover:text-[var(--primary)]" title="Edit Task">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path
-                          d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                      </svg>
-                    </button>
-                    <button @click="updateTaskStatus(task)" class="text-gray-400 hover:text-[var(--primary)]"
-                      :title="task.status === 'BACKLOG' ? 'Start Task' : task.status === 'IN_PROGRESS' ? 'Complete Task' : 'Reopen Task'">
-                      <svg v-if="task.status === 'BACKLOG'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                        viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                          clip-rule="evenodd" />
-                      </svg>
-                      <svg v-else-if="task.status === 'IN_PROGRESS'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                        viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clip-rule="evenodd" />
-                      </svg>
-                      <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                        fill="currentColor">
-                        <path fill-rule="evenodd"
-                          d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                          clip-rule="evenodd" />
-                      </svg>
-                    </button>
-                    <button @click="confirmDelete(task)" class="text-gray-400 hover:text-red-600" title="Delete Task">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd"
-                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                          clip-rule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <!-- Pagination Controls -->
-        <div class="mt-4 flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-700">Show</span>
-            <select v-model="pageSize"
-              class="rounded-md border-gray-300 text-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-              <option value="20">20</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-              <option value="200">200</option>
-            </select>
-            <span class="text-sm text-gray-700">items per page</span>
-          </div>
+        <!-- Delete Confirmation Modal -->
+        <TaskDeleteModal v-if="showDeleteConfirm" :show="showDeleteConfirm" :task="taskToDelete" @cancel="cancelDelete"
+          @confirm="confirmDeleteTask" />
 
-          <div class="flex items-center space-x-2">
-            <span class="text-sm text-gray-700">
-              Showing {{ paginationStart }} to {{ paginationEnd }} of {{ paginatedTasks.length }} items
-            </span>
-            <div class="flex space-x-1">
-              <button @click="currentPage = 1" :disabled="currentPage === 1" class="px-2 py-1 text-sm rounded-md border"
-                :class="currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'"
-                title="First Page">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd"
-                    d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z"
-                    clip-rule="evenodd" />
-                </svg>
-              </button>
-              <button @click="currentPage--" :disabled="currentPage === 1" class="px-2 py-1 text-sm rounded-md border"
-                :class="currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'"
-                title="Previous Page">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd"
-                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                    clip-rule="evenodd" />
-                </svg>
-              </button>
-              <button v-for="page in displayedPages" :key="page" @click="currentPage = page"
-                class="px-3 py-1 text-sm rounded-md border"
-                :class="currentPage === page ? 'bg-[var(--primary)] text-white' : 'text-gray-700 hover:bg-gray-50'">
-                {{ page }}
-              </button>
-              <button @click="currentPage++" :disabled="currentPage === totalPages"
-                class="px-2 py-1 text-sm rounded-md border"
-                :class="currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'"
-                title="Next Page">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clip-rule="evenodd" />
-                </svg>
-              </button>
-              <button @click="currentPage = totalPages" :disabled="currentPage === totalPages"
-                class="px-2 py-1 text-sm rounded-md border"
-                :class="currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'"
-                title="Last Page">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd"
-                    d="M4.293 15.707a1 1 0 001.414 0l5-5a1 1 0 000-1.414l-5-5a1 1 0 00-1.414 1.414L8.586 10 4.293 14.293a1 1 0 000 1.414zm6 0a1 1 0 001.414 0l5-5a1 1 0 000-1.414l-5-5a1 1 0 00-1.414 1.414L14.586 10l-4.293 4.293a1 1 0 000 1.414z"
-                    clip-rule="evenodd" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+        <!-- Pomodoro Timer Modal -->
+        <PomodoroTimer v-if="showPomodoroTimer" :total-rounds="selectedTask?.estimatedPomodoros || 1"
+          :focus-duration="userSettings?.focusDuration || 25" :short-break-duration="userSettings?.shortBreakDuration || 5"
+          :long-break-duration="userSettings?.longBreakDuration || 15"
+          :long-break-interval="userSettings?.longBreakInterval || 4"
+          :completed-pomodoros="selectedTask?.completedPomodoros || 0" @close="closePomodoroTimer"
+          @update:completed-pomodoros="updateCompletedPomodoros" />
       </div>
     </main>
-
-    <!-- Edit Task Modal -->
-    <div v-if="showEditModal" class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-      <div class="bg-white/95 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
-        <div class="flex justify-between items-start mb-4">
-          <h3 class="text-xl font-medium text-gray-900">Edit Task</h3>
-          <button @click="closeEditModal" class="text-gray-400 hover:text-gray-500">
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <form @submit.prevent="saveTask" class="space-y-4">
-          <!-- Title -->
-          <div>
-            <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
-            <input id="title" v-model="editingTask.title" type="text" required maxlength="200"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
-          </div>
-
-          <!-- Status -->
-          <div>
-            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-            <select id="status" v-model="editingTask.status" required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-              <option value="BACKLOG">Backlog</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="DONE">Done</option>
-            </select>
-          </div>
-
-          <!-- Priority -->
-          <div>
-            <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
-            <select id="priority" v-model="editingTask.priority" required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-              <option value="URGENT">Urgent</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
-            </select>
-          </div>
-
-          <!-- Notes -->
-          <div>
-            <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
-            <textarea id="notes" v-model="editingTask.notes" rows="4" maxlength="2000" required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"></textarea>
-          </div>
-
-          <!-- Estimated Pomodoros -->
-          <div>
-            <label for="estimatedPomodoros" class="block text-sm font-medium text-gray-700">Estimated Pomodoros</label>
-            <input id="estimatedPomodoros" v-model.number="editingTask.estimatedPomodoros" type="number" min="0"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
-          </div>
-
-          <!-- Due Date -->
-          <div>
-            <label for="dueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
-            <input id="dueDate" v-model="editingTask.dueDate" type="date"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
-          </div>
-
-          <!-- Form Actions -->
-          <div class="flex justify-end space-x-4 mt-6">
-            <button type="button" @click="closeEditModal"
-              class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100">
-              Cancel
-            </button>
-            <button type="submit"
-              class="px-4 py-2 bg-[var(--primary)] text-white rounded-md hover:bg-[var(--button-hover)]">
-              Save Changes
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- View Task Modal -->
-    <div v-if="showViewModal" class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-      <div class="bg-white/95 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
-        <div class="flex justify-between items-start mb-4">
-          <h3 class="text-xl font-medium text-gray-900">{{ selectedTask?.title }}</h3>
-          <button @click="closeViewModal" class="text-gray-400 hover:text-gray-500">
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="space-y-4">
-          <!-- Status -->
-          <div>
-            <h4 class="text-sm font-medium text-gray-500">Status</h4>
-            <span class="mt-1 inline-block px-2 py-1 text-sm rounded-full" :class="{
-              'bg-yellow-100 text-yellow-800': selectedTask?.status === 'BACKLOG',
-              'bg-blue-100 text-blue-800': selectedTask?.status === 'IN_PROGRESS',
-              'bg-green-100 text-green-800': selectedTask?.status === 'DONE'
-            }">
-              {{ selectedTask?.status.replace('_', ' ') }}
-            </span>
-          </div>
-
-          <!-- Notes -->
-          <div>
-            <h4 class="text-sm font-medium text-gray-500">Notes</h4>
-            <p class="mt-1 text-gray-900 whitespace-pre-wrap">{{ selectedTask?.notes || 'No notes' }}</p>
-          </div>
-
-          <!-- Details -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <h4 class="text-sm font-medium text-gray-500">Created</h4>
-              <p class="mt-1 text-gray-900">{{ selectedTask?.createdAt ? new
-                Date(selectedTask.createdAt).toISOString().substring(0, 10) : '-' }}</p>
-            </div>
-            <div>
-              <h4 class="text-sm font-medium text-gray-500">Due Date</h4>
-              <p class="mt-1 text-gray-900">{{ selectedTask?.dueDate ? new
-                Date(selectedTask.dueDate).toISOString().substring(0, 10) : 'No due date' }}</p>
-            </div>
-            <div>
-              <h4 class="text-sm font-medium text-gray-500">Estimated Pomodoros</h4>
-              <p class="mt-1 text-gray-900">{{ selectedTask?.estimatedPomodoros || '-' }}</p>
-            </div>
-            <div>
-              <h4 class="text-sm font-medium text-gray-500">Completed Pomodoros</h4>
-              <p class="mt-1 flex items-center">
-                <span :class="{
-                  'text-green-600 font-medium': selectedTask?.completedPomodoros && selectedTask?.estimatedPomodoros && selectedTask?.completedPomodoros >= selectedTask?.estimatedPomodoros,
-                  'text-orange-500': selectedTask?.completedPomodoros && selectedTask?.estimatedPomodoros && selectedTask?.completedPomodoros < selectedTask?.estimatedPomodoros,
-                  'text-gray-900': !selectedTask?.completedPomodoros || !selectedTask?.estimatedPomodoros
-                }">
-                  {{ selectedTask?.completedPomodoros || 0 }}
-                </span>
-                <span v-if="selectedTask?.estimatedPomodoros" class="text-gray-400 mx-1">/</span>
-                <span v-if="selectedTask?.estimatedPomodoros" class="text-gray-900">{{ selectedTask?.estimatedPomodoros
-                  }}</span>
-                <span
-                  v-if="selectedTask?.completedPomodoros && selectedTask?.estimatedPomodoros && selectedTask?.completedPomodoros >= selectedTask?.estimatedPomodoros"
-                  class="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                  Completed
-                </span>
-              </p>
-            </div>
-            <div>
-              <h4 class="text-sm font-medium text-gray-500">Completed</h4>
-              <p class="mt-1 text-gray-900">{{ selectedTask?.completedAt ? new
-                Date(selectedTask.completedAt).toLocaleDateString() : 'Not completed' }}</p>
-            </div>
-          </div>
-
-          <!-- Sessions -->
-          <div v-if="selectedTask?.sessions?.length">
-            <h4 class="text-sm font-medium text-gray-500 mb-2">Pomodoro Sessions</h4>
-            <div class="space-y-2">
-              <div v-for="session in selectedTask.sessions" :key="session.id" class="bg-gray-50 p-3 rounded-lg">
-                <div class="flex justify-between text-sm">
-                  <span class="font-medium">{{ session.type.replace('_', ' ') }}</span>
-                  <span class="text-gray-500">{{ session.durationMinutes }} minutes</span>
-                </div>
-                <div class="text-xs text-gray-500 mt-1">
-                  {{ new Date(session.startTime).toLocaleString() }}
-                </div>
-                <p v-if="session.notes" class="text-sm text-gray-600 mt-1">{{ session.notes }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Confirmation Dialog -->
-    <div v-if="showDeleteConfirm"
-      class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-      <div class="bg-white/95 rounded-lg p-6 max-w-md w-full shadow-xl">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Task</h3>
-        <p class="text-gray-600 mb-6">Are you sure you want to delete the task "{{ taskToDelete?.title }}"?</p>
-        <div class="flex justify-end space-x-4">
-          <button @click="cancelDelete"
-            class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100">
-            No, Cancel
-          </button>
-          <button @click="confirmDeleteTask" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-            Yes, Delete
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Pomodoro Timer Modal -->
-    <PomodoroTimer v-if="showPomodoroTimer" :total-rounds="selectedTask?.estimatedPomodoros || 1"
-      :focus-duration="userSettings?.focusDuration || 25" :short-break-duration="userSettings?.shortBreakDuration || 5"
-      :long-break-duration="userSettings?.longBreakDuration || 15"
-      :long-break-interval="userSettings?.longBreakInterval || 4"
-      :completed-pomodoros="selectedTask?.completedPomodoros || 0" @close="closePomodoroTimer"
-      @update:completed-pomodoros="updateCompletedPomodoros" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import SortIndicator from '~/components/SortIndicator.vue'
 import PomodoroTimer from '~/components/PomodoroTimer.vue'
+import TaskFilters from '~/components/tasks/TaskFilters.vue'
+import TaskTable from '~/components/tasks/TaskTable.vue'
+import TaskPagination from '~/components/tasks/TaskPagination.vue'
+import TaskEditModal from '~/components/tasks/TaskEditModal.vue'
+import TaskViewModal from '~/components/tasks/TaskViewModal.vue'
+import TaskDeleteModal from '~/components/tasks/TaskDeleteModal.vue'
+
 const {
   status,
   data,
@@ -522,74 +78,26 @@ const {
   signOut
 } = useAuth()
 
-const userSession = await getSession()
-const user = userSession?.user; const router = useRouter()
-
-interface PomodoroTemplate {
-  id: string;
-  userId: string;
-  name: string;
-  description: string;
-  focusDuration: number;
-  shortBreakDuration: number;
-  rounds: number;
-  isDefault: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+interface ExtendedSession {
+  user?: {
+    id: string;
+    email?: string | null;
+    name?: string | null;
+    image?: string | null;
+  };
+  blocked?: boolean;
 }
 
-const templates = ref<PomodoroTemplate[]>([])
-const currentTemplate = ref<Partial<PomodoroTemplate>>({
-  focusDuration: 25 * 60,
-  shortBreakDuration: 5 * 60,
-  rounds: 4
-})
+interface ExtendedUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+}
 
-// Storage key for template selection
-const TEMPLATE_STORAGE_KEY = 'pomodoro-selected-template'
-
-// Default templates if we can't fetch from the API yet
-const defaultTemplates: PomodoroTemplate[] = [
-  {
-    id: 'classic',
-    userId: '',
-    name: 'Classic Pomodoro',
-    description: 'Traditional 25/5 pomodoro technique',
-    focusDuration: 25 * 60,
-    shortBreakDuration: 5 * 60,
-    rounds: 4,
-    isDefault: true,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 'long-focus',
-    userId: '',
-    name: 'Long Focus',
-    description: 'Extended focus periods with longer breaks',
-    focusDuration: 50 * 60,
-    shortBreakDuration: 10 * 60,
-    rounds: 3,
-    isDefault: false,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 'short-sessions',
-    userId: '',
-    name: 'Short Sessions',
-    description: 'Quick focus bursts with minimal breaks',
-    focusDuration: 15 * 60,
-    shortBreakDuration: 3 * 60,
-    rounds: 7,
-    isDefault: false,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-]
-
-// Initialize templates with defaults
-templates.value = defaultTemplates
+const userSession = await getSession() as ExtendedSession
+const user = userSession?.user as ExtendedUser | undefined
+const router = useRouter()
 
 type TaskStatus = 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
 
@@ -605,14 +113,8 @@ type Task = {
   completedAt: string | null;
   dueDate: string | null;
   position: number | null;
-  user: {
-    id: string;
-    email: string;
-    name: string | null;
-    createdAt: string;
-    proStatus: boolean;
-  };
-  sessions: Array<{
+  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
+  sessions?: Array<{
     id: string;
     userId: string;
     taskId: string | null;
@@ -622,7 +124,6 @@ type Task = {
     durationMinutes: number;
     notes: string | null;
   }>;
-  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
 const tasks = ref<Task[]>([])
@@ -775,35 +276,6 @@ const paginatedTasks = computed(() => {
   return sortedTasks.value.slice(start, end)
 })
 
-// Computed properties for pagination
-const totalPages = computed(() => Math.ceil(filteredTasks.value.length / pageSize.value))
-
-const paginationStart = computed(() => {
-  if (filteredTasks.value.length === 0) return 0
-  return (currentPage.value - 1) * pageSize.value + 1
-})
-
-const paginationEnd = computed(() => {
-  return Math.min(currentPage.value * pageSize.value, filteredTasks.value.length)
-})
-
-const displayedPages = computed(() => {
-  const pages = []
-  const maxVisiblePages = 5
-  let start = Math.max(1, currentPage.value - Math.floor(maxVisiblePages / 2))
-  let end = Math.min(totalPages.value, start + maxVisiblePages - 1)
-
-  if (end - start + 1 < maxVisiblePages) {
-    start = Math.max(1, end - maxVisiblePages + 1)
-  }
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
-
-  return pages
-})
-
 // Watch for changes that should reset pagination
 watch([filters, sortColumn, sortDirection, pageSize], () => {
   currentPage.value = 1
@@ -811,7 +283,7 @@ watch([filters, sortColumn, sortDirection, pageSize], () => {
 
 // Variables for delete confirmation
 const showDeleteConfirm = ref(false)
-const taskToDelete = ref<typeof tasks.value[0] | null>(null)
+const taskToDelete = ref<Task | null>(null)
 
 // View task modal state
 const showViewModal = ref(false)
@@ -844,7 +316,7 @@ function sortTasks(column: string) {
   }
 }
 
-async function updateTaskStatus(task: typeof tasks.value[0]) {
+async function updateTaskStatus(task: Task) {
   if (!user) return
 
   try {
@@ -861,7 +333,7 @@ async function updateTaskStatus(task: typeof tasks.value[0]) {
         status: newStatus,
         completedAt: newStatus === 'DONE' ? new Date().toISOString() : null
       }
-    }) as typeof tasks.value[0]
+    }) as Task
 
     const index = tasks.value.findIndex(t => t.id === task.id)
     if (index !== -1) {
@@ -873,7 +345,7 @@ async function updateTaskStatus(task: typeof tasks.value[0]) {
 }
 
 // Open delete confirmation dialog
-function confirmDelete(task: typeof tasks.value[0]) {
+function confirmDelete(task: Task) {
   taskToDelete.value = task
   showDeleteConfirm.value = true
 }
@@ -943,15 +415,15 @@ function closeEditModal() {
   editingTask.value = {}
 }
 
-async function saveTask() {
-  if (!user || !editingTask.value.id) return
+async function saveTask(task: Partial<Task>) {
+  if (!user || !task.id) return
 
   try {
     // Format the date for the API (ISO string)
     const taskToUpdate = {
-      ...editingTask.value,
-      dueDate: editingTask.value.dueDate ? new Date(editingTask.value.dueDate).toISOString() : null
-    }
+      ...task,
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : null
+    } as Task
 
     const updatedTask = await $fetch<Task>('/api/tasks', {
       method: 'PATCH',
@@ -976,16 +448,6 @@ async function saveTask() {
     closeEditModal()
   } catch (error) {
     console.error('Failed to update task:', error)
-  }
-}
-
-// Clear all filters
-function clearFilters() {
-  filters.value = {
-    search: '',
-    status: '',
-    priority: '',
-    dueDate: ''
   }
 }
 
@@ -1044,15 +506,4 @@ onMounted(async () => {
   fetchUserSettings()
   await fetchTasks()
 })
-
-// Add isTaskOverdue helper function
-function isTaskOverdue(task: Task): boolean {
-  if (!task.dueDate || task.status === 'DONE') return false
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const dueDate = new Date(task.dueDate)
-
-  return dueDate < today
-}
 </script>
