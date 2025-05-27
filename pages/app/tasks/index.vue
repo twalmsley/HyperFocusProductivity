@@ -35,7 +35,7 @@
         <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredTasks.length" />
 
         <!-- Edit Task Modal -->
-        <TaskEditModal v-if="showEditModal" :show="showEditModal" :task="editingTask" @close="closeEditModal"
+        <TaskEditModal v-if="showEditModal" :show="showEditModal" :task="editingTask as Task" @close="closeEditModal"
           @save="saveTask" />
 
         <!-- View Task Modal -->
@@ -59,6 +59,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { startOfTomorrow, addWeeks, addMonths, parseISO, isBefore, isSameDay, isWithinInterval, startOfToday } from 'date-fns'
 import PomodoroTimer from '~/components/PomodoroTimer.vue'
 import TaskFilters from '~/components/tasks/TaskFilters.vue'
 import TaskTable from '~/components/tasks/TaskTable.vue'
@@ -173,15 +174,9 @@ const filteredTasks = computed(() => {
       // Exclude DONE tasks when filtering by due date
       if (task.status === 'DONE') return false
 
-      var today = new Date()
-      today.setHours(0, 0, 0, 0)
-      today = new Date(today.getTime() + 1000 * 60 * 60 * 24)
-
-      const oneWeekFromNow = new Date(today)
-      oneWeekFromNow.setDate(today.getDate() + 7)
-
-      const oneMonthFromNow = new Date(today)
-      oneMonthFromNow.setMonth(today.getMonth() + 1)
+      const today = startOfToday()
+      const oneWeekFromNow = addWeeks(today, 1)
+      const oneMonthFromNow = addMonths(today, 1)
 
       // Handle no due date case first
       if (filters.value.dueDate === 'none') {
@@ -189,23 +184,20 @@ const filteredTasks = computed(() => {
       } else if (task.dueDate === null) {
         return false
       } else {
-        // Fix date comparison by using the date part only
-        const taskDueDate = new Date(task.dueDate)
-        const dueDateStr = taskDueDate.toISOString().split('T')[0]
-        const todayStr = today.toISOString().split('T')[0]
+        const taskDueDate = parseISO(task.dueDate)
 
         switch (filters.value.dueDate) {
           case 'overdue':
-            if (dueDateStr >= todayStr) return false
+            if (!isBefore(taskDueDate, today)) return false
             break
           case 'today':
-            if (dueDateStr !== todayStr) return false
+            if (!isSameDay(taskDueDate, today)) return false
             break
           case 'week':
-            if (taskDueDate < today || taskDueDate > oneWeekFromNow) return false
+            if (!isWithinInterval(taskDueDate, { start: today, end: oneWeekFromNow })) return false
             break
           case 'month':
-            if (taskDueDate < today || taskDueDate > oneMonthFromNow) return false
+            if (!isWithinInterval(taskDueDate, { start: today, end: oneMonthFromNow })) return false
             break
         }
       }
