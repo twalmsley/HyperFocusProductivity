@@ -53,7 +53,7 @@
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">{{ plan.name }}</h2>
             <p class="text-[var(--text-secondary)] mb-6">{{ plan.description }}</p>
             <p class="text-4xl font-bold text-[var(--text-primary)] mb-6">
-              £{{ plan.price }}<span class="text-lg text-[var(--text-secondary)]">/month</span>
+              £{{ plan.price }}<span class="text-lg text-[var(--text-secondary)]">/{{ plan.type === 'MONTHLY' ? 'month' : 'year' }}</span>
             </p>
             <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
               <li
@@ -103,7 +103,7 @@ interface Subscription {
   description: string
   price: number
   type: 'MONTHLY' | 'YEARLY'
-  level: 'BASIC' | 'PREMIUM'
+  level: 'BASIC' | 'ADVANCED' | 'PREMIUM'
 }
 
 const subscription = ref<Subscription | null>(null)

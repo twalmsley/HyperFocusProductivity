@@ -112,7 +112,7 @@
             <div class="space-y-6">
               <div class="bg-white p-6 rounded-lg shadow-sm">
                 <h3 class="text-lg font-bold text-[var(--text-primary)] mb-2">What's your typical response time?</h3>
-                <p class="text-[var(--text-secondary)]">We aim to respond to all inquiries within 24 hours during business days. For urgent support issues, premium subscribers receive priority assistance.</p>
+                <p class="text-[var(--text-secondary)]">We aim to respond to all inquiries within 24 hours during business days. For urgent support issues, advanced and premium subscribers receive priority assistance.</p>
               </div>
               
               <div class="bg-white p-6 rounded-lg shadow-sm">
