@@ -4,9 +4,9 @@
       backgroundColor: `rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`,
       color: textColor
     }">
-    <div class="flex justify-between items-center">
+    <div class="flex space-x-4 justify-center items-center">
         <div>
-            Workload
+            <span class="font-semibold">Workload</span>
         </div>
       <div>
         <span class="font-semibold">{{ totalTasks }}</span> tasks

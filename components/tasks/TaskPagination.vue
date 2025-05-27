@@ -4,6 +4,8 @@
       <span class="text-sm text-gray-700">Show</span>
       <select v-model="localPageSize" @change="$emit('update:pageSize', localPageSize)"
         class="rounded-md border-gray-300 text-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
+        <option value="5">5</option>
+        <option value="10">10</option>
         <option value="20">20</option>
         <option value="50">50</option>
         <option value="100">100</option>
