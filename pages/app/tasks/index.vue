@@ -29,7 +29,7 @@
         <!-- Task table -->
         <TaskTable :tasks="paginatedTasks" :total-tasks="tasks.length" :sort-column="sortColumn"
           :sort-direction="sortDirection" @sort="sortTasks" @view="viewTask" @edit="editTask" @delete="confirmDelete"
-          @update-status="updateTaskStatus" @start-pomodoro="startPomodoro" />
+          @update-status="updateTaskStatus" @start-pomodoro="startPomodoro" @extend-due-date="extendDueDate" />
 
         <!-- Pagination -->
         <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredTasks.length" />
@@ -490,6 +490,34 @@ async function updateCompletedPomodoros(value: number) {
     selectedTask.value = updatedTask
   } catch (error) {
     console.error('Failed to update completed pomodoros:', error)
+  }
+}
+
+// Add the extendDueDate function before the onMounted hook
+async function extendDueDate(task: Task) {
+  if (!user || !task.dueDate) return
+
+  try {
+    // Add one day to the current due date
+    const currentDueDate = new Date(task.dueDate)
+    const newDueDate = new Date(currentDueDate)
+    newDueDate.setDate(newDueDate.getDate() + 1)
+
+    const updatedTask = await $fetch('/api/tasks', {
+      method: 'PATCH',
+      body: {
+        id: task.id,
+        dueDate: newDueDate.toISOString()
+      }
+    }) as Task
+
+    // Update the task in the local state
+    const index = tasks.value.findIndex(t => t.id === updatedTask.id)
+    if (index !== -1) {
+      tasks.value[index] = updatedTask
+    }
+  } catch (error) {
+    console.error('Failed to extend due date:', error)
   }
 }
 
