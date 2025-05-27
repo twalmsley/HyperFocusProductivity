@@ -29,6 +29,9 @@
                 {{ subscription.level }}
               </p>
             </div>
+            <button class="bg-[var(--primary)] text-white px-4 py-2 rounded-md">
+              Manage Subscription
+            </button>
           </div>
         </div>
 
@@ -65,7 +68,11 @@
                 <span>{{ feature }}</span>
               </li>
             </ul>
-            
+           <div class="flex justify-center">
+            <button v-if="subscription?.planId === plan.id" class="bg-[var(--primary)] text-white px-4 py-2 rounded-md">
+              Current Plan
+            </button>
+           </div> 
           </div>
         </div>
       </div>

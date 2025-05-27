@@ -59,6 +59,7 @@ model UserSubscription {
   status            SubscriptionStatus @default(FREE_TRIAL)
   type              SubscriptionType?
   level             SubscriptionLevel @default(BASIC)
+  planId            String?
   freeTrialExpiresAt DateTime
   currentPeriodStart DateTime?
   currentPeriodEnd   DateTime?
