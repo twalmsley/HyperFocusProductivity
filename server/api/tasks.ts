@@ -1,6 +1,5 @@
 import { getServerSession } from '#auth'
 import { prisma } from '../utils/db'
-import { checkRateLimit } from '../utils/rateLimiter'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -45,8 +44,6 @@ export default defineEventHandler(async (event) => {
       })
 
     case 'POST':
-      // Check rate limit for database operations
-      await checkRateLimit(ip, 'dbUpdate')
 
       const body = await readBody(event)
       const { title, notes, estimatedPomodoros, status = 'BACKLOG', dueDate, priority = 'MEDIUM' } = body
@@ -83,8 +80,6 @@ export default defineEventHandler(async (event) => {
       })
 
     case 'PATCH':
-      // Check rate limit for database operations
-      await checkRateLimit(ip, 'dbUpdate')
 
       const { id, ...updateData } = await readBody(event)
 
@@ -124,8 +119,6 @@ export default defineEventHandler(async (event) => {
       })
 
     case 'DELETE':
-      // Check rate limit for database operations
-      await checkRateLimit(ip, 'dbUpdate')
 
       const taskId = getQuery(event).id as string
 

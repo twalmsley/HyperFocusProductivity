@@ -1,5 +1,4 @@
 import { sendContactEmail } from '../utils/emailService'
-import { checkRateLimit } from '../utils/rateLimiter'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -11,9 +10,6 @@ export default defineEventHandler(async (event) => {
         message: 'Could not determine client IP'
       })
     }
-
-    // Check rate limit for email sending
-    await checkRateLimit(ip, 'email')
 
     const body = await readBody(event)
     const { name, email, subject, message } = body

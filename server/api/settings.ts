@@ -1,6 +1,5 @@
 import { getServerSession } from '#auth'
 import { prisma } from '../utils/db'
-import { checkRateLimit } from '../utils/rateLimiter'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -38,8 +37,6 @@ export default defineEventHandler(async (event) => {
       })
 
       if (!settings) {
-        // Check rate limit for database operations
-        await checkRateLimit(ip, 'dbUpdate')
         
         settings = await prisma.userSettings.create({
           data: {
@@ -55,9 +52,6 @@ export default defineEventHandler(async (event) => {
       return settings
 
     case 'PATCH':
-      // Check rate limit for database operations
-      await checkRateLimit(ip, 'dbUpdate')
-
       const updateData = await readBody(event)
       
       return await prisma.userSettings.update({

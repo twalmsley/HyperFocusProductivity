@@ -31,6 +31,9 @@
           :sort-direction="sortDirection" @sort="sortTasks" @view="viewTask" @edit="editTask" @delete="confirmDelete"
           @update-status="updateTaskStatus" @start-pomodoro="startPomodoro" @extend-due-date="extendDueDate" />
 
+        <!-- Task Stats -->
+        <TaskStats :tasks="filteredTasks" />
+
         <!-- Pagination -->
         <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredTasks.length" />
 
@@ -67,6 +70,7 @@ import TaskPagination from '~/components/tasks/TaskPagination.vue'
 import TaskEditModal from '~/components/tasks/TaskEditModal.vue'
 import TaskViewModal from '~/components/tasks/TaskViewModal.vue'
 import TaskDeleteModal from '~/components/tasks/TaskDeleteModal.vue'
+import TaskStats from '~/components/tasks/TaskStats.vue'
 
 const {
   status,
