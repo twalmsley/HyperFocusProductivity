@@ -27,20 +27,20 @@ export default defineEventHandler(async (event) => {
       ],
       isPopular: true
     },
-    {
-      id: 'hyper-advanced-yearly',
-      name: 'Advanced Plan - Coming Soon!',
-      description: 'For power users who want it all',
-      price: 112,
-      type: 'YEARLY',
-      features: [
-        'Everything in Basic',
-        'Advanced analytics and insights',
-        'Team collaboration features',
-        'Priority support',
-        'Early access to new features'
-      ]
-    },
+    // {
+    //   id: 'hyper-advanced-yearly',
+    //   name: 'Advanced Plan - Coming Soon!',
+    //   description: 'For power users who want it all',
+    //   price: 112,
+    //   type: 'YEARLY',
+    //   features: [
+    //     'Everything in Basic',
+    //     'Advanced analytics and insights',
+    //     'Team collaboration features',
+    //     'Priority support',
+    //     'Early access to new features'
+    //   ]
+    // },
     {
       id: 'hyper-basic-monthly',
       name: 'Basic Plan',
@@ -55,20 +55,20 @@ export default defineEventHandler(async (event) => {
       ],
       isPopular: true
     },
-    {
-      id: 'hyper-advanced-monthly',
-      name: 'Advanced Plan - Coming Soon!',
-      description: 'For power users who want it all',
-      price: 14,
-      type: 'MONTHLY',
-      features: [
-        'Everything in Basic',
-        'Advanced analytics and insights',
-        'Team collaboration features',
-        'Priority support',
-        'Early access to new features'
-      ]
-    },
+    // {
+    //   id: 'hyper-advanced-monthly',
+    //   name: 'Advanced Plan - Coming Soon!',
+    //   description: 'For power users who want it all',
+    //   price: 14,
+    //   type: 'MONTHLY',
+    //   features: [
+    //     'Everything in Basic',
+    //     'Advanced analytics and insights',
+    //     'Team collaboration features',
+    //     'Priority support',
+    //     'Early access to new features'
+    //   ]
+    // },
   ]
 
   return plans
