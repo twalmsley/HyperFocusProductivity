@@ -1,6 +1,8 @@
 import GithubProvider from 'next-auth/providers/github'
-import CredentialsProvider from 'next-auth/providers/credentials'
 import { NuxtAuthHandler } from '#auth'
+import Stripe from 'stripe'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY : '')
 
 export default NuxtAuthHandler({
   // A secret string you define, to ensure correct encryption
@@ -43,11 +45,14 @@ export default NuxtAuthHandler({
         }
       })
       if (!subscription) {
+        const customer = await stripe.customers.create({ email: user.email })
+
         const newSubscription = await prisma.userSubscription.create({
           data: {
             userId: userInDatabase.id,
             status: 'FREE_TRIAL',
             type: 'MONTHLY',
+            stripeCustomerId: customer.id,
             createdAt: new Date(),
             updatedAt: new Date(),
             freeTrialExpiresAt: new Date(new Date().setDate(new Date().getDate() + 14))

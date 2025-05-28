@@ -61,11 +61,7 @@ model UserSubscription {
   level             SubscriptionLevel @default(BASIC)
   planId            String?
   freeTrialExpiresAt DateTime
-  currentPeriodStart DateTime?
-  currentPeriodEnd   DateTime?
-  stripeCustomerId   String?
-  stripeSubscriptionId String?
-  cancelAtPeriodEnd  Boolean          @default(false)
+  stripeCustomerId   String?          @unique
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 

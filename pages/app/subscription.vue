@@ -41,6 +41,35 @@
         </div>
 
         <!-- Subscription Plans -->
+        <div v-if="subscription?.planId" class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div
+            v-for="plan in plans.filter(p => p.id === subscription.planId)" 
+            :key="plan.id"
+            class="bg-white p-8 rounded-lg shadow-md border-t-4 border-[var(--primary)]"
+          >
+            <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">{{ plan.name }}</h2>
+            <p class="text-[var(--text-secondary)] mb-6">{{ plan.description }}</p>
+            <p class="text-4xl font-bold text-[var(--text-primary)] mb-6">
+              £{{ plan.price }}<span class="text-lg text-[var(--text-secondary)]">/{{ plan.type === 'MONTHLY' ? 'month' : 'year' }}</span>
+            </p>
+            <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
+              <li
+                v-for="feature in plan.features"
+                :key="feature"
+                class="flex items-start"
+              >
+                <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
+                <span>{{ feature }}</span>
+              </li>
+            </ul>
+            <div class="flex justify-center">
+              <button class="bg-green-500 text-black px-4 py-2 rounded-md">
+                Current Plan
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           <div
             v-for="plan in plans"
@@ -68,11 +97,11 @@
                 <span>{{ feature }}</span>
               </li>
             </ul>
-           <div class="flex justify-center">
-            <button v-if="subscription?.planId === plan.id" class="bg-[var(--primary)] text-white px-4 py-2 rounded-md">
-              Current Plan
-            </button>
-           </div> 
+            <div class="flex justify-center">
+              <button class="bg-[var(--primary)] text-white px-4 py-2 rounded-md" @click="handleSubscribe(plan.id)">
+                Subscribe
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -147,6 +176,14 @@ const formatStatus = (status: string):string => {
     'EXPIRED': 'Expired'
   }
   return statusMap[status] || status
+}
+
+const handleSubscribe = async (planId: string) => {
+  const { data: checkoutSession } = await useFetch('/api/stripe/checkout', {
+    method: 'POST',
+    body: { lookup_key: planId }
+  })
+  window.location.href = checkoutSession.value?.url || ''
 }
 
 </script> 

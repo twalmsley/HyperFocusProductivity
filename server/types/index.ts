@@ -10,7 +10,6 @@ export interface UserSubscription {
   currentPeriodStart?: Date | null
   currentPeriodEnd?: Date | null
   stripeCustomerId?: string | null
-  stripeSubscriptionId?: string | null
   cancelAtPeriodEnd: boolean
   createdAt: Date
   updatedAt: Date

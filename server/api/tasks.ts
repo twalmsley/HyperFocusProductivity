@@ -20,15 +20,6 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Get client IP for rate limiting
-  const ip = getRequestIP(event, { xForwardedFor: true })
-  if (!ip) {
-    throw createError({
-      statusCode: 400,
-      message: 'Could not determine client IP'
-    })
-  }
-
   switch (method) {
     case 'GET':
       return await prisma.task.findMany({
