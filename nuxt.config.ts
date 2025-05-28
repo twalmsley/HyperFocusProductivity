@@ -11,6 +11,9 @@ export default defineNuxtConfig({
     ],
     css: {
       devSourcemap: true
+    },
+    server: {
+        allowedHosts: ['immune-glowing-flea.ngrok-free.app']
     }
   },
   modules: [
@@ -29,13 +32,13 @@ export default defineNuxtConfig({
     isEnabled: true,
     disableServerSideAuth: false,
     originEnvKey: 'AUTH_ORIGIN',
-    baseURL: 'http://localhost:8888/api/auth',
+    baseURL: 'https://immune-glowing-flea.ngrok-free.app/api/auth',
     globalAppMiddleware: true,
     provider: {
       type: 'authjs',
       trustHost: false,
       defaultProvider: 'github',
-      addDefaultCallbackUrl: '/app'
+      addDefaultCallbackUrl: true
     },
     sessionRefresh: {
       enableOnWindowFocus: true,

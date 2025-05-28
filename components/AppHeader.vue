@@ -32,7 +32,7 @@
           </template>
           <template v-else>
             <NuxtLink 
-              to="/login" 
+              @click="handleLogin"
               class="text-white hover:text-[var(--primary-light)] transition-colors"
             >
               Login
@@ -57,5 +57,9 @@ const {
 
 async function handleLogout() {
   await signOut({ callbackUrl: '/' })
+}
+
+async function handleLogin() {
+  await signIn(undefined, { callbackUrl: '/app' })
 }
 </script>

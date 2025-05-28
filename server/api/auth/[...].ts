@@ -67,7 +67,7 @@ export default NuxtAuthHandler({
     },
     /* on redirect to another url */
     async redirect({ url, baseUrl }) {
-      return `${baseUrl}/app`
+      return url
     },
     /* on session retrieval */
     async session({ session, token }) {
