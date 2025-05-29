@@ -19,11 +19,12 @@ RUN yarn add wait-on --non-interactive
 # Copy the rest of the app
 COPY . .
 
-RUN yarn build
-
 # Set environment
 ENV NODE_ENV=production
+ENV NUXT_ENV="production nuxt build"
 ENV HOST=0.0.0.0
+
+RUN yarn build
 
 # Clean and regenerate Prisma client
 RUN rm -rf node_modules/.prisma
