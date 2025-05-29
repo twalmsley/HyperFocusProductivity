@@ -142,8 +142,6 @@ onMounted(async () => {
 
     subscription.value = sub as Subscription
 
-    console.log(sub)
-
     // Fetch subscription plans
     const { data: plansData } = await useFetch<SubscriptionPlan[]>('/api/subscription/plans')
     plans.value = plansData.value || []

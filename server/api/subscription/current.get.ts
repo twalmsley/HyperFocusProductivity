@@ -26,7 +26,5 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  console.log(subscription)
-
   return subscription
 })
