@@ -31,13 +31,13 @@ export default defineNuxtConfig({
   auth: {
     isEnabled: true,
     disableServerSideAuth: false,
-    originEnvKey: 'AUTH_ORIGIN',
-    baseURL: 'https://immune-glowing-flea.ngrok-free.app/api/auth',
+    originEnvKey: 'NUXT_AUTH_ORIGIN',
     globalAppMiddleware: true,
+    baseURL: process.env.NUXT_AUTH_ORIGIN || 'http://localhost:3000',
     provider: {
       type: 'authjs',
       trustHost: false,
-      defaultProvider: 'github',
+      defaultProvider: 'google',
       addDefaultCallbackUrl: true
     },
     sessionRefresh: {
