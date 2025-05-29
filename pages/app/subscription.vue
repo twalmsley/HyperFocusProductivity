@@ -29,7 +29,8 @@
                 {{ subscription.level }}
               </p>
             </div>
-            <button class="bg-[var(--primary)] text-white px-4 py-2 rounded-md" @click="handleManageSubscription">
+            <button v-if="subscription.status === 'ACTIVE'" class="bg-[var(--primary)] text-white px-4 py-2 rounded-md"
+              @click="handleManageSubscription">
               Manage Subscription
             </button>
           </div>
