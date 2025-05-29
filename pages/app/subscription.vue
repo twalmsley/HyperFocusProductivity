@@ -29,7 +29,7 @@
                 {{ subscription.level }}
               </p>
             </div>
-            <button class="bg-[var(--primary)] text-white px-4 py-2 rounded-md">
+            <button class="bg-[var(--primary)] text-white px-4 py-2 rounded-md" @click="handleManageSubscription">
               Manage Subscription
             </button>
           </div>
@@ -42,22 +42,16 @@
 
         <!-- Subscription Plans -->
         <div v-if="subscription?.planId" class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          <div
-            v-for="plan in plans.filter(p => p.id === subscription.planId)" 
-            :key="plan.id"
-            class="bg-white p-8 rounded-lg shadow-md border-t-4 border-[var(--primary)]"
-          >
+          <div v-for="plan in plans.filter(p => p.id === subscription?.planId)" :key="plan.id"
+            class="bg-white p-8 rounded-lg shadow-md border-t-4 border-[var(--primary)]">
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">{{ plan.name }}</h2>
             <p class="text-[var(--text-secondary)] mb-6">{{ plan.description }}</p>
             <p class="text-4xl font-bold text-[var(--text-primary)] mb-6">
-              £{{ plan.price }}<span class="text-lg text-[var(--text-secondary)]">/{{ plan.type === 'MONTHLY' ? 'month' : 'year' }}</span>
+              £{{ plan.price }}<span class="text-lg text-[var(--text-secondary)]">/{{ plan.type === 'MONTHLY' ? 'month'
+                : 'year' }}</span>
             </p>
             <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
-              <li
-                v-for="feature in plan.features"
-                :key="feature"
-                class="flex items-start"
-              >
+              <li v-for="feature in plan.features" :key="feature" class="flex items-start">
                 <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
                 <span>{{ feature }}</span>
               </li>
@@ -71,28 +65,19 @@
         </div>
 
         <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          <div
-            v-for="plan in plans"
-            :key="plan.id"
-            class="bg-white p-8 rounded-lg shadow-md border-t-4"
-            :class="plan.isPopular ? 'border-[var(--primary)]' : 'border-[var(--primary-dark)]'"
-          >
-            <div
-              v-if="plan.isPopular"
-              class="absolute -top-4 right-8 bg-[var(--primary)] text-white text-sm font-bold px-3 py-1 rounded-full"
-            >
+          <div v-for="plan in plans" :key="plan.id" class="bg-white p-8 rounded-lg shadow-md border-t-4"
+            :class="plan.isPopular ? 'border-[var(--primary)]' : 'border-[var(--primary-dark)]'">
+            <div v-if="plan.isPopular"
+              class="absolute -top-4 right-8 bg-[var(--primary)] text-white text-sm font-bold px-3 py-1 rounded-full">
             </div>
             <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-2">{{ plan.name }}</h2>
             <p class="text-[var(--text-secondary)] mb-6">{{ plan.description }}</p>
             <p class="text-4xl font-bold text-[var(--text-primary)] mb-6">
-              £{{ plan.price }}<span class="text-lg text-[var(--text-secondary)]">/{{ plan.type === 'MONTHLY' ? 'month' : 'year' }}</span>
+              £{{ plan.price }}<span class="text-lg text-[var(--text-secondary)]">/{{ plan.type === 'MONTHLY' ? 'month'
+                : 'year' }}</span>
             </p>
             <ul class="space-y-3 text-[var(--text-secondary)] mb-8">
-              <li
-                v-for="feature in plan.features"
-                :key="feature"
-                class="flex items-start"
-              >
+              <li v-for="feature in plan.features" :key="feature" class="flex items-start">
                 <span class="text-[var(--primary)] mr-2 mt-1">✓</span>
                 <span>{{ feature }}</span>
               </li>
@@ -138,6 +123,7 @@ interface Subscription {
   status: string
   description: string
   price: number
+  planId: string
   type: 'MONTHLY' | 'YEARLY'
   level: 'BASIC' | 'ADVANCED' | 'PREMIUM'
 }
@@ -150,11 +136,13 @@ const isLoading = ref(false)
 onMounted(async () => {
   isLoading.value = true
   try {
-    
+
     // Fetch user subscription
-    const { data: sub }= await useFetch<Subscription>('/api/subscription/current')
-    
-    subscription.value = sub.value
+    const sub: any = await $fetch('/api/subscription/current')
+
+    subscription.value = sub as Subscription
+
+    console.log(sub)
 
     // Fetch subscription plans
     const { data: plansData } = await useFetch<SubscriptionPlan[]>('/api/subscription/plans')
@@ -167,7 +155,7 @@ onMounted(async () => {
 })
 
 // Format subscription status for display
-const formatStatus = (status: string):string => {
+const formatStatus = (status: string): string => {
   const statusMap = {
     'FREE_TRIAL': 'Free Trial',
     'ACTIVE': 'Active',
@@ -186,4 +174,16 @@ const handleSubscribe = async (planId: string) => {
   window.location.href = checkoutSession.value?.url || ''
 }
 
-</script> 
+const handleManageSubscription = async () => {
+  const res = await $fetch('/api/stripe/portal')
+
+  if (res && res.url) {
+    await navigateTo(res.url, {
+      external: true,
+    })
+  } else {
+    console.error('Error creating portal session:', res)
+  }
+}
+
+</script>
