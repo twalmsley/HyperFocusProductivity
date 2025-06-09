@@ -15,7 +15,12 @@
       <tbody class="bg-white divide-y divide-gray-200">
         <tr v-for="task in tasks" :key="task.id" :class="getRowClass(task)">
           <td class="px-4 py-3 whitespace-nowrap">
-            <div class="font-medium text-gray-900">{{ task.title }}</div>
+            <div class="flex items-center">
+              <div class="font-medium text-gray-900">{{ task.title }}</div>
+              <svg v-if="task.repeatType" class="h-4 w-4 text-blue-500 ml-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Recurring task">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
           </td>
           <td v-if="showStatus" class="px-4 py-3 whitespace-nowrap">
             <span class="px-2 py-1 text-xs rounded-full" :class="getStatusClass(task)">
@@ -72,6 +77,13 @@ interface Task {
   dueDate: string | null;
   createdAt: string;
   completedAt: string | null;
+  repeatType: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ANNUALLY' | 'MONTHLY_BY_WEEKDAY' | null;
+  repeatInterval: number | null;
+  repeatDays: string | null;
+  repeatMonth: number | null;
+  repeatDay: number | null;
+  repeatWeekOfMonth: number | null;
+  repeatDayOfWeek: number | null;
 }
 
 const props = defineProps<{
