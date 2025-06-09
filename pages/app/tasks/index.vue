@@ -26,6 +26,9 @@
         <!-- Filter controls -->
         <TaskFilters v-model:filters="filters" />
 
+        <!-- Pagination -->
+        <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredTasks.length" />
+
         <!-- Task table -->
         <TaskTable :tasks="paginatedTasks" :total-tasks="tasks.length" :sort-column="sortColumn"
           :sort-direction="sortDirection" @sort="sortTasks" @view="viewTask" @edit="editTask" @delete="confirmDelete"
