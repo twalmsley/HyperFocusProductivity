@@ -84,6 +84,7 @@ export default NuxtAuthHandler({
     async session({ session, token }) {
       const userId = token.sub;
       const subscriptionState = token.subscriptionState;
+      const freeTrialExpiresAt = token.freeTrialExpiresAt;
 
       const result = {
         ...session,
@@ -92,26 +93,28 @@ export default NuxtAuthHandler({
           id: userId
         },
         subscriptionState: subscriptionState,
+        freeTrialExpiresAt: freeTrialExpiresAt,
         blocked: token.blocked
       }
       return result
-  },
-  /* on JWT token creation or mutation */
-  async jwt({ token, user, account, profile, isNewUser }) {
-    const userInDatabase = await prisma.user.findUnique({
-      where: {
-        email: token.email as string
-      }
-    })
-    const subscription = await prisma.userSubscription.findUnique({
-      where: {
-        userId: userInDatabase?.id
-      }
-    })
-    token.sub = userInDatabase?.id;
-    token.subscriptionState = subscription?.status
-    token.blocked = subscription?.status !== 'FREE_TRIAL' && subscription?.status !== 'ACTIVE'
-    return token
+    },
+    /* on JWT token creation or mutation */
+    async jwt({ token, user, account, profile, isNewUser }) {
+      const userInDatabase = await prisma.user.findUnique({
+        where: {
+          email: token.email as string
+        }
+      })
+      const subscription = await prisma.userSubscription.findUnique({
+        where: {
+          userId: userInDatabase?.id
+        }
+      })
+      token.sub = userInDatabase?.id;
+      token.subscriptionState = subscription?.status
+      token.freeTrialExpiresAt = subscription?.freeTrialExpiresAt
+      token.blocked = subscription?.status !== 'FREE_TRIAL' && subscription?.status !== 'ACTIVE'
+      return token
+    }
   }
-}
 })
