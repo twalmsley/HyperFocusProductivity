@@ -23,10 +23,34 @@
           </span>
         </div>
 
+        <!-- Priority -->
+        <div>
+          <h4 class="text-sm font-medium text-gray-500">Priority</h4>
+          <span class="mt-1 inline-block px-2 py-1 text-sm rounded-full font-medium" :class="{
+            'bg-red-100 text-red-800': task?.priority === 'URGENT',
+            'bg-orange-100 text-orange-800': task?.priority === 'HIGH',
+            'bg-yellow-100 text-yellow-800': task?.priority === 'MEDIUM',
+            'bg-green-100 text-green-800': task?.priority === 'LOW'
+          }">
+            {{ task?.priority }}
+          </span>
+        </div>
+
         <!-- Notes -->
         <div>
           <h4 class="text-sm font-medium text-gray-500">Notes</h4>
           <p class="mt-1 text-gray-900 whitespace-pre-wrap">{{ task?.notes || 'No notes' }}</p>
+        </div>
+
+        <!-- Repeat Schedule -->
+        <div v-if="task?.repeatType">
+          <h4 class="text-sm font-medium text-gray-500">Repeat Schedule</h4>
+          <div class="mt-1 flex items-center">
+            <svg class="h-4 w-4 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span class="text-gray-900">{{ formatRepeatSchedule() }}</span>
+          </div>
         </div>
 
         <!-- Details -->
@@ -93,34 +117,9 @@
 </template>
 
 <script setup lang="ts">
-type TaskStatus = 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
+import type { Task, RepeatSchedule } from '~/types/task'
 
-type Task = {
-  id: string;
-  userId: string;
-  title: string;
-  notes: string | null;
-  estimatedPomodoros: number | null;
-  completedPomodoros: number;
-  status: TaskStatus;
-  createdAt: string;
-  completedAt: string | null;
-  dueDate: string | null;
-  position: number | null;
-  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
-  sessions?: Array<{
-    id: string;
-    userId: string;
-    taskId: string | null;
-    type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
-    startTime: string;
-    endTime: string;
-    durationMinutes: number;
-    notes: string | null;
-  }>;
-}
-
-defineProps<{
+const props = defineProps<{
   show: boolean;
   task: Task | null;
 }>()
@@ -128,4 +127,55 @@ defineProps<{
 defineEmits<{
   (e: 'close'): void;
 }>()
+
+function formatRepeatSchedule(): string {
+  if (!props.task?.repeatType) return ''
+
+  const task = props.task
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                     'July', 'August', 'September', 'October', 'November', 'December']
+  const ordinals = ['', 'First', 'Second', 'Third', 'Fourth', 'Last']
+
+  switch (task.repeatType) {
+    case 'DAILY':
+      return 'Repeat daily'
+
+    case 'WEEKLY':
+      const interval = task.repeatInterval || 1
+      if (task.repeatDays) {
+        try {
+          const days = JSON.parse(task.repeatDays).map((day: number) => dayNames[day]).join(', ')
+          return interval === 1 ? `Every ${days}` : `Every ${interval} weeks on ${days}`
+        } catch {
+          // Fallback if JSON parsing fails
+          return interval === 1 ? 'Repeat weekly' : `Every ${interval} weeks`
+        }
+      }
+      return interval === 1 ? 'Repeat weekly' : `Every ${interval} weeks`
+
+    case 'MONTHLY':
+      const day = task.repeatDay
+      return day ? `Monthly on day ${day}` : 'Repeat monthly'
+
+    case 'ANNUALLY':
+      const month = task.repeatMonth
+      const dayOfMonth = task.repeatDay
+      if (month && dayOfMonth) {
+        return `Annually on ${monthNames[month - 1]} ${dayOfMonth}`
+      }
+      return 'Repeat annually'
+
+    case 'MONTHLY_BY_WEEKDAY':
+      if (task.repeatWeekOfMonth && task.repeatDayOfWeek !== undefined) {
+        const week = ordinals[task.repeatWeekOfMonth]
+        const day = dayNames[task.repeatDayOfWeek]
+        return `${week} ${day} of every month`
+      }
+      return 'Repeat monthly by weekday'
+
+    default:
+      return ''
+  }
+}
 </script> 

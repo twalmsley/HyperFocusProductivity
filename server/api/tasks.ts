@@ -1,5 +1,7 @@
 import { getServerSession } from '#auth'
 import { prisma } from '../utils/db'
+import { calculateNextRepeatDate } from '../utils/repeatSchedule'
+import type { RepeatSchedule } from '../utils/repeatSchedule'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -11,9 +13,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const method = event.method
-  const user = session.user
+  const user = session.user as { id: string; email?: string; name?: string; image?: string }
 
-  if (!user) {
+  if (!user || !user.id) {
     throw createError({
       statusCode: 401,
       message: 'Not authenticated'
@@ -37,7 +39,21 @@ export default defineEventHandler(async (event) => {
     case 'POST':
 
       const body = await readBody(event)
-      const { title, notes, estimatedPomodoros, status = 'BACKLOG', dueDate, priority = 'MEDIUM' } = body
+      const { 
+        title, 
+        notes, 
+        estimatedPomodoros, 
+        status = 'BACKLOG', 
+        dueDate, 
+        priority = 'MEDIUM',
+        repeatType,
+        repeatInterval,
+        repeatDays,
+        repeatMonth,
+        repeatDay,
+        repeatWeekOfMonth,
+        repeatDayOfWeek
+      } = body
 
       if (!title || !notes || !estimatedPomodoros || !status || !dueDate) {
         throw createError({
@@ -63,7 +79,15 @@ export default defineEventHandler(async (event) => {
           status,
           priority,
           dueDate,
-          position: newPosition
+          position: newPosition,
+          repeatType,
+          repeatInterval,
+          repeatDays: repeatDays ? JSON.stringify(repeatDays) : null,
+          repeatMonth,
+          repeatDay,
+          repeatWeekOfMonth,
+          repeatDayOfWeek,
+          isTemplate: !!repeatType
         },
         include: {
           user: true
@@ -101,9 +125,66 @@ export default defineEventHandler(async (event) => {
         updateData.notes = updateData.notes.slice(0, 2000)
       }
 
+      // Handle repeat schedule updates
+      if (updateData.repeatDays) {
+        updateData.repeatDays = JSON.stringify(updateData.repeatDays)
+      }
+
+      // Check if task is being marked as completed and has a repeat schedule
+      if (updateData.status === 'DONE' && task.repeatType && !task.completedAt) {
+        const repeatSchedule: RepeatSchedule = {
+          repeatType: task.repeatType as any,
+          repeatInterval: task.repeatInterval || undefined,
+          repeatDays: task.repeatDays ? JSON.parse(task.repeatDays) : undefined,
+          repeatMonth: task.repeatMonth || undefined,
+          repeatDay: task.repeatDay || undefined,
+          repeatWeekOfMonth: task.repeatWeekOfMonth || undefined,
+          repeatDayOfWeek: task.repeatDayOfWeek || undefined
+        }
+
+        const currentDueDate = task.dueDate ? new Date(task.dueDate) : new Date()
+        const nextDueDate = calculateNextRepeatDate(currentDueDate, repeatSchedule)
+
+        if (nextDueDate) {
+          // Get the highest position value for new task
+          const lastTask = await prisma.task.findFirst({
+            where: { userId: user.id },
+            orderBy: { position: 'desc' }
+          })
+
+          const newTaskPosition = (lastTask?.position ?? -1) + 1
+
+          // Create a new task for the next occurrence
+          await prisma.task.create({
+            data: {
+              userId: user.id,
+              title: task.title,
+              notes: task.notes,
+              estimatedPomodoros: task.estimatedPomodoros,
+              status: 'BACKLOG',
+              priority: task.priority,
+              dueDate: nextDueDate,
+              position: newTaskPosition,
+              repeatType: task.repeatType,
+              repeatInterval: task.repeatInterval,
+              repeatDays: task.repeatDays,
+              repeatMonth: task.repeatMonth,
+              repeatDay: task.repeatDay,
+              repeatWeekOfMonth: task.repeatWeekOfMonth,
+              repeatDayOfWeek: task.repeatDayOfWeek,
+              isTemplate: task.isTemplate,
+              templateTaskId: task.isTemplate ? task.id : task.templateTaskId
+            }
+          })
+        }
+      }
+
       return await prisma.task.update({
         where: { id },
-        data: updateData,
+        data: {
+          ...updateData,
+          completedAt: updateData.status === 'DONE' ? new Date() : updateData.status === 'BACKLOG' ? null : task.completedAt
+        },
         include: {
           user: true
         }

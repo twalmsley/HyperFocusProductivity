@@ -93,6 +93,9 @@
               />
             </div>
 
+            <!-- Repeat Schedule -->
+            <RepeatScheduleSelector v-model="repeatSchedule" />
+
             <div class="flex justify-end">
               <button
                 type="submit"
@@ -109,6 +112,8 @@
 </template>
 
 <script setup lang="ts">
+import RepeatScheduleSelector from '~/components/tasks/RepeatScheduleSelector.vue'
+import type { RepeatSchedule } from '~/types/task'
 
 const {
   status,
@@ -122,7 +127,8 @@ const {
 } = useAuth()
 
 const userSession = await getSession()
-const user = userSession?.user;const router = useRouter()
+const user = userSession?.user
+const router = useRouter()
 
 interface NewTask {
   title: string;
@@ -142,6 +148,9 @@ const task = ref<NewTask>({
   dueDate: new Date().toISOString().substring(0, 10)
 })
 
+const repeatSchedule = ref<RepeatSchedule>({
+  repeatType: null
+})
 
 async function createTask() {
   if (!user) {
@@ -159,13 +168,26 @@ async function createTask() {
     // Ensure date is in ISO format
     const dueDate = task.value.dueDate ? new Date(task.value.dueDate).toISOString() : null;
     
+    const requestBody: any = {
+      userId: user.id,
+      ...task.value,
+      dueDate: dueDate
+    }
+
+    // Add repeat schedule fields if present
+    if (repeatSchedule.value.repeatType) {
+      requestBody.repeatType = repeatSchedule.value.repeatType
+      requestBody.repeatInterval = repeatSchedule.value.repeatInterval
+      requestBody.repeatDays = repeatSchedule.value.repeatDays
+      requestBody.repeatMonth = repeatSchedule.value.repeatMonth
+      requestBody.repeatDay = repeatSchedule.value.repeatDay
+      requestBody.repeatWeekOfMonth = repeatSchedule.value.repeatWeekOfMonth
+      requestBody.repeatDayOfWeek = repeatSchedule.value.repeatDayOfWeek
+    }
+    
     await $fetch('/api/tasks', {
       method: 'POST',
-      body: {
-        userId: user.id,
-        ...task.value,
-        dueDate: dueDate
-      }
+      body: requestBody
     })
     
     // Redirect to tasks list after successful creation

@@ -1,0 +1,229 @@
+<template>
+  <div class="space-y-4">
+    <div>
+      <label for="repeatType" class="block text-sm font-medium text-gray-700">Repeat Schedule</label>
+      <select 
+        id="repeatType" 
+        v-model="localSchedule.repeatType" 
+        @change="onRepeatTypeChange"
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
+        <option :value="null">No repeat</option>
+        <option value="DAILY">Daily</option>
+        <option value="WEEKLY">Weekly</option>
+        <option value="MONTHLY">Monthly</option>
+        <option value="ANNUALLY">Annually</option>
+        <option value="MONTHLY_BY_WEEKDAY">Monthly by weekday</option>
+      </select>
+    </div>
+
+    <!-- Daily options (no additional options needed) -->
+
+    <!-- Weekly options -->
+    <div v-if="localSchedule.repeatType === 'WEEKLY'" class="space-y-4">
+      <div>
+        <label for="weekInterval" class="block text-sm font-medium text-gray-700">Every</label>
+        <div class="flex items-center space-x-2">
+          <input 
+            id="weekInterval"
+            v-model.number="localSchedule.repeatInterval" 
+            type="number" 
+            min="1" 
+            max="52"
+            class="mt-1 block w-20 rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
+          <span class="text-sm text-gray-700">week(s) on:</span>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Days of the week</label>
+        <div class="flex flex-wrap gap-2">
+          <label v-for="(day, index) in dayNames" :key="index" class="flex items-center">
+            <input 
+              type="checkbox" 
+              :checked="localSchedule.repeatDays?.includes(index)"
+              @change="toggleWeekDay(index)"
+              class="rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]" />
+            <span class="ml-2 text-sm text-gray-700">{{ day }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly options -->
+    <div v-if="localSchedule.repeatType === 'MONTHLY'" class="space-y-4">
+      <div>
+        <label for="monthlyDay" class="block text-sm font-medium text-gray-700">Day of month</label>
+        <input 
+          id="monthlyDay"
+          v-model.number="localSchedule.repeatDay" 
+          type="number" 
+          min="1" 
+          max="31"
+          class="mt-1 block w-24 rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
+        <p class="mt-1 text-xs text-gray-500">For months without this day, the last day of the month will be used.</p>
+      </div>
+    </div>
+
+    <!-- Annually options -->
+    <div v-if="localSchedule.repeatType === 'ANNUALLY'" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="annualMonth" class="block text-sm font-medium text-gray-700">Month</label>
+          <select 
+            id="annualMonth"
+            v-model.number="localSchedule.repeatMonth"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
+            <option v-for="(month, index) in monthNames" :key="index" :value="index + 1">{{ month }}</option>
+          </select>
+        </div>
+        <div>
+          <label for="annualDay" class="block text-sm font-medium text-gray-700">Day</label>
+          <input 
+            id="annualDay"
+            v-model.number="localSchedule.repeatDay" 
+            type="number" 
+            min="1" 
+            max="31"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly by weekday options -->
+    <div v-if="localSchedule.repeatType === 'MONTHLY_BY_WEEKDAY'" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="weekOfMonth" class="block text-sm font-medium text-gray-700">Week of month</label>
+          <select 
+            id="weekOfMonth"
+            v-model.number="localSchedule.repeatWeekOfMonth"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
+            <option value="1">First</option>
+            <option value="2">Second</option>
+            <option value="3">Third</option>
+            <option value="4">Fourth</option>
+            <option value="5">Last</option>
+          </select>
+        </div>
+        <div>
+          <label for="dayOfWeek" class="block text-sm font-medium text-gray-700">Day of week</label>
+          <select 
+            id="dayOfWeek"
+            v-model.number="localSchedule.repeatDayOfWeek"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
+            <option v-for="(day, index) in dayNames" :key="index" :value="index">{{ day }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div v-if="localSchedule.repeatType" class="p-3 bg-blue-50 rounded-md">
+      <p class="text-sm text-blue-800">
+        <strong>Preview:</strong> {{ formatSchedulePreview() }}
+      </p>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, watch, computed } from 'vue'
+import type { RepeatSchedule } from '~/types/task'
+
+const props = defineProps<{
+  modelValue: RepeatSchedule
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: RepeatSchedule): void
+}>()
+
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+]
+
+const localSchedule = ref<RepeatSchedule>({ ...props.modelValue })
+
+// Watch for changes and emit updates
+watch(localSchedule, (newValue) => {
+  emit('update:modelValue', { ...newValue })
+}, { deep: true })
+
+// Watch for prop changes
+watch(() => props.modelValue, (newValue) => {
+  localSchedule.value = { ...newValue }
+}, { deep: true })
+
+function onRepeatTypeChange() {
+  // Reset all fields when repeat type changes
+  localSchedule.value = {
+    repeatType: localSchedule.value.repeatType,
+    repeatInterval: localSchedule.value.repeatType === 'WEEKLY' ? 1 : undefined,
+    repeatDays: undefined,
+    repeatMonth: undefined,
+    repeatDay: undefined,
+    repeatWeekOfMonth: undefined,
+    repeatDayOfWeek: undefined
+  }
+}
+
+function toggleWeekDay(dayIndex: number) {
+  if (!localSchedule.value.repeatDays) {
+    localSchedule.value.repeatDays = []
+  }
+  
+  const index = localSchedule.value.repeatDays.indexOf(dayIndex)
+  if (index > -1) {
+    localSchedule.value.repeatDays.splice(index, 1)
+  } else {
+    localSchedule.value.repeatDays.push(dayIndex)
+  }
+  
+  // Sort the days
+  localSchedule.value.repeatDays.sort()
+}
+
+function formatSchedulePreview(): string {
+  const schedule = localSchedule.value
+  if (!schedule.repeatType) return ''
+
+  const ordinals = ['', 'First', 'Second', 'Third', 'Fourth', 'Last']
+
+  switch (schedule.repeatType) {
+    case 'DAILY':
+      return 'Repeat daily'
+
+    case 'WEEKLY':
+      const interval = schedule.repeatInterval || 1
+      if (schedule.repeatDays && schedule.repeatDays.length > 0) {
+        const days = schedule.repeatDays.map(day => dayNames[day]).join(', ')
+        return interval === 1 ? `Every ${days}` : `Every ${interval} weeks on ${days}`
+      }
+      return interval === 1 ? 'Repeat weekly' : `Every ${interval} weeks`
+
+    case 'MONTHLY':
+      const day = schedule.repeatDay
+      return day ? `Monthly on day ${day}` : 'Repeat monthly'
+
+    case 'ANNUALLY':
+      const month = schedule.repeatMonth
+      const dayOfMonth = schedule.repeatDay
+      if (month && dayOfMonth) {
+        return `Annually on ${monthNames[month - 1]} ${dayOfMonth}`
+      }
+      return 'Repeat annually'
+
+    case 'MONTHLY_BY_WEEKDAY':
+      if (schedule.repeatWeekOfMonth && schedule.repeatDayOfWeek !== undefined) {
+        const week = ordinals[schedule.repeatWeekOfMonth]
+        const day = dayNames[schedule.repeatDayOfWeek]
+        return `${week} ${day} of every month`
+      }
+      return 'Repeat monthly by weekday'
+
+    default:
+      return ''
+  }
+}
+</script> 

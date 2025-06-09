@@ -10,7 +10,7 @@
         </button>
       </div>
 
-      <form @submit.prevent="$emit('save', task)" class="space-y-4">
+      <form @submit.prevent="handleSave" class="space-y-4">
         <!-- Title -->
         <div>
           <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
@@ -62,6 +62,9 @@
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
         </div>
 
+        <!-- Repeat Schedule -->
+        <RepeatScheduleSelector v-model="repeatSchedule" />
+
         <!-- Form Actions -->
         <div class="flex justify-end space-x-4 mt-6">
           <button type="button" @click="$emit('close')"
@@ -80,23 +83,8 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-
-type TaskStatus = 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
-
-type Task = {
-  id: string;
-  userId: string;
-  title: string;
-  notes: string | null;
-  estimatedPomodoros: number | null;
-  completedPomodoros: number;
-  status: TaskStatus;
-  createdAt: string;
-  completedAt: string | null;
-  dueDate: string | null;
-  position: number | null;
-  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
-}
+import RepeatScheduleSelector from './RepeatScheduleSelector.vue'
+import type { Task, RepeatSchedule } from '~/types/task'
 
 const props = defineProps<{
   show: boolean;
@@ -105,14 +93,53 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'save', task: Task): void;
+  (e: 'save', task: Task & { repeatSchedule: RepeatSchedule }): void;
 }>()
 
 // Create a local copy of the task to avoid direct mutation
 const task = ref<Task>({ ...props.task })
 
+// Initialize repeat schedule from task data
+const repeatSchedule = ref<RepeatSchedule>({
+  repeatType: props.task.repeatType,
+  repeatInterval: props.task.repeatInterval || undefined,
+  repeatDays: parseRepeatDays(props.task.repeatDays),
+  repeatMonth: props.task.repeatMonth || undefined,
+  repeatDay: props.task.repeatDay || undefined,
+  repeatWeekOfMonth: props.task.repeatWeekOfMonth || undefined,
+  repeatDayOfWeek: props.task.repeatDayOfWeek || undefined
+})
+
+// Helper function to safely parse repeat days
+function parseRepeatDays(repeatDays: string | null): number[] | undefined {
+  if (!repeatDays) return undefined
+  try {
+    return JSON.parse(repeatDays)
+  } catch {
+    return undefined
+  }
+}
+
 // Watch for changes in the task prop
 watch(() => props.task, (newTask) => {
   task.value = { ...newTask }
+  
+  // Update repeat schedule
+  repeatSchedule.value = {
+    repeatType: newTask.repeatType,
+    repeatInterval: newTask.repeatInterval || undefined,
+    repeatDays: parseRepeatDays(newTask.repeatDays),
+    repeatMonth: newTask.repeatMonth || undefined,
+    repeatDay: newTask.repeatDay || undefined,
+    repeatWeekOfMonth: newTask.repeatWeekOfMonth || undefined,
+    repeatDayOfWeek: newTask.repeatDayOfWeek || undefined
+  }
 }, { deep: true })
+
+function handleSave() {
+  emit('save', { 
+    ...task.value, 
+    repeatSchedule: repeatSchedule.value 
+  })
+}
 </script> 

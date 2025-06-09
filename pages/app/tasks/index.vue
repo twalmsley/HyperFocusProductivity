@@ -106,30 +106,7 @@ const router = useRouter()
 
 type TaskStatus = 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
 
-type Task = {
-  id: string;
-  userId: string;
-  title: string;
-  notes: string | null;
-  estimatedPomodoros: number | null;
-  completedPomodoros: number;
-  status: TaskStatus;
-  createdAt: string;
-  completedAt: string | null;
-  dueDate: string | null;
-  position: number | null;
-  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
-  sessions?: Array<{
-    id: string;
-    userId: string;
-    taskId: string | null;
-    type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
-    startTime: string;
-    endTime: string;
-    durationMinutes: number;
-    notes: string | null;
-  }>;
-}
+import type { Task } from '~/types/task'
 
 const tasks = ref<Task[]>([])
 
@@ -335,6 +312,11 @@ async function updateTaskStatus(task: Task) {
     if (index !== -1) {
       tasks.value[index] = updatedTask
     }
+
+    // If this was a repeating task that was completed, refresh the task list to show the new repeat task
+    if (newStatus === 'DONE' && task.repeatType) {
+      await fetchTasks()
+    }
   } catch (error) {
     console.error('Failed to update task:', error)
   }
@@ -411,7 +393,7 @@ function closeEditModal() {
   editingTask.value = {}
 }
 
-async function saveTask(task: Partial<Task>) {
+async function saveTask(task: Partial<Task> & { repeatSchedule?: any }) {
   if (!user || !task.id) return
 
   try {
@@ -421,18 +403,32 @@ async function saveTask(task: Partial<Task>) {
       dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : null
     } as Task
 
+    const updateBody: any = {
+      id: taskToUpdate.id,
+      title: taskToUpdate.title,
+      notes: taskToUpdate.notes,
+      status: taskToUpdate.status,
+      priority: taskToUpdate.priority,
+      estimatedPomodoros: taskToUpdate.estimatedPomodoros,
+      dueDate: taskToUpdate.dueDate,
+      completedAt: taskToUpdate.status === 'DONE' ? new Date().toISOString() : null
+    }
+
+    // Add repeat schedule fields if present
+    if (task.repeatSchedule) {
+      const schedule = task.repeatSchedule
+      updateBody.repeatType = schedule.repeatType
+      updateBody.repeatInterval = schedule.repeatInterval
+      updateBody.repeatDays = schedule.repeatDays
+      updateBody.repeatMonth = schedule.repeatMonth
+      updateBody.repeatDay = schedule.repeatDay
+      updateBody.repeatWeekOfMonth = schedule.repeatWeekOfMonth
+      updateBody.repeatDayOfWeek = schedule.repeatDayOfWeek
+    }
+
     const updatedTask = await $fetch<Task>('/api/tasks', {
       method: 'PATCH',
-      body: {
-        id: taskToUpdate.id,
-        title: taskToUpdate.title,
-        notes: taskToUpdate.notes,
-        status: taskToUpdate.status,
-        priority: taskToUpdate.priority,
-        estimatedPomodoros: taskToUpdate.estimatedPomodoros,
-        dueDate: taskToUpdate.dueDate,
-        completedAt: taskToUpdate.status === 'DONE' ? new Date().toISOString() : null
-      }
+      body: updateBody
     })
 
     // Update the task in the local state
@@ -442,6 +438,11 @@ async function saveTask(task: Partial<Task>) {
     }
 
     closeEditModal()
+    
+    // Refresh tasks to get any newly created repeat tasks
+    if (task.repeatSchedule && updatedTask.status === 'DONE') {
+      await fetchTasks()
+    }
   } catch (error) {
     console.error('Failed to update task:', error)
   }

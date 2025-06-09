@@ -39,6 +39,18 @@ model Task {
   completedAt       DateTime?
   dueDate           DateTime?
   position          Int?
+  
+  // Repeat schedule fields
+  repeatType        RepeatType?
+  repeatInterval    Int?       // For "every N weeks", "monthly on day N", etc.
+  repeatDays        String?    // JSON array for days of week (for weekly repeats)
+  repeatMonth       Int?       // Month for annual repeats (1-12)
+  repeatDay         Int?       // Day for monthly/annual repeats (1-31)
+  repeatWeekOfMonth Int?       // For "first Tuesday of month" (1-5, where 5 means last)
+  repeatDayOfWeek   Int?       // Day of week for "first Tuesday of month" (0=Sunday, 1=Monday, etc.)
+  isTemplate        Boolean   @default(false) // True for the original repeating task
+  templateTaskId    String?   // Reference to the original template task
+  
   user              User      @relation("UserTasks", fields: [userId], references: [id])
 }
 
@@ -120,4 +132,12 @@ enum SubscriptionType {
 enum SubscriptionLevel {
   BASIC
   PREMIUM
+}
+
+enum RepeatType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  ANNUALLY
+  MONTHLY_BY_WEEKDAY // For "first Tuesday of every month"
 }
