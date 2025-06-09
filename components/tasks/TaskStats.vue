@@ -26,7 +26,8 @@ interface Task {
 }
 
 const props = defineProps<{
-  tasks: Task[]
+  tasks: Task[],
+  filter: 'all' | 'overdue' | 'today' | 'week' | 'month'
 }>()
 
 const totalTasks = computed(() => props.tasks.length)
@@ -37,9 +38,26 @@ const totalPomodoros = computed(() => {
   }, 0)
 })
 
+const getMaxPomodoros = (filter: string) => {
+  switch (filter) {
+    case 'all':
+      return 1000
+    case 'overdue':
+    case 'today':
+      return 16
+    case 'week':
+      return 112
+    case 'month':
+      return 480
+    default:
+      return 16
+  }
+}
+
 const bgColor = computed(() => {
+  const maxPomodoros = getMaxPomodoros(props.filter)
   // Normalize the pomodoro count to a value between 0 and 1
-  const normalizedCount = Math.min(totalPomodoros.value, 16) / 16
+  const normalizedCount = Math.min(totalPomodoros.value, maxPomodoros) / maxPomodoros
 
   // Blue (0, 0, 255) to Red (255, 0, 0)
   return {

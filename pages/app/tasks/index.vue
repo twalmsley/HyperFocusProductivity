@@ -32,7 +32,7 @@
           @update-status="updateTaskStatus" @start-pomodoro="startPomodoro" @extend-due-date="extendDueDate" />
 
         <!-- Task Stats -->
-        <TaskStats :tasks="filteredTasks" />
+        <TaskStats :tasks="filteredTasks" :filter="filters.dueDate || 'all'" />
 
         <!-- Pagination -->
         <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredTasks.length" />
