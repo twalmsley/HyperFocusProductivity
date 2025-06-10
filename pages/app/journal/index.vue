@@ -39,11 +39,17 @@
                 <h3 class="font-medium">{{ entry.title }}</h3>
                 <span class="text-sm text-gray-500">{{ formatDate(entry.createdAt) }}</span>
               </div>
-              <p class="text-gray-600 mt-2 line-clamp-2">{{ entry.content }}</p>
-              <div class="flex gap-2 mt-2">
-                <span v-for="tag in entry.tags" :key="tag" 
-                  class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                  #{{ tag }}
+              <div class="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+                <span>{{ new Date(entry.date).toLocaleDateString() }}</span>
+                <span v-if="entry.mood" class="text-xl" :title="entry.mood.toLowerCase()">
+                  {{ getMoodEmoji(entry.mood) }}
+                </span>
+              </div>
+              <div class="whitespace-pre-wrap">{{ entry.content }}</div>
+              <div v-if="entry.tags.length > 0" class="mt-3 flex flex-wrap gap-2">
+                <span v-for="tag in entry.tags" :key="tag"
+                  class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                  {{ tag }}
                 </span>
               </div>
             </div>
@@ -55,6 +61,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+
 const {
   status,
   data,
@@ -118,6 +126,17 @@ const fetchEntries = async () => {
 onMounted(() => {
   fetchEntries()
 })
+
+const getMoodEmoji = (mood: string | null) => {
+  const emojis: Record<string, string> = {
+    'HAPPY': '😊',
+    'SAD': '😢',
+    'NEUTRAL': '😐',
+    'ANGRY': '😠',
+    'EXCITED': '🤩'
+  }
+  return mood ? emojis[mood] || '❓' : null
+}
 </script>
 
 <style scoped>

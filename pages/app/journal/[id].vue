@@ -67,9 +67,7 @@
           </div>
 
           <!-- Entry Content -->
-          <div v-if="!isEditing" class="prose max-w-none">
-            <div v-html="renderedContent"></div>
-          </div>
+          <div v-if="!isEditing" class="whitespace-pre-wrap">{{ entry.content }}</div>
 
           <div v-else class="space-y-6">
             <!-- Title -->
@@ -130,7 +128,7 @@
                 ></textarea>
               </div>
               <p class="mt-2 text-sm text-gray-500">
-                Supports Markdown formatting. Use # for tags and [[note-title]] for backlinks.
+                Use # for tags and [[note-title]] for backlinks.
               </p>
             </div>
 
@@ -187,6 +185,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+
 const {
   status,
   data,
@@ -236,23 +236,16 @@ const formatDate = (dateString: string) => {
 }
 
 // Get mood emoji
-const getMoodEmoji = (mood: string) => {
+const getMoodEmoji = (mood: string | null) => {
   const emojis: Record<string, string> = {
-    happy: '😊',
-    sad: '😢',
-    neutral: '😐',
-    angry: '😠',
-    excited: '🤩'
+    'HAPPY': '😊',
+    'SAD': '😢',
+    'NEUTRAL': '😐',
+    'ANGRY': '😠',
+    'EXCITED': '🤩'
   }
-  return emojis[mood] || ''
+  return mood ? emojis[mood] || '❓' : null
 }
-
-// Render markdown content
-const renderedContent = computed(() => {
-  if (!entry.value?.content) return ''
-  // TODO: Implement markdown rendering
-  return entry.value.content
-})
 
 // Add a tag
 const addTag = () => {
@@ -323,4 +316,8 @@ const saveChanges = async () => {
 onMounted(() => {
   fetchEntry()
 })
-</script> 
+</script>
+
+<style>
+/* Remove custom prose styles as they are now handled by @tailwindcss/typography */
+</style> 

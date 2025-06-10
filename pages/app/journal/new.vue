@@ -74,7 +74,7 @@
                 ></textarea>
               </div>
               <p class="mt-2 text-sm text-gray-500">
-                Supports Markdown formatting. Use # for tags and [[note-title]] for backlinks.
+                Use # for tags.
               </p>
             </div>
 
