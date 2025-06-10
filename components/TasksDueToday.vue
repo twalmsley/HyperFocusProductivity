@@ -3,7 +3,7 @@
     <h2 class="text-xl font-semibold mb-4">Tasks Due Today or Earlier</h2>
     <div v-if="isLoading" class="text-gray-600">Loading tasks...</div>
     <div v-else-if="tasks.length === 0" class="text-gray-600">No tasks due today or earlier</div>
-    <TaskTable v-else :tasks="tasks" :show-status="true" @view-task="$emit('view-task', $event)" />
+    <TaskTable v-else :tasks="tasks" :show-status="true" :show-due-date="true" @view-task="$emit('view-task', $event)" />
   </div>
 </template>
 
