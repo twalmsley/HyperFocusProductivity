@@ -25,6 +25,7 @@ model User {
   subscription      UserSubscription?
   sessions          Session[]       @relation("UserSessions")
   journalEntries    JournalEntry[]  @relation("UserJournalEntries")
+  cyclicTasks       CyclicTask[]    @relation("UserCyclicTasks")
 }
 
 model Task {
@@ -106,6 +107,19 @@ model JournalEntry {
   updatedAt         DateTime        @updatedAt
 
   user              User            @relation("UserJournalEntries", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CyclicTask {
+  id                  String    @id @default(uuid())
+  userId              String
+  groupName           String
+  title               String
+  description         String?
+  lastCompletedDate   DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user                User      @relation("UserCyclicTasks", fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum TaskStatus {
