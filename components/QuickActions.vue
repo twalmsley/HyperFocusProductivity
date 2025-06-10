@@ -10,6 +10,10 @@
         class="flex-1 min-w-[120px] border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white px-4 py-2 rounded-lg text-center transition-colors">
         View Tasks
       </NuxtLink>
+      <NuxtLink to="/app/cyclic-tasks/new"
+        class="flex-1 min-w-[120px] bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg text-center transition-colors">
+        New Cyclic Task
+      </NuxtLink>
       <NuxtLink to="/app/journal/new"
         class="flex-1 min-w-[120px] bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg text-center transition-colors">
         New Journal Entry

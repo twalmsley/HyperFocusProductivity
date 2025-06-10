@@ -18,6 +18,13 @@
             Tasks
           </NuxtLink>
           <NuxtLink 
+            to="/app/cyclic-tasks" 
+            class="text-gray-900 hover:text-[var(--primary)] transition-colors"
+            :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/cyclic-tasks') }"
+          >
+            Cyclic Tasks
+          </NuxtLink>
+          <NuxtLink 
             to="/app/journal" 
             class="text-gray-900 hover:text-[var(--primary)] transition-colors"
             :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/journal') }"
