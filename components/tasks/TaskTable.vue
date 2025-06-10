@@ -27,7 +27,7 @@
             Pomodoros
             <SortIndicator :active="sortColumn === 'estimatedPomodoros'" :direction="sortDirection" />
           </th>
-          <th @click="$emit('sort', 'dueDate')" scope="col"
+          <th v-if="showDueDate !== false" @click="$emit('sort', 'dueDate')" scope="col"
             class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[100px]">
             Due Date
             <SortIndicator :active="sortColumn === 'dueDate'" :direction="sortDirection" />
@@ -91,7 +91,7 @@
               <span class="text-gray-500">{{ task.estimatedPomodoros || '-' }}</span>
             </div>
           </td>
-          <td class="px-2 py-2">
+          <td v-if="showDueDate !== false" class="px-2 py-2">
             <div class="text-xs text-gray-500">
               {{ task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : '-' }}
             </div>
@@ -182,6 +182,7 @@ defineProps<{
   totalTasks: number;
   sortColumn: string;
   sortDirection: 'asc' | 'desc';
+  showDueDate?: boolean;
 }>()
 
 defineEmits<{

@@ -4,7 +4,7 @@
     <div v-if="isLoading" class="text-gray-600">Loading tasks...</div>
     <div v-else-if="tasks.length === 0" class="text-gray-600 bg-white p-6 rounded-lg shadow-sm">No recently completed tasks</div>
     <div v-else class="bg-white p-6 rounded-lg shadow-sm">
-      <TaskTable :tasks="tasks" :show-completed-at="true" @view-task="$emit('view-task', $event)" />
+      <TaskTable :tasks="tasks" :show-completed-at="true" :show-due-date="false" @view-task="$emit('view-task', $event)" />
     </div>
   </div>
 </template>

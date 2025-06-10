@@ -6,7 +6,7 @@
           <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
           <th v-if="showStatus" scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
           <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-          <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+          <th v-if="showDueDate !== false" scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
           <th v-if="showCompletedAt" scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
           <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
           <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -32,7 +32,7 @@
               {{ task.priority }}
             </span>
           </td>
-          <td class="px-4 py-3 whitespace-nowrap">
+          <td v-if="showDueDate !== false" class="px-4 py-3 whitespace-nowrap">
             <span class="text-xs px-2 py-1 rounded-full" :class="getDueDateClass(task)">
               {{ formatDueDate(task.dueDate) }}
             </span>
@@ -70,6 +70,7 @@ const props = defineProps<{
   tasks: Task[];
   showStatus?: boolean;
   showCompletedAt?: boolean;
+  showDueDate?: boolean;
 }>();
 
 defineEmits<{

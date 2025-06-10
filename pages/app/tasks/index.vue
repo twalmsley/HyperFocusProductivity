@@ -31,7 +31,7 @@
 
         <!-- Task table -->
         <TaskTable :tasks="paginatedTasks" :total-tasks="tasks.length" :sort-column="sortColumn"
-          :sort-direction="sortDirection" @sort="sortTasks" @view="viewTask" @edit="editTask" @delete="confirmDelete"
+          :sort-direction="sortDirection" :show-due-date="true" @sort="sortTasks" @view="viewTask" @edit="editTask" @delete="confirmDelete"
           @update-status="updateTaskStatus" @start-pomodoro="startPomodoro" @extend-due-date="extendDueDate" />
 
         <!-- Task Stats -->
