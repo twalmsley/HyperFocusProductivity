@@ -10,50 +10,67 @@
         </NuxtLink>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Calendar View -->
-        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm">
-          <h2 class="text-xl font-semibold mb-4">Calendar</h2>
-          <div class="calendar-grid">
-            <!-- Calendar will be implemented here -->
-            <div class="text-center text-gray-500 py-8">
-              Calendar view coming soon...
-            </div>
+      <!-- Calendar View -->
+      <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+        <h2 class="text-xl font-semibold mb-4">Calendar</h2>
+        <div class="calendar-grid">
+          <!-- Calendar will be implemented here -->
+          <div class="text-center text-gray-500 py-8">
+            Calendar view coming soon...
           </div>
         </div>
+      </div>
 
-        <!-- Recent Entries -->
-        <div class="bg-white p-6 rounded-lg shadow-sm">
-          <h2 class="text-xl font-semibold mb-4">Recent Entries</h2>
-          <div v-if="isLoading" class="text-center py-4">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)] mx-auto"></div>
-          </div>
-          <div v-else-if="journalEntries.length === 0" class="text-center text-gray-500 py-4">
-            No entries yet. Start your journaling journey today!
-          </div>
-          <div v-else class="space-y-4">
-            <div v-for="entry in journalEntries" :key="entry.id" 
-              class="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-              @click="viewEntry(entry)">
-              <div class="flex justify-between items-start">
-                <h3 class="font-medium">{{ entry.title }}</h3>
-                <span class="text-sm text-gray-500">{{ formatDate(entry.createdAt) }}</span>
-              </div>
-              <div class="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-                <span>{{ new Date(entry.date).toLocaleDateString() }}</span>
-                <span v-if="entry.mood" class="text-xl" :title="entry.mood.toLowerCase()">
-                  {{ getMoodEmoji(entry.mood) }}
-                </span>
-              </div>
-              <div class="whitespace-pre-wrap">{{ entry.content }}</div>
-              <div v-if="entry.tags.length > 0" class="mt-3 flex flex-wrap gap-2">
-                <span v-for="tag in entry.tags" :key="tag"
-                  class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                  {{ tag }}
-                </span>
-              </div>
-            </div>
-          </div>
+      <!-- Recent Entries Table -->
+      <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h2 class="text-xl font-semibold mb-4">Recent Entries</h2>
+        <div v-if="isLoading" class="text-center py-4">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)] mx-auto"></div>
+        </div>
+        <div v-else-if="journalEntries.length === 0" class="text-center text-gray-500 py-4">
+          No entries yet. Start your journaling journey today!
+        </div>
+        <div v-else class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mood</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="entry in journalEntries" :key="entry.id" 
+                  class="hover:bg-gray-50 cursor-pointer transition-colors"
+                  @click="viewEntry(entry)">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="font-medium text-gray-900">{{ entry.title }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">{{ formatDate(entry.createdAt) }}</div>
+                  <div class="text-xs text-gray-500">{{ new Date(entry.createdAt).toLocaleTimeString() }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span v-if="entry.mood" class="text-xl" :title="entry.mood.toLowerCase()">
+                    {{ getMoodEmoji(entry.mood) }}
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex flex-wrap gap-2">
+                    <span v-for="tag in entry.tags" :key="tag"
+                      class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                      {{ tag }}
+                    </span>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm text-gray-900 line-clamp-2">{{ entry.content }}</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </main>
@@ -88,7 +105,6 @@ interface JournalEntry {
   date: string;
   mood?: 'happy' | 'sad' | 'neutral' | 'angry' | 'excited';
   tags: string[];
-  backlinks: string[];
   templateUsed?: string;
 }
 
@@ -114,7 +130,10 @@ const fetchEntries = async () => {
   try {
     isLoading.value = true
     const response = await $fetch('/api/journal')
-    journalEntries.value = response
+    // Sort entries by createdAt in descending order (most recent first)
+    journalEntries.value = response.sort((a: JournalEntry, b: JournalEntry) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
   } catch (error) {
     console.error('Error fetching journal entries:', error)
   } finally {

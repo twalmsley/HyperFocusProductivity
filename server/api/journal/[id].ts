@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
       return entry
 
     case 'PATCH':
-      const { title, content, type, date, mood, tags, backlinks, templateUsed } = await readBody(event)
+      const { title, content, type, date, mood, tags, templateUsed } = await readBody(event)
 
       // Truncate title and content if they are being updated
       const updateData: any = {}
@@ -55,7 +55,6 @@ export default defineEventHandler(async (event) => {
       if (date) updateData.date = new Date(date)
       if (mood) updateData.mood = mood.toUpperCase()
       if (tags) updateData.tags = tags
-      if (backlinks) updateData.backlinks = backlinks
       if (templateUsed) updateData.templateUsed = templateUsed
 
       return await prisma.journalEntry.update({

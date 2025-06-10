@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
 
     case 'POST':
       const body = await readBody(event)
+      console.log('Received request body:', body)
       const { 
         title, 
         content, 
@@ -40,7 +41,6 @@ export default defineEventHandler(async (event) => {
         date = new Date(),
         mood,
         tags = [],
-        backlinks = [],
         templateUsed
       } = body
 
@@ -51,19 +51,30 @@ export default defineEventHandler(async (event) => {
         })
       }
 
-      return await prisma.journalEntry.create({
-        data: {
-          userId: user.id,
-          title: title.slice(0, 200),
-          content: content.slice(0, 10000),
-          type: type.toUpperCase() as 'DAILY' | 'FREEFORM' | 'REVIEW',
-          date: new Date(date),
-          mood: mood ? mood.toUpperCase() as 'HAPPY' | 'SAD' | 'NEUTRAL' | 'ANGRY' | 'EXCITED' : null,
-          tags,
-          backlinks,
-          templateUsed
-        }
+      // Ensure tags is an array and convert to lowercase
+      const processedTags = Array.isArray(tags) 
+        ? tags.map(tag => tag.toLowerCase().trim())
+        : []
+
+      console.log('Processed tags:', processedTags)
+
+      const entryData = {
+        userId: user.id,
+        title: title.slice(0, 200),
+        content: content.slice(0, 10000),
+        type: type.toUpperCase() as 'DAILY' | 'FREEFORM' | 'REVIEW',
+        date: new Date(date),
+        mood: mood ? mood.toUpperCase() as 'HAPPY' | 'SAD' | 'NEUTRAL' | 'ANGRY' | 'EXCITED' : null,
+        tags: processedTags,
+        templateUsed
+      }
+      console.log('Creating entry with data:', entryData)
+
+      const result = await prisma.journalEntry.create({
+        data: entryData
       })
+      console.log('Created entry:', result)
+      return result
 
     default:
       throw createError({

@@ -127,9 +127,7 @@
                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
                 ></textarea>
               </div>
-              <p class="mt-2 text-sm text-gray-500">
-                Use # for tags and [[note-title]] for backlinks.
-              </p>
+              
             </div>
 
             <!-- Tags -->
@@ -141,7 +139,7 @@
                   v-model="tagInput"
                   type="text"
                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-                  placeholder="Add tags separated by spaces"
+                  placeholder="Add tags separated by spaces, commas, or semicolons (e.g., work, personal; goals)"
                   @keydown.enter.prevent="addTag"
                 />
               </div>
@@ -164,20 +162,7 @@
             </div>
           </div>
 
-          <!-- Backlinks Section -->
-          <div v-if="entry.backlinks.length > 0" class="mt-8 pt-6 border-t">
-            <h3 class="text-lg font-semibold mb-4">Linked Notes</h3>
-            <div class="space-y-2">
-              <NuxtLink
-                v-for="backlink in entry.backlinks"
-                :key="backlink"
-                :to="`/app/notes/${backlink}`"
-                class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                {{ backlink }}
-              </NuxtLink>
-            </div>
-          </div>
+          
         </div>
       </div>
     </main>
@@ -215,7 +200,6 @@ interface JournalEntry {
   date: string;
   mood?: 'happy' | 'sad' | 'neutral' | 'angry' | 'excited';
   tags: string[];
-  backlinks: string[];
   templateUsed?: string;
 }
 
@@ -249,10 +233,21 @@ const getMoodEmoji = (mood: string | null) => {
 
 // Add a tag
 const addTag = () => {
-  const tag = tagInput.value.trim().toLowerCase()
-  if (tag && !editedEntry.value.tags?.includes(tag)) {
-    editedEntry.value.tags?.push(tag)
-  }
+  if (!tagInput.value.trim()) return
+
+  // Split by spaces, commas, and semicolons, then process each tag
+  const tags = tagInput.value
+    .split(/[\s,;]+/) // Split by spaces, commas, and semicolons
+    .map(tag => tag.trim().toLowerCase())
+    .filter(tag => tag.length > 0) // Remove empty tags
+
+  // Add unique tags
+  tags.forEach(tag => {
+    if (!editedEntry.value.tags?.includes(tag)) {
+      editedEntry.value.tags?.push(tag)
+    }
+  })
+  
   tagInput.value = ''
 }
 
@@ -290,6 +285,22 @@ const fetchEntry = async () => {
 const saveChanges = async () => {
   try {
     isSaving.value = true
+
+    // Parse any remaining tags in the input field
+    if (tagInput.value.trim()) {
+      const remainingTags = tagInput.value
+        .split(/[\s,;]+/)
+        .map(tag => tag.trim().toLowerCase())
+        .filter(tag => tag.length > 0)
+
+      remainingTags.forEach(tag => {
+        if (!editedEntry.value.tags?.includes(tag)) {
+          editedEntry.value.tags?.push(tag)
+        }
+      })
+      tagInput.value = ''
+    }
+
     const response = await $fetch(`/api/journal/${entryId}`, {
       method: 'PATCH',
       body: {
@@ -299,7 +310,6 @@ const saveChanges = async () => {
         date: editedEntry.value.date,
         mood: editedEntry.value.mood,
         tags: editedEntry.value.tags,
-        backlinks: editedEntry.value.backlinks,
         templateUsed: editedEntry.value.templateUsed
       }
     })

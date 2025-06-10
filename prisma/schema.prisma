@@ -101,7 +101,6 @@ model JournalEntry {
   date              DateTime
   mood              JournalMood?
   tags              String[]
-  backlinks         String[]
   templateUsed      String?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt

@@ -87,7 +87,7 @@
                   v-model="tagInput"
                   type="text"
                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-                  placeholder="Add tags separated by spaces (e.g., work personal goals)"
+                  placeholder="Add tags separated by spaces, commas, or semicolons (e.g., work, personal; goals)"
                   @keydown.enter.prevent="addTag"
                 />
               </div>
@@ -152,7 +152,6 @@ interface JournalEntry {
   date: string;
   mood?: 'happy' | 'sad' | 'neutral' | 'angry' | 'excited';
   tags: string[];
-  backlinks: string[];
   templateUsed?: string;
 }
 
@@ -162,7 +161,6 @@ const entry = ref<Partial<JournalEntry>>({
   type: 'freeform',
   date: new Date().toISOString().split('T')[0],
   tags: [],
-  backlinks: []
 })
 
 const tagInput = ref('')
@@ -170,10 +168,21 @@ const isSaving = ref(false)
 
 // Add a tag
 const addTag = () => {
-  const tag = tagInput.value.trim().toLowerCase()
-  if (tag && !entry.value.tags?.includes(tag)) {
-    entry.value.tags?.push(tag)
-  }
+  if (!tagInput.value.trim()) return
+
+  // Split by spaces, commas, and semicolons, then process each tag
+  const tags = tagInput.value
+    .split(/[\s,;]+/) // Split by spaces, commas, and semicolons
+    .map(tag => tag.trim().toLowerCase())
+    .filter(tag => tag.length > 0) // Remove empty tags
+
+  // Add unique tags
+  tags.forEach(tag => {
+    if (!entry.value.tags?.includes(tag)) {
+      entry.value.tags?.push(tag)
+    }
+  })
+  
   tagInput.value = ''
 }
 
@@ -186,6 +195,22 @@ const removeTag = (tag: string) => {
 const createEntry = async () => {
   try {
     isSaving.value = true
+
+    // Parse any remaining tags in the input field
+    if (tagInput.value.trim()) {
+      const remainingTags = tagInput.value
+        .split(/[\s,;]+/)
+        .map(tag => tag.trim().toLowerCase())
+        .filter(tag => tag.length > 0)
+
+      remainingTags.forEach(tag => {
+        if (!entry.value.tags?.includes(tag)) {
+          entry.value.tags?.push(tag)
+        }
+      })
+      tagInput.value = ''
+    }
+
     const response = await $fetch('/api/journal', {
       method: 'POST',
       body: {
@@ -195,7 +220,6 @@ const createEntry = async () => {
         date: entry.value.date,
         mood: entry.value.mood,
         tags: entry.value.tags,
-        backlinks: entry.value.backlinks,
         templateUsed: entry.value.templateUsed
       }
     })
