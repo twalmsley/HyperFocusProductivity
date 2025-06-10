@@ -64,27 +64,7 @@
 </template>
 
 <script setup lang="ts">
-interface Task {
-  id: string;
-  userId: string;
-  title: string;
-  notes: string;
-  status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE';
-  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
-  estimatedPomodoros: number | null;
-  completedPomodoros: number | null;
-  position: number;
-  dueDate: string | null;
-  createdAt: string;
-  completedAt: string | null;
-  repeatType: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'ANNUALLY' | 'MONTHLY_BY_WEEKDAY' | null;
-  repeatInterval: number | null;
-  repeatDays: string | null;
-  repeatMonth: number | null;
-  repeatDay: number | null;
-  repeatWeekOfMonth: number | null;
-  repeatDayOfWeek: number | null;
-}
+import type { Task } from '~/types/task'
 
 const props = defineProps<{
   tasks: Task[];

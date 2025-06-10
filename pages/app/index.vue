@@ -19,6 +19,69 @@
         <QuickActions />
         <div class="grid grid-cols-1 gap-6">
           <TasksDueToday :tasks="dueTasks" :is-loading="isLoading" @view-task="viewTask" />
+          <div class="bg-white p-6 rounded-lg shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-semibold">Recent Journal Entries</h2>
+              <NuxtLink to="/app/journal" class="text-[var(--primary)] hover:text-[var(--button-hover)]">
+                View All
+              </NuxtLink>
+            </div>
+            <div v-if="isLoadingJournal" class="text-center py-4">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)] mx-auto"></div>
+            </div>
+            <div v-else-if="recentJournalEntries.length === 0" class="text-center text-gray-500 py-4">
+              No entries yet. Start your journaling journey today!
+            </div>
+            <div v-else class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mood</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="entry in recentJournalEntries" :key="entry.id" 
+                      class="hover:bg-gray-50 cursor-pointer transition-colors"
+                      @click="viewJournalEntry(entry)">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900">{{ entry.title }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                        {{ entry.type }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span v-if="entry.mood" class="text-xl" :title="entry.mood">
+                        {{ getMoodEmoji(entry.mood) }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="text-sm text-gray-600 line-clamp-2">
+                        {{ entry.content }}
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ formatDate(entry.createdAt) }}
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex flex-wrap gap-1">
+                        <span v-for="tag in entry.tags" :key="tag"
+                          class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                          {{ tag }}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
         <RecentlyCompletedTasks :tasks="completedTasks" :is-loading="isLoading" @view-task="viewTask" />
       </div>
@@ -29,6 +92,19 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { startOfTomorrow, addWeeks, addMonths, parseISO, isBefore, isSameDay, isWithinInterval, startOfToday } from 'date-fns'
+import PomodoroTimer from '~/components/PomodoroTimer.vue'
+import TaskFilters from '~/components/tasks/TaskFilters.vue'
+import TaskTable from '~/components/tasks/TaskTable.vue'
+import TaskPagination from '~/components/tasks/TaskPagination.vue'
+import TaskEditModal from '~/components/tasks/TaskEditModal.vue'
+import TaskViewModal from '~/components/tasks/TaskViewModal.vue'
+import TaskDeleteModal from '~/components/tasks/TaskDeleteModal.vue'
+import TaskStats from '~/components/tasks/TaskStats.vue'
+import RecentJournalEntries from '~/components/journal/RecentJournalEntries.vue'
+import type { Task } from '~/types/task'
+
 const {
   status,
   data,
@@ -40,22 +116,38 @@ const {
   signOut
 } = useAuth()
 
-const userSession = await getSession()
-const user = userSession?.user;
+interface ExtendedSession {
+  user?: {
+    id: string;
+    email?: string | null;
+    name?: string | null;
+    image?: string | null;
+  };
+  blocked?: boolean;
+}
 
-interface Task {
+interface ExtendedUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+}
+
+const userSession = await getSession() as ExtendedSession
+const user = userSession?.user as ExtendedUser | undefined
+
+interface JournalEntry {
   id: string;
   userId: string;
   title: string;
-  notes: string;
-  status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE';
-  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
-  estimatedPomodoros: number | null;
-  completedPomodoros: number | null;
-  position: number;
-  dueDate: string | null;
+  content: string;
+  type: 'DAILY' | 'FREEFORM' | 'REVIEW';
+  date: string;
+  mood: 'HAPPY' | 'SAD' | 'NEUTRAL' | 'ANGRY' | 'EXCITED' | null;
+  tags: string[];
+  templateUsed: string | null;
   createdAt: string;
-  completedAt: string | null;
+  updatedAt: string;
 }
 
 const isLoading = ref(false)
@@ -250,5 +342,71 @@ function viewTask(task: Task) {
 function closeViewModal() {
   showViewModal.value = false
   viewingTask.value = {}
+}
+
+// Add journal entries state
+const isLoadingJournal = ref(false)
+const journalEntries = ref<JournalEntry[]>([])
+
+// Add computed property for recent journal entries
+const recentJournalEntries = computed(() => {
+  if (!journalEntries.value || journalEntries.value.length === 0) return []
+  return journalEntries.value.slice(0, 3)
+})
+
+// Fetch journal entries
+async function fetchJournalEntries() {
+  if (!user?.id) {
+    console.error('No user available for fetching journal entries')
+    return
+  }
+
+  try {
+    isLoadingJournal.value = true
+    const response = await $fetch<JournalEntry[]>('/api/journal')
+    journalEntries.value = response.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  } catch (error) {
+    console.error('Failed to fetch journal entries:', error)
+  } finally {
+    isLoadingJournal.value = false
+  }
+}
+
+// View a journal entry
+function viewJournalEntry(entry: JournalEntry) {
+  navigateTo(`/app/journal/${entry.id}`)
+}
+
+// Fetch tasks and journal entries on component mount
+onMounted(() => {
+  if (user?.id) {
+    fetchTasks()
+    fetchJournalEntries()
+  }
+})
+
+// Add getMoodEmoji function
+const getMoodEmoji = (mood: string | null) => {
+  const emojis: Record<string, string> = {
+    'HAPPY': '😊',
+    'SAD': '😢',
+    'NEUTRAL': '😐',
+    'ANGRY': '😠',
+    'EXCITED': '🤩'
+  }
+  return mood ? emojis[mood] || '❓' : null
+}
+
+// Update formatDate function
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 </script>

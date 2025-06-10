@@ -37,9 +37,9 @@
                 required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
               >
-                <option value="daily">Daily Journal</option>
-                <option value="freeform">Free-form Entry</option>
-                <option value="review">Review Entry</option>
+                <option value="DAILY">Daily Journal</option>
+                <option value="FREEFORM">Free-form Entry</option>
+                <option value="REVIEW">Review Entry</option>
               </select>
             </div>
 
@@ -52,11 +52,11 @@
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
               >
                 <option value="">Select a mood...</option>
-                <option value="happy">😊 Happy</option>
-                <option value="sad">😢 Sad</option>
-                <option value="neutral">😐 Neutral</option>
-                <option value="angry">😠 Angry</option>
-                <option value="excited">🤩 Excited</option>
+                <option value="HAPPY">😊 Happy</option>
+                <option value="SAD">😢 Sad</option>
+                <option value="NEUTRAL">😐 Neutral</option>
+                <option value="ANGRY">😠 Angry</option>
+                <option value="EXCITED">🤩 Excited</option>
               </select>
             </div>
 
@@ -148,17 +148,17 @@ interface JournalEntry {
   content: string;
   createdAt: string;
   updatedAt: string;
-  type: 'daily' | 'freeform' | 'review';
+  type: 'DAILY' | 'FREEFORM' | 'REVIEW';
   date: string;
-  mood?: 'happy' | 'sad' | 'neutral' | 'angry' | 'excited';
+  mood: 'HAPPY' | 'SAD' | 'NEUTRAL' | 'ANGRY' | 'EXCITED' | null;
   tags: string[];
-  templateUsed?: string;
+  templateUsed: string | null;
 }
 
 const entry = ref<Partial<JournalEntry>>({
   title: '',
   content: '',
-  type: 'freeform',
+  type: 'FREEFORM',
   date: new Date().toISOString().split('T')[0],
   tags: [],
 })

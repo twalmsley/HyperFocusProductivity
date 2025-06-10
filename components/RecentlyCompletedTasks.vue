@@ -10,20 +10,7 @@
 </template>
 
 <script setup lang="ts">
-interface Task {
-  id: string;
-  userId: string;
-  title: string;
-  notes: string;
-  status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE';
-  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
-  estimatedPomodoros: number | null;
-  completedPomodoros: number | null;
-  position: number;
-  dueDate: string | null;
-  createdAt: string;
-  completedAt: string | null;
-}
+import type { Task } from '~/types/task'
 
 defineProps<{
   tasks: Task[];

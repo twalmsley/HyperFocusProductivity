@@ -11,66 +11,17 @@
       </div>
 
       <!-- Calendar View -->
-      <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+      <div class="bg-white p-6 rounded-lg shadow-sm">
         <h2 class="text-xl font-semibold mb-4">Calendar</h2>
         <div class="calendar-grid">
-          <!-- Calendar will be implemented here -->
-          <div class="text-center text-gray-500 py-8">
-            Calendar view coming soon...
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Entries Table -->
-      <div class="bg-white p-6 rounded-lg shadow-sm">
-        <h2 class="text-xl font-semibold mb-4">Recent Entries</h2>
-        <div v-if="isLoading" class="text-center py-4">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)] mx-auto"></div>
-        </div>
-        <div v-else-if="journalEntries.length === 0" class="text-center text-gray-500 py-4">
-          No entries yet. Start your journaling journey today!
-        </div>
-        <div v-else class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mood</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="entry in journalEntries" :key="entry.id" 
-                  class="hover:bg-gray-50 cursor-pointer transition-colors"
-                  @click="viewEntry(entry)">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="font-medium text-gray-900">{{ entry.title }}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900">{{ formatDate(entry.createdAt) }}</div>
-                  <div class="text-xs text-gray-500">{{ new Date(entry.createdAt).toLocaleTimeString() }}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span v-if="entry.mood" class="text-xl" :title="entry.mood.toLowerCase()">
-                    {{ getMoodEmoji(entry.mood) }}
-                  </span>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex flex-wrap gap-2">
-                    <span v-for="tag in entry.tags" :key="tag"
-                      class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                      {{ tag }}
-                    </span>
-                  </div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="text-sm text-gray-900 line-clamp-2">{{ entry.content }}</div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <Calendar
+            v-model="selectedDate"
+            :attributes="calendarAttributes"
+            @dayclick="onDayClick"
+            is-expanded
+            trim-weeks
+            :first-day-of-week="1"
+          />
         </div>
       </div>
     </main>
@@ -78,7 +29,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { Calendar } from 'v-calendar'
+import 'v-calendar/style.css'
 
 const {
   status,
@@ -101,15 +54,30 @@ interface JournalEntry {
   content: string;
   createdAt: string;
   updatedAt: string;
-  type: 'daily' | 'freeform' | 'review';
+  type: 'DAILY' | 'FREEFORM' | 'REVIEW';
   date: string;
-  mood?: 'happy' | 'sad' | 'neutral' | 'angry' | 'excited';
+  mood: 'HAPPY' | 'SAD' | 'NEUTRAL' | 'ANGRY' | 'EXCITED' | null;
   tags: string[];
-  templateUsed?: string;
+  templateUsed: string | null;
 }
 
 const isLoading = ref(true)
 const journalEntries = ref<JournalEntry[]>([])
+const selectedDate = ref(new Date())
+
+const calendarAttributes = computed(() => {
+  return journalEntries.value.map(entry => ({
+    key: entry.id,
+    highlight: {
+      color: 'blue',
+      fillMode: 'light' as const,
+    },
+    dates: [new Date(entry.createdAt)],
+    popover: {
+      label: entry.title,
+    },
+  }))
+})
 
 // Format date for display
 const formatDate = (dateString: string) => {
@@ -146,15 +114,22 @@ onMounted(() => {
   fetchEntries()
 })
 
-const getMoodEmoji = (mood: string | null) => {
-  const emojis: Record<string, string> = {
-    'HAPPY': '😊',
-    'SAD': '😢',
-    'NEUTRAL': '😐',
-    'ANGRY': '😠',
-    'EXCITED': '🤩'
+const onDayClick = (day: any) => {
+  const entriesForDay = journalEntries.value.filter(entry => {
+    const entryDate = new Date(entry.createdAt)
+    return entryDate.toDateString() === day.date.toDateString()
+  })
+  
+  if (entriesForDay.length > 0) {
+    // If there's only one entry, navigate directly to it
+    if (entriesForDay.length === 1) {
+      viewEntry(entriesForDay[0])
+    } else {
+      // If there are multiple entries, you could show a modal or navigate to a filtered view
+      // For now, we'll just navigate to the first entry
+      viewEntry(entriesForDay[0])
+    }
   }
-  return mood ? emojis[mood] || '❓' : null
 }
 </script>
 
