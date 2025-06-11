@@ -77,6 +77,21 @@
               Read More →
             </NuxtLink>
           </div>
+
+          <!-- Trackers Post -->
+          <div class="bg-white p-8 rounded-lg shadow-md">
+            <div class="text-[var(--primary)] text-4xl mb-4">📊</div>
+            <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-4">Mastering Progress with Trackers</h3>
+            <p class="text-[var(--text-secondary)] mb-4">
+              How to use trackers to monitor habits, goals, and daily metrics for continuous improvement.
+            </p>
+            <NuxtLink 
+              to="/blog/trackers" 
+              class="inline-block text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
+            >
+              Read More →
+            </NuxtLink>
+          </div>
         </div>
       </div>
     </section>
