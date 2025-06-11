@@ -25,9 +25,13 @@
                 id="groupName"
                 v-model="task.groupName"
                 type="text"
+                list="groupNames"
                 required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
               />
+              <datalist id="groupNames">
+                <option v-for="group in groupNames" :key="group" :value="group" />
+              </datalist>
             </div>
 
             <div>
@@ -86,6 +90,18 @@ const task = ref({
 
 const isLoading = ref(true)
 const isSubmitting = ref(false)
+const groupNames = ref<string[]>([])
+
+// Fetch existing group names
+const fetchGroupNames = async () => {
+  try {
+    const response = await fetch('/api/cyclic-tasks/groups')
+    if (!response.ok) throw new Error('Failed to fetch group names')
+    groupNames.value = await response.json()
+  } catch (error) {
+    console.error('Error fetching group names:', error)
+  }
+}
 
 // Fetch task details
 const fetchTask = async () => {
@@ -126,8 +142,8 @@ const updateTask = async () => {
   }
 }
 
-// Fetch task on component mount
-onMounted(() => {
-  fetchTask()
+// Fetch task and group names on component mount
+onMounted(async () => {
+  await Promise.all([fetchTask(), fetchGroupNames()])
 })
 </script> 
