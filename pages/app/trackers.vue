@@ -14,22 +14,24 @@
     <!-- Date Navigation -->
     <div class="flex items-center justify-between mb-6">
       <button
-        @click="navigateDateRange(-30)"
-        class="p-2 hover:bg-gray-100 rounded-md"
+        @click="navigateDateRange(30)"
+        class="p-2 hover:bg-gray-100 rounded-md flex items-center gap-2"
+        :disabled="isAtNewestDate"
+        :class="{ 'opacity-50 cursor-not-allowed': isAtNewestDate }"
       >
-        <span class="sr-only">Previous 30 days</span>
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
+        <span>Newer Dates</span>
       </button>
       <div class="text-lg font-medium">
         {{ formatDateRange }}
       </div>
       <button
-        @click="navigateDateRange(30)"
-        class="p-2 hover:bg-gray-100 rounded-md"
+        @click="navigateDateRange(-30)"
+        class="p-2 hover:bg-gray-100 rounded-md flex items-center gap-2"
       >
-        <span class="sr-only">Next 30 days</span>
+        <span>Older Dates</span>
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
@@ -198,16 +200,30 @@ const formatDateRange = computed(() => {
   return `${format(startDate.value, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`
 })
 
+const isAtNewestDate = computed(() => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const endDate = addDays(startDate.value, 29)
+  return endDate >= today
+})
+
 const navigateDateRange = (days: number) => {
-  const newStartDate = days > 0 ? addDays(startDate.value, days) : subDays(startDate.value, -days)
+  // For positive days, we're moving forward in time (newer dates)
+  // For negative days, we're moving backward in time (older dates)
+  const newStartDate = addDays(startDate.value, days)
   const newEndDate = addDays(newStartDate, 29)
   
   // Don't allow navigating past today
-  if (newEndDate > new Date()) {
-    return
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  if (newEndDate > today) {
+    // If we would go past today, adjust to show the most recent 30 days
+    startDate.value = subDays(today, 29)
+  } else {
+    startDate.value = newStartDate
   }
   
-  startDate.value = newStartDate
   fetchTrackers()
 }
 
