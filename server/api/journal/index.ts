@@ -33,7 +33,6 @@ export default defineEventHandler(async (event) => {
 
     case 'POST':
       const body = await readBody(event)
-      console.log('Received request body:', body)
       const { 
         title, 
         content, 
@@ -56,7 +55,6 @@ export default defineEventHandler(async (event) => {
         ? tags.map(tag => tag.toLowerCase().trim())
         : []
 
-      console.log('Processed tags:', processedTags)
 
       const entryData = {
         userId: user.id,
@@ -68,12 +66,10 @@ export default defineEventHandler(async (event) => {
         tags: processedTags,
         templateUsed
       }
-      console.log('Creating entry with data:', entryData)
 
       const result = await prisma.journalEntry.create({
         data: entryData
       })
-      console.log('Created entry:', result)
       return result
 
     default:
