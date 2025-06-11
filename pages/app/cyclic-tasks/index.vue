@@ -43,7 +43,7 @@
                     <div class="flex items-center space-x-3">
                       <button
                         @click="markAsCompleted(task)"
-                        class="text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
+                        class="text-gray-400 hover:text-gray-600 transition-colors"
                         title="Mark as completed"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -52,7 +52,7 @@
                       </button>
                       <NuxtLink
                         :to="`/app/cyclic-tasks/${task.id}`"
-                        class="text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
+                        class="text-gray-400 hover:text-gray-600 transition-colors"
                         title="View details"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -62,7 +62,7 @@
                       </NuxtLink>
                       <NuxtLink
                         :to="`/app/cyclic-tasks/${task.id}/edit`"
-                        class="text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
+                        class="text-gray-400 hover:text-gray-600 transition-colors"
                         title="Edit task"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -71,7 +71,7 @@
                       </NuxtLink>
                       <button
                         @click="deleteTask(task)"
-                        class="text-red-600 hover:text-red-800 transition-colors"
+                        class="text-gray-400 hover:text-red-600 transition-colors"
                         title="Delete task"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -87,6 +87,21 @@
         </div>
       </div>
     </main>
+
+    <!-- Success Dialog -->
+    <div v-if="showSuccessDialog" class="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="bg-white/90 rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Task Completed</h3>
+        <div class="flex justify-end">
+          <button
+            @click="showSuccessDialog = false"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[var(--primary)] hover:bg-[var(--button-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -95,6 +110,7 @@ import { format } from 'date-fns'
 
 const isLoading = ref(true)
 const cyclicTasks = ref([])
+const showSuccessDialog = ref(false)
 
 // Fetch cyclic tasks
 const fetchTasks = async () => {
@@ -153,6 +169,7 @@ const markAsCompleted = async (task) => {
     })
     if (!response.ok) throw new Error('Failed to mark task as completed')
     await fetchTasks() // Refresh the list
+    showSuccessDialog.value = true // Show success dialog
   } catch (error) {
     console.error('Error marking task as completed:', error)
   }
