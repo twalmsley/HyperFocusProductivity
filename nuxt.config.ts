@@ -32,11 +32,7 @@ export default defineNuxtConfig({
     isEnabled: true,
     disableServerSideAuth: false,
     originEnvKey: 'NUXT_AUTH_ORIGIN',
-    globalAppMiddleware: {
-      isEnabled: true,
-      allow404WithoutAuth: true,
-      addDefaultCallbackUrl: true
-    },
+    globalAppMiddleware: true,
     baseURL: process.env.NUXT_AUTH_ORIGIN || 'http://localhost:3000',
     provider: {
       type: 'authjs',

@@ -74,7 +74,7 @@
     </div>
 
     <!-- Create/Edit Tracker Modal -->
-    <Modal v-if="showCreateTrackerModal" @close="showCreateTrackerModal = false">
+    <CreateEditTrackerModal v-if="showCreateTrackerModal" @close="showCreateTrackerModal = false">
       <template #header>
         <h3 class="text-lg font-medium">{{ editingTracker ? 'Edit Tracker' : 'Create Tracker' }}</h3>
       </template>
@@ -107,7 +107,7 @@
           </div>
         </form>
       </template>
-    </Modal>
+    </CreateEditTrackerModal>
 
     <!-- Value Selection Modal -->
     <Modal v-if="showValueModal" @close="showValueModal = false">
@@ -306,7 +306,9 @@ const fetchTrackers = async () => {
 }
 
 // Initial fetch
-fetchTrackers()
+onMounted(async () => {
+  await fetchTrackers()
+})
 </script>
 
 <style scoped>

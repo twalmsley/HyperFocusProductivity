@@ -5,12 +5,22 @@ const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
-  if (!session?.user?.id) {
+  if (!session) {
     throw createError({
       statusCode: 401,
-      message: 'Unauthorized'
+      message: 'Not authenticated'
     })
   }
+
+  const user = session.user as { id: string; email?: string; name?: string; image?: string }
+
+  if (!user || !user.id) {
+    throw createError({
+      statusCode: 401,
+      message: 'Not authenticated'
+    })
+  }
+
 
   const id = event.context.params?.id
   if (!id) {
@@ -25,7 +35,7 @@ export default defineEventHandler(async (event) => {
     const existingTracker = await prisma.tracker.findFirst({
       where: {
         id,
-        userId: session.user.id
+        userId: user.id
       }
     })
 
