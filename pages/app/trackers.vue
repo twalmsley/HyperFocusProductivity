@@ -196,8 +196,8 @@ const valueForm = ref({
 })
 
 const formatDateRange = computed(() => {
-  const endDate = new Date()
-  return `${format(startDate.value, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`
+  const endDate = addDays(startDate.value, 29)
+  return `${format(endDate, 'MMM d, yyyy')} - ${format(startDate.value, 'MMM d, yyyy')}`
 })
 
 const isAtNewestDate = computed(() => {
