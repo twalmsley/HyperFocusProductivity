@@ -127,9 +127,10 @@
           <input
             type="range"
             id="value"
-            v-model="valueForm.value"
+            v-model.number="valueForm.value"
             min="0"
             max="100"
+            step="5"
             class="mt-1 block w-full"
           />
           <div class="text-center mt-2">{{ valueForm.value }}%</div>
@@ -216,10 +217,14 @@ const getCellStyle = (tracker: Tracker, day: number) => {
   
   if (!entry) return { backgroundColor: '#f3f4f6' }
   
-  const intensity = entry.value / 100
-  const alpha = 0.2 + (intensity * 0.8) // Minimum opacity of 0.2
+  // Light blue (rgb(191, 219, 254)) to dark orange (rgb(234, 88, 12))
+  const value = entry.value / 100
+  const r = Math.round(191 + (234 - 191) * value)
+  const g = Math.round(219 + (88 - 219) * value)
+  const b = Math.round(254 + (12 - 254) * value)
+  
   return {
-    backgroundColor: `rgba(59, 130, 246, ${alpha})`
+    backgroundColor: `rgb(${r}, ${g}, ${b})`
   }
 }
 
