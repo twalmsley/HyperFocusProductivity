@@ -108,7 +108,7 @@
           </button>
           <button
             type="submit"
-            class="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] rounded-md hover:bg-[var(--primary-dark)]"
+            class="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] rounded-md hover:bg-[var(--button-hover)]"
           >
             {{ editingTracker ? 'Save' : 'Create' }}
           </button>
@@ -145,7 +145,7 @@
           <button
             type="button"
             @click="saveValue"
-            class="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] rounded-md hover:bg-[var(--primary-dark)]"
+            class="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] rounded-md hover:bg-[var(--button-hover)]"
           >
             Save
           </button>
