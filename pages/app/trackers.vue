@@ -37,10 +37,29 @@
     </div>
 
     <!-- Trackers Grid -->
-    <div class="space-y-4">
-      <div v-for="tracker in trackers" :key="tracker.id" class="bg-white rounded-lg shadow p-4">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-medium">{{ tracker.name }}</h3>
+    <div class="divide-y divide-gray-200">
+      <div v-for="tracker in trackers" :key="tracker.id" class="bg-white p-4">
+        <div class="flex items-center gap-4">
+          <h3 class="text-lg font-medium w-48">{{ tracker.name }}</h3>
+          <div class="flex-1">
+            <div class="grid grid-cols-30 gap-1">
+              <div
+                v-for="day in 30"
+                :key="day"
+                class="aspect-square rounded cursor-pointer hover:ring-2 hover:ring-[var(--primary)] transition-all relative"
+                :style="getCellStyle(tracker, day)"
+                @click="openValueModal(tracker, day)"
+                :title="getDateTooltip(day)"
+              >
+                <div 
+                  class="absolute inset-0 flex items-center justify-center text-xs font-medium"
+                  :class="getTextColorClass(tracker, day)"
+                >
+                  {{ getTrackerValue(tracker, day) }}
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="flex space-x-2">
             <button
               @click="editTracker(tracker)"
@@ -60,23 +79,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
-          </div>
-        </div>
-        <div class="grid grid-cols-30 gap-1">
-          <div
-            v-for="day in 30"
-            :key="day"
-            class="aspect-square rounded cursor-pointer hover:ring-2 hover:ring-[var(--primary)] transition-all relative"
-            :style="getCellStyle(tracker, day)"
-            @click="openValueModal(tracker, day)"
-            :title="getDateTooltip(day)"
-          >
-            <div 
-              class="absolute inset-0 flex items-center justify-center text-xs font-medium"
-              :class="getTextColorClass(tracker, day)"
-            >
-              {{ getTrackerValue(tracker, day) }}
-            </div>
           </div>
         </div>
       </div>
