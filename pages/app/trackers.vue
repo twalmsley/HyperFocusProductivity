@@ -69,6 +69,7 @@
             class="aspect-square rounded cursor-pointer hover:ring-2 hover:ring-[var(--primary)] transition-all relative"
             :style="getCellStyle(tracker, day)"
             @click="openValueModal(tracker, day)"
+            :title="getDateTooltip(day)"
           >
             <div 
               class="absolute inset-0 flex items-center justify-center text-xs font-medium"
@@ -76,7 +77,6 @@
             >
               {{ getTrackerValue(tracker, day) }}
             </div>
-            <div class="absolute inset-0" :title="getDateTooltip(day)"></div>
           </div>
         </div>
       </div>
