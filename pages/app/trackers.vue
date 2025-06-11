@@ -279,7 +279,7 @@ const saveValue = async () => {
   if (!selectedTracker.value) return
   
   try {
-    const date = addDays(startDate.value, selectedDay.value - 1)
+    const date = addDays(startDate.value, 30 - selectedDay.value)
     await $fetch('/api/tracker-entries', {
       method: 'POST',
       body: {
@@ -353,5 +353,28 @@ onMounted(async () => {
 <style scoped>
 .grid-cols-30 {
   grid-template-columns: repeat(30, minmax(0, 1fr));
+}
+
+/* Remove delay for tracker cell tooltips */
+.grid-cols-30 > div {
+  pointer-events: auto;
+}
+.grid-cols-30 > div[title] {
+  position: relative;
+}
+.grid-cols-30 > div[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 50;
+  margin-bottom: 4px;
 }
 </style> 
