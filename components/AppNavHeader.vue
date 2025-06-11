@@ -32,6 +32,13 @@
             Journal
           </NuxtLink>
           <NuxtLink 
+            to="/app/trackers" 
+            class="text-gray-900 hover:text-[var(--primary)] transition-colors"
+            :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/trackers') }"
+          >
+            Trackers
+          </NuxtLink>
+          <NuxtLink 
             to="/app/settings" 
             class="text-gray-900 hover:text-[var(--primary)] transition-colors"
             :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/settings') }"

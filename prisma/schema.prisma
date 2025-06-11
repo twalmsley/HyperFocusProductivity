@@ -26,6 +26,7 @@ model User {
   sessions          Session[]       @relation("UserSessions")
   journalEntries    JournalEntry[]  @relation("UserJournalEntries")
   cyclicTasks       CyclicTask[]    @relation("UserCyclicTasks")
+  trackers          Tracker[]       @relation("UserTrackers")
 }
 
 model Task {
@@ -120,6 +121,26 @@ model CyclicTask {
   updatedAt           DateTime  @updatedAt
 
   user                User      @relation("UserCyclicTasks", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Tracker {
+  id          String         @id @default(uuid())
+  userId      String
+  name        String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  entries     TrackerEntry[]
+  user        User           @relation("UserTrackers", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TrackerEntry {
+  id          String    @id @default(uuid())
+  trackerId   String
+  date        DateTime
+  value       Int       // 0-100 representing the intensity
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  tracker     Tracker   @relation(fields: [trackerId], references: [id], onDelete: Cascade)
 }
 
 enum TaskStatus {
