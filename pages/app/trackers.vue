@@ -1,4 +1,5 @@
 <template>
+  <AppNavHeader />
   <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-2xl font-bold">Trackers</h1>
@@ -65,94 +66,101 @@
           <div
             v-for="day in 30"
             :key="day"
-            class="aspect-square rounded cursor-pointer hover:ring-2 hover:ring-[var(--primary)] transition-all"
+            class="aspect-square rounded cursor-pointer hover:ring-2 hover:ring-[var(--primary)] transition-all relative"
             :style="getCellStyle(tracker, day)"
             @click="openValueModal(tracker, day)"
-          ></div>
+          >
+            <div 
+              class="absolute inset-0 flex items-center justify-center text-xs font-medium"
+              :class="getTextColorClass(tracker, day)"
+            >
+              {{ getTrackerValue(tracker, day) }}
+            </div>
+            <div class="absolute inset-0" :title="getDateTooltip(day)"></div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Create/Edit Tracker Modal -->
-    <CreateEditTrackerModal v-if="showCreateTrackerModal" @close="showCreateTrackerModal = false">
+    <CreateEditTrackerModal :show="showCreateTrackerModal" @close="showCreateTrackerModal = false">
       <template #header>
         <h3 class="text-lg font-medium">{{ editingTracker ? 'Edit Tracker' : 'Create Tracker' }}</h3>
       </template>
-      <template #default>
-        <form @submit.prevent="saveTracker" class="space-y-4">
-          <div>
-            <label for="trackerName" class="block text-sm font-medium text-gray-700">Name</label>
-            <input
-              type="text"
-              id="trackerName"
-              v-model="trackerForm.name"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              required
-            />
-          </div>
-          <div class="flex justify-end space-x-2">
-            <button
-              type="button"
-              @click="showCreateTrackerModal = false"
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              class="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] rounded-md hover:bg-[var(--primary-dark)]"
-            >
-              {{ editingTracker ? 'Save' : 'Create' }}
-            </button>
-          </div>
-        </form>
-      </template>
+      <form @submit.prevent="saveTracker" class="space-y-4">
+        <div>
+          <label for="trackerName" class="block text-sm font-medium text-gray-700">Name</label>
+          <input
+            type="text"
+            id="trackerName"
+            v-model="trackerForm.name"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            required
+          />
+        </div>
+        <div class="flex justify-end space-x-2">
+          <button
+            type="button"
+            @click="showCreateTrackerModal = false"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] rounded-md hover:bg-[var(--primary-dark)]"
+          >
+            {{ editingTracker ? 'Save' : 'Create' }}
+          </button>
+        </div>
+      </form>
     </CreateEditTrackerModal>
 
     <!-- Value Selection Modal -->
-    <Modal v-if="showValueModal" @close="showValueModal = false">
+    <ValueSelectionModal :show="showValueModal" @close="showValueModal = false">
       <template #header>
         <h3 class="text-lg font-medium">Set Value</h3>
       </template>
-      <template #default>
-        <div class="space-y-4">
-          <div>
-            <label for="value" class="block text-sm font-medium text-gray-700">Value (0-100)</label>
-            <input
-              type="range"
-              id="value"
-              v-model="valueForm.value"
-              min="0"
-              max="100"
-              class="mt-1 block w-full"
-            />
-            <div class="text-center mt-2">{{ valueForm.value }}%</div>
-          </div>
-          <div class="flex justify-end space-x-2">
-            <button
-              type="button"
-              @click="showValueModal = false"
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              @click="saveValue"
-              class="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] rounded-md hover:bg-[var(--primary-dark)]"
-            >
-              Save
-            </button>
-          </div>
+      <div class="space-y-4">
+        <div>
+          <label for="value" class="block text-sm font-medium text-gray-700">Value (0-100)</label>
+          <input
+            type="range"
+            id="value"
+            v-model="valueForm.value"
+            min="0"
+            max="100"
+            class="mt-1 block w-full"
+          />
+          <div class="text-center mt-2">{{ valueForm.value }}%</div>
         </div>
-      </template>
-    </Modal>
+        <div class="flex justify-end space-x-2">
+          <button
+            type="button"
+            @click="showValueModal = false"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="saveValue"
+            class="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] rounded-md hover:bg-[var(--primary-dark)]"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </ValueSelectionModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { format, addDays, subDays } from 'date-fns'
+import BaseModal from '~/components/BaseModal.vue'
+import CreateEditTrackerModal from '~/components/trackers/CreateEditTrackerModal.vue'
+import ValueSelectionModal from '~/components/trackers/ValueSelectionModal.vue'
 
 interface Tracker {
   id: string
@@ -167,7 +175,7 @@ interface TrackerEntry {
 }
 
 const trackers = ref<Tracker[]>([])
-const startDate = ref(new Date())
+const startDate = ref(subDays(new Date(), 29))
 const showCreateTrackerModal = ref(false)
 const showValueModal = ref(false)
 const editingTracker = ref<Tracker | null>(null)
@@ -183,17 +191,25 @@ const valueForm = ref({
 })
 
 const formatDateRange = computed(() => {
-  const endDate = addDays(startDate.value, 29)
+  const endDate = new Date()
   return `${format(startDate.value, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`
 })
 
 const navigateDateRange = (days: number) => {
-  startDate.value = days > 0 ? addDays(startDate.value, days) : subDays(startDate.value, -days)
+  const newStartDate = days > 0 ? addDays(startDate.value, days) : subDays(startDate.value, -days)
+  const newEndDate = addDays(newStartDate, 29)
+  
+  // Don't allow navigating past today
+  if (newEndDate > new Date()) {
+    return
+  }
+  
+  startDate.value = newStartDate
   fetchTrackers()
 }
 
 const getCellStyle = (tracker: Tracker, day: number) => {
-  const date = addDays(startDate.value, day - 1)
+  const date = addDays(startDate.value, 30 - day)
   const entry = tracker.entries.find(e => 
     format(new Date(e.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
   )
@@ -201,8 +217,9 @@ const getCellStyle = (tracker: Tracker, day: number) => {
   if (!entry) return { backgroundColor: '#f3f4f6' }
   
   const intensity = entry.value / 100
+  const alpha = 0.2 + (intensity * 0.8) // Minimum opacity of 0.2
   return {
-    backgroundColor: `rgba(59, 130, 246, ${intensity})`
+    backgroundColor: `rgba(59, 130, 246, ${alpha})`
   }
 }
 
@@ -228,7 +245,7 @@ const deleteTracker = async (tracker: Tracker) => {
 const openValueModal = (tracker: Tracker, day: number) => {
   selectedTracker.value = tracker
   selectedDay.value = day
-  const date = addDays(startDate.value, day - 1)
+  const date = addDays(startDate.value, 30 - day)
   const entry = tracker.entries.find(e => 
     format(new Date(e.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
   )
@@ -303,6 +320,28 @@ const fetchTrackers = async () => {
       alert('Failed to fetch trackers. Please try again.')
     }
   }
+}
+
+const getTrackerValue = (tracker: Tracker, day: number) => {
+  const date = addDays(startDate.value, 30 - day)
+  const entry = tracker.entries.find(e => 
+    format(new Date(e.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+  )
+  return entry?.value || ''
+}
+
+const getTextColorClass = (tracker: Tracker, day: number) => {
+  const date = addDays(startDate.value, 30 - day)
+  const entry = tracker.entries.find(e => 
+    format(new Date(e.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+  )
+  if (!entry) return 'text-gray-400'
+  return entry.value > 50 ? 'text-white' : 'text-gray-700'
+}
+
+const getDateTooltip = (day: number) => {
+  const date = addDays(startDate.value, 30 - day)
+  return format(date, 'MMMM d, yyyy')
 }
 
 // Initial fetch

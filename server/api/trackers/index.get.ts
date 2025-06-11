@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { getServerSession } from '#auth'
+import { subDays, startOfDay, endOfDay } from 'date-fns'
 
 const prisma = new PrismaClient()
 
@@ -21,16 +22,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const query = getQuery(event)
-  const start = query.start as string
-  const end = query.end as string
-
-  if (!start || !end) {
-    throw createError({
-      statusCode: 400,
-      message: 'Start and end dates are required'
-    })
-  }
+  // Calculate date range
+  const endDate = endOfDay(new Date())
+  const startDate = startOfDay(subDays(endDate, 29))
 
   try {
     const trackers = await prisma.tracker.findMany({
@@ -41,11 +35,17 @@ export default defineEventHandler(async (event) => {
         entries: {
           where: {
             date: {
-              gte: new Date(start),
-              lte: new Date(end)
+              gte: startDate,
+              lte: endDate
             }
+          },
+          orderBy: {
+            date: 'asc'
           }
         }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     })
 
