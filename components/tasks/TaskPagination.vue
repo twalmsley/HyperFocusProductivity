@@ -2,7 +2,7 @@
   <div class="mt-4 flex items-center justify-between">
     <div class="flex items-center space-x-2">
       <span class="text-sm text-gray-700">Show</span>
-      <select v-model="localPageSize" @change="(e) => handlePageSizeChange((e.target as HTMLSelectElement).value)"
+      <select v-model="localPageSize" @change="handlePageSizeChange"
         class="rounded-md border-gray-300 text-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
         <option value="5">5</option>
         <option value="10">10</option>
@@ -90,10 +90,9 @@ watch(() => props.pageSize, (newSize) => {
   localPageSize.value = newSize
 })
 
-// Convert string to number when emitting pageSize changes
-const handlePageSizeChange = (value: string) => {
-  const numValue = parseInt(value, 10)
-  localPageSize.value = numValue
+// Handle page size changes
+const handlePageSizeChange = () => {
+  const numValue = parseInt(localPageSize.value.toString(), 10)
   emit('update:pageSize', numValue)
 }
 

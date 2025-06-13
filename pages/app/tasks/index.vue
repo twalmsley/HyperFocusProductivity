@@ -26,13 +26,31 @@
         <!-- Filter controls -->
         <TaskFilters v-model:filters="filters" />
 
-        <!-- Pagination -->
-        <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredTasks.length" />
+        <!-- Sort controls -->
+        <TaskSortControls 
+          :sort-column="sortColumn"
+          :sort-direction="sortDirection"
+          :show-due-date="true"
+          @sort="sortTasks"
+        />
 
-        <!-- Task table -->
-        <TaskTable :tasks="paginatedTasks" :total-tasks="tasks.length" :sort-column="sortColumn"
-          :sort-direction="sortDirection" :show-due-date="true" @sort="sortTasks" @view="viewTask" @edit="editTask" @delete="confirmDelete"
-          @update-status="updateTaskStatus" @start-pomodoro="startPomodoro" @extend-due-date="extendDueDate" />
+        <!-- Task cards -->
+        <div v-if="tasks.length === 0" class="bg-white rounded-lg shadow-sm p-6 text-gray-600">
+          <p>Your tasks will appear here.</p>
+        </div>
+        <div v-else class="space-y-4">
+          <TaskCard
+            v-for="task in paginatedTasks"
+            :key="task.id"
+            :task="task"
+            @view="viewTask"
+            @edit="editTask"
+            @delete="confirmDelete"
+            @update-status="updateTaskStatus"
+            @start-pomodoro="startPomodoro"
+            @extend-due-date="extendDueDate"
+          />
+        </div>
 
         <!-- Task Stats -->
         <TaskStats :tasks="filteredTasks" :filter="filters.dueDate || 'all'" />
@@ -84,7 +102,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { startOfTomorrow, addWeeks, addMonths, parseISO, isBefore, isSameDay, isWithinInterval, startOfToday } from 'date-fns'
 import PomodoroTimer from '~/components/PomodoroTimer.vue'
 import TaskFilters from '~/components/tasks/TaskFilters.vue'
-import TaskTable from '~/components/tasks/TaskTable.vue'
+import TaskCard from '~/components/tasks/TaskCard.vue'
+import TaskSortControls from '~/components/tasks/TaskSortControls.vue'
 import TaskPagination from '~/components/tasks/TaskPagination.vue'
 import TaskEditModal from '~/components/tasks/TaskEditModal.vue'
 import TaskViewModal from '~/components/tasks/TaskViewModal.vue'
@@ -143,7 +162,36 @@ const filters = ref({
 
 // Pagination state
 const currentPage = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10) // Default to 10
+
+// Load page size from localStorage on mount
+onMounted(() => {
+  try {
+    const saved = localStorage.getItem('taskPageSize')
+    if (saved) {
+      const parsed = parseInt(saved, 10)
+      if (!isNaN(parsed)) {
+        pageSize.value = parsed
+      }
+    }
+  } catch (error) {
+    console.error('Error loading page size from localStorage:', error)
+  }
+})
+
+// Watch for changes that should reset pagination
+watch([filters, sortColumn, sortDirection], () => {
+  currentPage.value = 1
+})
+
+// Watch for page size changes to save to localStorage
+watch(pageSize, (newSize) => {
+  try {
+    localStorage.setItem('taskPageSize', newSize.toString())
+  } catch (error) {
+    console.error('Error saving page size to localStorage:', error)
+  }
+})
 
 // Computed property for filtered tasks
 const filteredTasks = computed(() => {
@@ -266,11 +314,6 @@ const paginatedTasks = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
   return sortedTasks.value.slice(start, end)
-})
-
-// Watch for changes that should reset pagination
-watch([filters, sortColumn, sortDirection, pageSize], () => {
-  currentPage.value = 1
 })
 
 // Variables for delete confirmation
