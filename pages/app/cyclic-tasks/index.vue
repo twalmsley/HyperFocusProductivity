@@ -20,70 +20,97 @@
       </div>
 
       <div v-else class="space-y-6">
-        <div v-for="group in groupedTasks" :key="group.name" class="bg-white p-6 rounded-lg shadow-sm">
-          <h2 class="text-xl font-semibold mb-4">{{ group.name }}</h2>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Completed</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="task in group.tasks" :key="task.id">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ task.title }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-500">{{ task.description || '-' }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ task.lastCompletedDate ? formatDate(task.lastCompletedDate) : 'Never' }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div class="flex items-center space-x-3">
-                      <button
-                        @click="markAsCompleted(task)"
-                        class="text-gray-400 hover:text-gray-600 transition-colors"
-                        title="Mark as completed"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                      </button>
-                      <NuxtLink
-                        :to="`/app/cyclic-tasks/${task.id}`"
-                        class="text-gray-400 hover:text-gray-600 transition-colors"
-                        title="View details"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-                        </svg>
-                      </NuxtLink>
-                      <NuxtLink
-                        :to="`/app/cyclic-tasks/${task.id}/edit`"
-                        class="text-gray-400 hover:text-gray-600 transition-colors"
-                        title="Edit task"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                      </NuxtLink>
-                      <button
-                        @click="deleteTask(task)"
-                        class="text-gray-400 hover:text-red-600 transition-colors"
-                        title="Delete task"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div v-for="group in groupedTasks" :key="group.name" class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between p-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold">{{ group.name }}</h2>
+            <button 
+              @click="toggleGroup(group.name)"
+              class="text-gray-500 hover:text-gray-700 transition-colors"
+              :title="isGroupExpanded(group.name) ? 'Collapse group' : 'Expand group'"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                class="h-6 w-6 transform transition-transform duration-200"
+                :class="{ 'rotate-180': isGroupExpanded(group.name) }"
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           </div>
+          <transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="transform -translate-y-2 opacity-0"
+            enter-to-class="transform translate-y-0 opacity-100"
+            leave-active-class="transition duration-200 ease-in"
+            leave-from-class="transform translate-y-0 opacity-100"
+            leave-to-class="transform -translate-y-2 opacity-0"
+          >
+            <div v-show="isGroupExpanded(group.name)" class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Completed</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="task in group.tasks" :key="task.id">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ task.title }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">{{ task.description || '-' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ task.lastCompletedDate ? formatDate(task.lastCompletedDate) : 'Never' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div class="flex items-center space-x-3">
+                        <button
+                          @click="markAsCompleted(task)"
+                          class="text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Mark as completed"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                          </svg>
+                        </button>
+                        <NuxtLink
+                          :to="`/app/cyclic-tasks/${task.id}`"
+                          class="text-gray-400 hover:text-gray-600 transition-colors"
+                          title="View details"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                          </svg>
+                        </NuxtLink>
+                        <NuxtLink
+                          :to="`/app/cyclic-tasks/${task.id}/edit`"
+                          class="text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Edit task"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </NuxtLink>
+                        <button
+                          @click="deleteTask(task)"
+                          class="text-gray-400 hover:text-red-600 transition-colors"
+                          title="Delete task"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </transition>
         </div>
       </div>
     </main>
@@ -111,6 +138,30 @@ import { format } from 'date-fns'
 const isLoading = ref(true)
 const cyclicTasks = ref([])
 const showSuccessDialog = ref(false)
+
+// Add state for expanded groups with localStorage persistence
+const expandedGroups = ref(new Set<string>())
+
+// Load expanded groups from localStorage
+const loadExpandedGroups = () => {
+  try {
+    const savedGroups = localStorage.getItem('cyclicTasksExpandedGroups')
+    if (savedGroups) {
+      expandedGroups.value = new Set(JSON.parse(savedGroups))
+    }
+  } catch (error) {
+    console.error('Error loading expanded groups from localStorage:', error)
+  }
+}
+
+// Save expanded groups to localStorage
+const saveExpandedGroups = () => {
+  try {
+    localStorage.setItem('cyclicTasksExpandedGroups', JSON.stringify([...expandedGroups.value]))
+  } catch (error) {
+    console.error('Error saving expanded groups to localStorage:', error)
+  }
+}
 
 // Fetch cyclic tasks
 const fetchTasks = async () => {
@@ -196,8 +247,24 @@ const deleteTask = async (task) => {
   }
 }
 
+// Toggle group expansion
+const toggleGroup = (groupName: string) => {
+  if (expandedGroups.value.has(groupName)) {
+    expandedGroups.value.delete(groupName)
+  } else {
+    expandedGroups.value.add(groupName)
+  }
+  saveExpandedGroups()
+}
+
+// Check if group is expanded
+const isGroupExpanded = (groupName: string) => {
+  return expandedGroups.value.has(groupName)
+}
+
 // Fetch tasks on component mount
 onMounted(() => {
   fetchTasks()
+  loadExpandedGroups()
 })
 </script> 
