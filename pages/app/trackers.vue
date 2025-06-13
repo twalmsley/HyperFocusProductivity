@@ -4,8 +4,8 @@
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-2xl font-bold">Trackers</h1>
       <button
-        @click="showCreateTrackerModal = true"
-        class="bg-[var(--primary)] text-white px-4 py-2 rounded-md hover:bg-[var(--primary-dark)] transition-colors"
+        @click="openCreateTrackerModal"
+        class="bg-[var(--primary)] text-white px-4 py-2 rounded-md hover:bg-[var(--primary)] hover:opacity-90 transition-colors"
       >
         Create Tracker
       </button>
@@ -140,6 +140,13 @@
           <div class="text-center mt-2">{{ valueForm.value }}%</div>
         </div>
         <div class="flex justify-end space-x-2">
+          <button
+            type="button"
+            @click="setValueAndSave(100)"
+            class="px-4 py-2 text-sm font-medium text-white bg-[var(--primary)] rounded-md hover:bg-[var(--button-hover)]"
+          >
+            100%
+          </button>
           <button
             type="button"
             @click="showValueModal = false"
@@ -323,6 +330,11 @@ const saveValue = async () => {
   }
 }
 
+const setValueAndSave = async (value: number) => {
+  valueForm.value.value = value
+  await saveValue()
+}
+
 const fetchTrackers = async () => {
   try {
     const start = format(startDate.value, 'yyyy-MM-dd')
@@ -365,6 +377,12 @@ const getTextColorClass = (tracker: Tracker, day: number) => {
 const getDateTooltip = (day: number) => {
   const date = addDays(startDate.value, 30 - day)
   return format(date, 'MMMM d, yyyy')
+}
+
+const openCreateTrackerModal = () => {
+  editingTracker.value = null
+  trackerForm.value.name = ''
+  showCreateTrackerModal.value = true
 }
 
 // Initial fetch
