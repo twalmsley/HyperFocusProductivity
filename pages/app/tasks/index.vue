@@ -58,6 +58,22 @@
           :long-break-interval="userSettings?.longBreakInterval || 4"
           :completed-pomodoros="selectedTask?.completedPomodoros || 0" @close="closePomodoroTimer"
           @update:completed-pomodoros="updateCompletedPomodoros" />
+
+        <!-- Success Dialog -->
+        <div v-if="showSuccessDialog" class="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
+          <div class="bg-white/90 rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Success</h3>
+            <p class="text-gray-600 mb-4">{{ successMessage }}</p>
+            <div class="flex justify-end">
+              <button
+                @click="showSuccessDialog = false"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[var(--primary)] hover:bg-[var(--button-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -279,6 +295,10 @@ const userSettings = ref<{
   userId?: string;
   theme?: string;
 } | null>(null)
+
+// Success dialog state
+const showSuccessDialog = ref(false)
+const successMessage = ref('')
 
 // Sort tasks by column
 function sortTasks(column: string) {
@@ -524,6 +544,10 @@ async function extendDueDate(task: Task) {
     if (index !== -1) {
       tasks.value[index] = updatedTask
     }
+
+    // Show success message
+    successMessage.value = `Task "${task.title}" moved to ${newDueDate.toLocaleDateString()}`
+    showSuccessDialog.value = true
   } catch (error) {
     console.error('Failed to extend due date:', error)
   }
