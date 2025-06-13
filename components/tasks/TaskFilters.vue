@@ -150,9 +150,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 const emit = defineEmits(['update:filters'])
+
+const STORAGE_KEY = 'task-filters'
 
 const filters = ref({
   search: '',
@@ -161,9 +163,27 @@ const filters = ref({
   dueDate: ''
 })
 
+// Load filters from local storage on mount
+onMounted(() => {
+  const savedFilters = localStorage.getItem(STORAGE_KEY)
+  if (savedFilters) {
+    try {
+      const parsedFilters = JSON.parse(savedFilters)
+      filters.value = {
+        ...filters.value,
+        ...parsedFilters
+      }
+    } catch (e) {
+      console.error('Failed to parse saved filters:', e)
+    }
+  }
+})
+
 // Watch for changes in filters and emit them
 watch(filters, (newFilters) => {
   emit('update:filters', newFilters)
+  // Save to local storage
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(newFilters))
 }, { deep: true })
 
 // Clear all filters
@@ -174,5 +194,7 @@ function clearFilters() {
     priority: '',
     dueDate: ''
   }
+  // Remove from local storage
+  localStorage.removeItem(STORAGE_KEY)
 }
 </script> 
