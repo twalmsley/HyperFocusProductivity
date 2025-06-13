@@ -248,14 +248,11 @@ const getCellStyle = (tracker: Tracker, day: number) => {
   
   if (!entry) return { backgroundColor: '#f3f4f6' }
   
-  // Light blue (rgb(191, 219, 254)) to dark orange (rgb(234, 88, 12))
-  const value = entry.value / 100
-  const r = Math.round(191 + (234 - 191) * value)
-  const g = Math.round(219 + (88 - 219) * value)
-  const b = Math.round(254 + (12 - 254) * value)
+  // Calculate the fill percentage (0-100)
+  const fillPercentage = entry.value
   
   return {
-    backgroundColor: `rgb(${r}, ${g}, ${b})`
+    background: `linear-gradient(to top, rgb(234, 88, 12) ${fillPercentage}%, #f3f4f6 ${fillPercentage}%)`
   }
 }
 
