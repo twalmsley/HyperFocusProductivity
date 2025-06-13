@@ -9,42 +9,135 @@
       </div>
 
       <!-- Status filter -->
-      <div class="w-40">
-        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-        <select id="status" v-model="filters.status"
-          class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-          <option value="">All Statuses</option>
-          <option value="BACKLOG">Backlog</option>
-          <option value="IN_PROGRESS">In Progress</option>
-          <option value="DONE">Done</option>
-        </select>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+        <div class="inline-flex rounded-md shadow-sm" role="group">
+          <button type="button" @click="filters.status = ''"
+            :class="[
+              'px-4 py-2 text-sm font-medium border border-gray-300',
+              filters.status === '' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+              'rounded-l-md'
+            ]">
+            All
+          </button>
+          <button type="button" @click="filters.status = 'BACKLOG'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.status === 'BACKLOG' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+            ]">
+            Backlog
+          </button>
+          <button type="button" @click="filters.status = 'IN_PROGRESS'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.status === 'IN_PROGRESS' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+            ]">
+            In Progress
+          </button>
+          <button type="button" @click="filters.status = 'DONE'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.status === 'DONE' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+              'rounded-r-md'
+            ]">
+            Done
+          </button>
+        </div>
       </div>
 
       <!-- Priority filter -->
-      <div class="w-40">
-        <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-        <select id="priority" v-model="filters.priority"
-          class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-          <option value="">All Priorities</option>
-          <option value="URGENT">URGENT</option>
-          <option value="HIGH">HIGH</option>
-          <option value="MEDIUM">MEDIUM</option>
-          <option value="LOW">LOW</option>
-        </select>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+        <div class="inline-flex rounded-md shadow-sm" role="group">
+          <button type="button" @click="filters.priority = ''"
+            :class="[
+              'px-4 py-2 text-sm font-medium border border-gray-300',
+              filters.priority === '' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+              'rounded-l-md'
+            ]">
+            All
+          </button>
+          <button type="button" @click="filters.priority = 'URGENT'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.priority === 'URGENT' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+            ]">
+            Urgent
+          </button>
+          <button type="button" @click="filters.priority = 'HIGH'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.priority === 'HIGH' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+            ]">
+            High
+          </button>
+          <button type="button" @click="filters.priority = 'MEDIUM'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.priority === 'MEDIUM' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+            ]">
+            Medium
+          </button>
+          <button type="button" @click="filters.priority = 'LOW'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.priority === 'LOW' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+              'rounded-r-md'
+            ]">
+            Low
+          </button>
+        </div>
       </div>
 
       <!-- Due date filter -->
       <div>
-        <label for="dueDate" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-        <select id="dueDate" v-model="filters.dueDate"
-          class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-          <option value="">All</option>
-          <option value="overdue">Overdue</option>
-          <option value="today">Due Today</option>
-          <option value="week">Due This Week</option>
-          <option value="month">Due This Month</option>
-          <option value="none">No Due Date</option>
-        </select>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+        <div class="inline-flex rounded-md shadow-sm" role="group">
+          <button type="button" @click="filters.dueDate = ''"
+            :class="[
+              'px-4 py-2 text-sm font-medium border border-gray-300',
+              filters.dueDate === '' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+              'rounded-l-md'
+            ]">
+            All
+          </button>
+          <button type="button" @click="filters.dueDate = 'overdue'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.dueDate === 'overdue' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+            ]">
+            Overdue
+          </button>
+          <button type="button" @click="filters.dueDate = 'today'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.dueDate === 'today' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+            ]">
+            Today
+          </button>
+          <button type="button" @click="filters.dueDate = 'week'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.dueDate === 'week' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+            ]">
+            This Week
+          </button>
+          <button type="button" @click="filters.dueDate = 'month'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.dueDate === 'month' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+            ]">
+            This Month
+          </button>
+          <button type="button" @click="filters.dueDate = 'none'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.dueDate === 'none' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+              'rounded-r-md'
+            ]">
+            No Due Date
+          </button>
+        </div>
       </div>
 
       <!-- Clear filters button -->
