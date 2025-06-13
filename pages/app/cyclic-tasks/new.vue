@@ -69,6 +69,7 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 
 const task = ref({
   groupName: '',
@@ -78,6 +79,12 @@ const task = ref({
 
 const isSubmitting = ref(false)
 const groupNames = ref<string[]>([])
+
+// Get group name from URL query parameter
+const route = useRoute()
+if (route.query.group) {
+  task.value.groupName = decodeURIComponent(route.query.group as string)
+}
 
 // Fetch existing group names
 const fetchGroupNames = async () => {

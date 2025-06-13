@@ -23,22 +23,33 @@
         <div v-for="group in groupedTasks" :key="group.name" class="bg-white rounded-lg shadow-sm overflow-hidden">
           <div class="flex items-center justify-between p-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold">{{ group.name }}</h2>
-            <button 
-              @click="toggleGroup(group.name)"
-              class="text-gray-500 hover:text-gray-700 transition-colors"
-              :title="isGroupExpanded(group.name) ? 'Collapse group' : 'Expand group'"
-            >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                class="h-6 w-6 transform transition-transform duration-200"
-                :class="{ 'rotate-180': isGroupExpanded(group.name) }"
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
+            <div class="flex items-center space-x-4">
+              <NuxtLink
+                :to="`/app/cyclic-tasks/new?group=${encodeURIComponent(group.name)}`"
+                class="text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
+                title="Add new task to this group"
               >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+              </NuxtLink>
+              <button 
+                @click="toggleGroup(group.name)"
+                class="text-gray-500 hover:text-gray-700 transition-colors"
+                :title="isGroupExpanded(group.name) ? 'Collapse group' : 'Expand group'"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  class="h-6 w-6 transform transition-transform duration-200"
+                  :class="{ 'rotate-180': isGroupExpanded(group.name) }"
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
           </div>
           <transition
             enter-active-class="transition duration-200 ease-out"
