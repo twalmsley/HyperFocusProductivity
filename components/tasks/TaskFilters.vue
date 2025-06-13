@@ -115,6 +115,13 @@
             ]">
             Today
           </button>
+          <button type="button" @click="filters.dueDate = 'tomorrow'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.dueDate === 'tomorrow' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+            ]">
+            Tomorrow
+          </button>
           <button type="button" @click="filters.dueDate = 'week'"
             :class="[
               'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
@@ -197,4 +204,13 @@ function clearFilters() {
   // Remove from local storage
   localStorage.removeItem(STORAGE_KEY)
 }
+
+const dueDateOptions = [
+  { value: 'all', label: 'All Due Dates' },
+  { value: 'today', label: 'Due Today' },
+  { value: 'tomorrow', label: 'Due Tomorrow' },
+  { value: 'this-week', label: 'Due This Week' },
+  { value: 'overdue', label: 'Overdue' },
+  { value: 'no-due-date', label: 'No Due Date' }
+]
 </script> 

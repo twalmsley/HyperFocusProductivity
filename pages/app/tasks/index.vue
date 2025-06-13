@@ -195,60 +195,62 @@ watch(pageSize, (newSize) => {
 
 // Computed property for filtered tasks
 const filteredTasks = computed(() => {
-  if (!tasks.value.length) return []
-
-  // Apply filters
   return tasks.value.filter(task => {
-    // Filter by search text (title and notes)
-    if (filters.value.search) {
-      const searchTerm = filters.value.search.toLowerCase()
-      const titleMatch = task.title.toLowerCase().includes(searchTerm)
-      const notesMatch = task.notes ? task.notes.toLowerCase().includes(searchTerm) : false
-      if (!titleMatch && !notesMatch) return false
-    }
-
-    // Filter by status
+    // Status filter
     if (filters.value.status && task.status !== filters.value.status) {
       return false
     }
 
-    // Filter by priority
+    // Priority filter
     if (filters.value.priority && task.priority !== filters.value.priority) {
       return false
     }
 
-    // Filter by due date
+    // Due date filter
     if (filters.value.dueDate) {
-      // Exclude DONE tasks when filtering by due date
-      if (task.status === 'DONE') return false
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      
+      const endOfWeek = new Date(today)
+      endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()))
 
-      const today = startOfToday()
-      const oneWeekFromNow = addWeeks(today, 1)
-      const oneMonthFromNow = addMonths(today, 1)
-
-      // Handle no due date case first
-      if (filters.value.dueDate === 'none') {
-        if (task.dueDate !== null) return false
-      } else if (task.dueDate === null) {
-        return false
+      if (!task.dueDate) {
+        if (filters.value.dueDate !== 'none') {
+          return false
+        }
       } else {
-        const taskDueDate = parseISO(task.dueDate)
+        const taskDate = new Date(task.dueDate)
+        taskDate.setHours(0, 0, 0, 0)
 
         switch (filters.value.dueDate) {
-          case 'overdue':
-            if (!isBefore(taskDueDate, today)) return false
-            break
           case 'today':
-            if (!isSameDay(taskDueDate, today)) return false
+            if (taskDate.getTime() !== today.getTime()) return false
+            break
+          case 'tomorrow':
+            if (taskDate.getTime() !== tomorrow.getTime()) return false
             break
           case 'week':
-            if (!isWithinInterval(taskDueDate, { start: today, end: oneWeekFromNow })) return false
+            if (taskDate < today || taskDate > endOfWeek) return false
             break
-          case 'month':
-            if (!isWithinInterval(taskDueDate, { start: today, end: oneMonthFromNow })) return false
+          case 'overdue':
+            if (taskDate >= today) return false
             break
+          case 'none':
+            return false
         }
       }
+    }
+
+    // Search filter
+    if (filters.value.search) {
+      const searchLower = filters.value.search.toLowerCase()
+      return (
+        task.title.toLowerCase().includes(searchLower) ||
+        (task.notes && task.notes.toLowerCase().includes(searchLower))
+      )
     }
 
     return true
