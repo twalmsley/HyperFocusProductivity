@@ -146,18 +146,24 @@ const monthNames = [
 const localSchedule = ref<RepeatSchedule>({ ...props.modelValue })
 
 // Watch for changes and emit updates
-watch(localSchedule, (newValue) => {
-  emit('update:modelValue', { ...newValue })
+watch(localSchedule, (newValue, oldValue) => {
+  // Only emit if the values are actually different
+  if (JSON.stringify(newValue) !== JSON.stringify(oldValue)) {
+    emit('update:modelValue', { ...newValue })
+  }
 }, { deep: true })
 
 // Watch for prop changes
 watch(() => props.modelValue, (newValue) => {
-  localSchedule.value = { ...newValue }
+  // Only update if the values are actually different
+  if (JSON.stringify(newValue) !== JSON.stringify(localSchedule.value)) {
+    localSchedule.value = { ...newValue }
+  }
 }, { deep: true })
 
 function onRepeatTypeChange() {
   // Reset all fields when repeat type changes
-  localSchedule.value = {
+  const newSchedule = {
     repeatType: localSchedule.value.repeatType,
     repeatInterval: localSchedule.value.repeatType === 'WEEKLY' ? 1 : undefined,
     repeatDays: undefined,
@@ -166,6 +172,7 @@ function onRepeatTypeChange() {
     repeatWeekOfMonth: undefined,
     repeatDayOfWeek: undefined
   }
+  localSchedule.value = newSchedule
 }
 
 function toggleWeekDay(dayIndex: number) {
