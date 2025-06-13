@@ -136,14 +136,7 @@
             ]">
             This Month
           </button>
-          <button type="button" @click="filters.dueDate = 'none'"
-            :class="[
-              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
-              filters.dueDate === 'none' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
-              'rounded-r-md'
-            ]">
-            No Due Date
-          </button>
+          
         </div>
       </div>
 
@@ -211,6 +204,5 @@ const dueDateOptions = [
   { value: 'tomorrow', label: 'Due Tomorrow' },
   { value: 'this-week', label: 'Due This Week' },
   { value: 'overdue', label: 'Overdue' },
-  { value: 'no-due-date', label: 'No Due Date' }
 ]
 </script> 

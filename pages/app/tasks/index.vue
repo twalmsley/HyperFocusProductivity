@@ -236,6 +236,8 @@ const filteredTasks = computed(() => {
             if (taskDate < today || taskDate > endOfWeek) return false
             break
           case 'overdue':
+            // Exclude completed tasks from overdue filter
+            if (task.status === 'DONE') return false
             if (taskDate >= today) return false
             break
           case 'none':
