@@ -153,7 +153,8 @@ const groupedTasks = computed(() => {
     })
   })
 
-  return Object.values(groups)
+  // Sort groups alphabetically by name
+  return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name))
 })
 
 // Format date
