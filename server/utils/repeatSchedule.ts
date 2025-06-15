@@ -15,7 +15,8 @@ export function calculateNextRepeatDate(currentDate: Date, schedule: RepeatSched
 
   switch (schedule.repeatType) {
     case 'DAILY':
-      nextDate.setDate(nextDate.getDate() + 1);
+      const dailyInterval = schedule.repeatInterval || 1;
+      nextDate.setDate(nextDate.getDate() + dailyInterval);
       return nextDate;
 
     case 'WEEKLY':
@@ -56,8 +57,9 @@ export function calculateNextRepeatDate(currentDate: Date, schedule: RepeatSched
       return nextDate;
 
     case 'MONTHLY':
+      const monthlyInterval = schedule.repeatInterval || 1;
       const targetDay = schedule.repeatDay || currentDate.getDate();
-      nextDate.setMonth(nextDate.getMonth() + 1);
+      nextDate.setMonth(nextDate.getMonth() + monthlyInterval);
       
       // Handle cases where the target day doesn't exist in the next month
       const lastDayOfMonth = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();

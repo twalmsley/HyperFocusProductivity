@@ -20,19 +20,7 @@
 
     <!-- Weekly options -->
     <div v-if="localSchedule.repeatType === 'WEEKLY'" class="space-y-4">
-      <div>
-        <label for="weekInterval" class="block text-sm font-medium text-gray-700">Every</label>
-        <div class="flex items-center space-x-2">
-          <input 
-            id="weekInterval"
-            v-model.number="localSchedule.repeatInterval" 
-            type="number" 
-            min="1" 
-            max="52"
-            class="mt-1 block w-20 rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
-          <span class="text-sm text-gray-700">week(s) on:</span>
-        </div>
-      </div>
+      
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">Days of the week</label>
         <div class="flex flex-wrap gap-2">
@@ -45,22 +33,6 @@
             <span class="ml-2 text-sm text-gray-700">{{ day }}</span>
           </label>
         </div>
-      </div>
-    </div>
-
-    <!-- Monthly options -->
-    <div v-if="localSchedule.repeatType === 'MONTHLY'" class="space-y-4">
-      <div>
-        <label for="monthlyDay" class="block text-sm font-medium text-gray-700">Day of month</label>
-        <input 
-          id="monthlyDay"
-          v-model.number="localSchedule.repeatDay" 
-          type="number" 
-          min="1" 
-          max="31"
-          @change="onMonthlyDayChange"
-          class="mt-1 block w-24 rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
-        <p class="mt-1 text-xs text-gray-500">For months without this day, the last day of the month will be used.</p>
       </div>
     </div>
 
@@ -128,6 +100,79 @@
       </p>
     </div>
 
+
+    <!-- Monthly repeat options -->
+    <div v-if="localSchedule.repeatType === 'MONTHLY'" class="mt-4">
+      <label for="monthlyDay" class="block text-sm font-medium text-gray-700">Repeat on day</label>
+      <input
+        type="number"
+        id="monthlyDay"
+        v-model.number="localSchedule.repeatDay"
+        @change="onMonthlyDayChange"
+        min="1" 
+        max="31"
+        class="mt-1 block w-24 rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
+      <p class="mt-1 text-xs text-gray-500">For months without this day, the last day of the month will be used.</p>
+    </div>
+
+    <!-- Annual repeat options -->
+    <div v-if="localSchedule.repeatType === 'ANNUALLY'" class="mt-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="annualMonth" class="block text-sm font-medium text-gray-700">Month</label>
+          <select
+            id="annualMonth"
+            v-model.number="localSchedule.repeatMonth"
+            @change="onAnnualMonthChange"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
+            <option v-for="(month, index) in monthNames" :key="index" :value="index + 1">{{ month }}</option>
+          </select>
+        </div>
+        <div>
+          <label for="annualDay" class="block text-sm font-medium text-gray-700">Day</label>
+          <input
+            type="number"
+            id="annualDay"
+            v-model.number="localSchedule.repeatDay"
+            @change="onAnnualDayChange"
+            min="1" 
+            max="31"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly by weekday repeat options -->
+    <div v-if="localSchedule.repeatType === 'MONTHLY_BY_WEEKDAY'" class="mt-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="weekOfMonth" class="block text-sm font-medium text-gray-700">Week of month</label>
+          <select
+            id="weekOfMonth"
+            v-model.number="localSchedule.repeatWeekOfMonth"
+            @change="onWeekOfMonthChange"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
+            <option value="1">First</option>
+            <option value="2">Second</option>
+            <option value="3">Third</option>
+            <option value="4">Fourth</option>
+            <option value="5">Last</option>
+          </select>
+        </div>
+        <div>
+          <label for="dayOfWeek" class="block text-sm font-medium text-gray-700">Day of week</label>
+          <select
+            id="dayOfWeek"
+            v-model.number="localSchedule.repeatDayOfWeek"
+            @change="onDayOfWeekChange"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
+            <option v-for="(day, index) in dayNames" :key="index" :value="index">{{ day }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interval input for all repeat types -->
     <div v-if="localSchedule.repeatType" class="mt-4">
       <label for="repeatInterval" class="block text-sm font-medium text-gray-700">Repeat every</label>
       <div class="mt-1 flex items-center">
