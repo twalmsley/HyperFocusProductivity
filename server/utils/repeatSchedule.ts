@@ -67,10 +67,11 @@ export function calculateNextRepeatDate(currentDate: Date, schedule: RepeatSched
       return nextDate;
 
     case 'ANNUALLY':
+      const annualInterval = schedule.repeatInterval || 1;
       const targetMonth = (schedule.repeatMonth || (currentDate.getMonth() + 1)) - 1; // Convert to 0-based
       const targetDayOfMonth = schedule.repeatDay || currentDate.getDate();
       
-      nextDate.setFullYear(nextDate.getFullYear() + 1);
+      nextDate.setFullYear(nextDate.getFullYear() + annualInterval);
       nextDate.setMonth(targetMonth);
       
       // Handle Feb 29 on non-leap years
