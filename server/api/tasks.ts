@@ -72,14 +72,6 @@ export default defineEventHandler(async (event) => {
 
       // Validate repeat schedule if provided
       if (repeatType) {
-          repeatType,
-          repeatInterval,
-          repeatDays,
-          repeatMonth,
-          repeatDay,
-          repeatWeekOfMonth,
-          repeatDayOfWeek
-        })
 
         if (repeatType === 'WEEKLY' && (!repeatDays || !Array.isArray(repeatDays))) {
           throw createError({
