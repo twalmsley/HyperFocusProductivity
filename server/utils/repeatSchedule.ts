@@ -80,11 +80,12 @@ export function calculateNextRepeatDate(currentDate: Date, schedule: RepeatSched
 
     case 'MONTHLY_BY_WEEKDAY':
       if (schedule.repeatWeekOfMonth && schedule.repeatDayOfWeek !== undefined) {
+        const monthlyByWeekdayInterval = schedule.repeatInterval || 1;
         const targetWeek = schedule.repeatWeekOfMonth;
         const targetDayOfWeek = schedule.repeatDayOfWeek;
         
-        // Move to next month
-        nextDate.setMonth(nextDate.getMonth() + 1);
+        // Move to next month by the interval
+        nextDate.setMonth(nextDate.getMonth() + monthlyByWeekdayInterval);
         nextDate.setDate(1);
         
         if (targetWeek === 5) {

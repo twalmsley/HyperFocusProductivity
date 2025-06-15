@@ -36,33 +36,6 @@
       </div>
     </div>
 
-    <!-- Annually options -->
-    <div v-if="localSchedule.repeatType === 'ANNUALLY'" class="space-y-4">
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="annualMonth" class="block text-sm font-medium text-gray-700">Month</label>
-          <select 
-            id="annualMonth"
-            v-model.number="localSchedule.repeatMonth"
-            @change="onAnnualMonthChange"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-            <option v-for="(month, index) in monthNames" :key="index" :value="index + 1">{{ month }}</option>
-          </select>
-        </div>
-        <div>
-          <label for="annualDay" class="block text-sm font-medium text-gray-700">Day</label>
-          <input 
-            id="annualDay"
-            v-model.number="localSchedule.repeatDay" 
-            type="number" 
-            min="1" 
-            max="31"
-            @change="onAnnualDayChange"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
-        </div>
-      </div>
-    </div>
-
     <!-- Preview -->
     <div v-if="localSchedule.repeatType" class="p-3 bg-blue-50 rounded-md">
       <p class="text-sm text-blue-800">
