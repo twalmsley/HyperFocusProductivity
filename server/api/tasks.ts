@@ -39,7 +39,6 @@ export default defineEventHandler(async (event) => {
     case 'POST':
 
       const body = await readBody(event)
-      console.log('Received request body:', body)
       const { 
         title, 
         notes, 
@@ -73,7 +72,6 @@ export default defineEventHandler(async (event) => {
 
       // Validate repeat schedule if provided
       if (repeatType) {
-        console.log('Processing repeat schedule:', {
           repeatType,
           repeatInterval,
           repeatDays,
@@ -128,7 +126,6 @@ export default defineEventHandler(async (event) => {
         repeatDayOfWeek,
         isTemplate: !!repeatType
       }
-      console.log('Creating task with data:', taskData)
 
       const newTask = await prisma.task.create({
         data: taskData,
@@ -136,7 +133,6 @@ export default defineEventHandler(async (event) => {
           user: true
         }
       })
-      console.log('Created task:', newTask)
 
       return newTask
 

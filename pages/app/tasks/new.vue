@@ -175,7 +175,6 @@ async function createTask() {
 
     // Add repeat schedule fields if present
     if (repeatSchedule.value.repeatType) {
-      console.log('Repeat schedule before sending:', repeatSchedule.value)
       requestBody.repeatType = repeatSchedule.value.repeatType
       requestBody.repeatInterval = repeatSchedule.value.repeatInterval
       requestBody.repeatDays = repeatSchedule.value.repeatDays
@@ -184,14 +183,12 @@ async function createTask() {
       requestBody.repeatWeekOfMonth = repeatSchedule.value.repeatWeekOfMonth
       requestBody.repeatDayOfWeek = repeatSchedule.value.repeatDayOfWeek
       requestBody.isTemplate = true // Set isTemplate to true for repeating tasks
-      console.log('Request body with repeat schedule:', requestBody)
     }
     
     const response = await $fetch('/api/tasks', {
       method: 'POST',
       body: requestBody
     })
-    console.log('Server response:', response)
     
     // Redirect to tasks list after successful creation
     router.push('/app/tasks')
