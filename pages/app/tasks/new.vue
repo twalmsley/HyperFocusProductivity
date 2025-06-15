@@ -1,101 +1,100 @@
 <template>
-  <div>
-    <AppNavHeader v-if="user" />
-    <main class="container mx-auto px-4 py-8">
-      <div class="max-w-2xl mx-auto">
-        <div class="flex items-center mb-6">
-          <NuxtLink 
-            to="/app/tasks" 
-            class="text-gray-600 hover:text-gray-900 mr-4"
-          >
-            ← Back
-          </NuxtLink>
-          <h1 class="text-3xl font-bold">New Task</h1>
-        </div>
-
-        <form @submit.prevent="createTask" class="bg-white p-6 rounded-lg shadow-sm">
-          <div class="space-y-4">
+  <div class="min-h-screen bg-gray-50">
+    <main class="py-10">
+      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <form @submit.prevent="createTask" class="space-y-8 divide-y divide-gray-200">
+          <div class="space-y-8 divide-y divide-gray-200">
             <div>
-              <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
-              <input
-                id="title"
-                v-model="task.title"
-                type="text"
-                maxlength="200"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              />
+              <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Create New Task</h3>
+                <p class="mt-1 text-sm text-gray-500">Fill in the details below to create a new task.</p>
+              </div>
+
+              <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                <!-- Title -->
+                <div class="sm:col-span-4">
+                  <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                  <div class="mt-1">
+                    <input
+                      id="title"
+                      v-model="task.title"
+                      type="text"
+                      required
+                      class="shadow-sm focus:ring-[var(--primary)] focus:border-[var(--primary)] block w-full sm:text-sm border-gray-300 rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <!-- Priority -->
+                <div class="sm:col-span-3">
+                  <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                  <select
+                    id="priority"
+                    v-model="task.priority"
+                    required
+                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm rounded-md"
+                  >
+                    <option value="URGENT">Urgent</option>
+                    <option value="HIGH">High</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="LOW">Low</option>
+                  </select>
+                </div>
+
+                <!-- Notes -->
+                <div class="sm:col-span-6">
+                  <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
+                  <div class="mt-1">
+                    <textarea
+                      id="notes"
+                      v-model="task.notes"
+                      rows="3"
+                      required
+                      class="shadow-sm focus:ring-[var(--primary)] focus:border-[var(--primary)] block w-full sm:text-sm border-gray-300 rounded-md"
+                    ></textarea>
+                  </div>
+                </div>
+
+                <!-- Estimated Pomodoros -->
+                <div class="sm:col-span-3">
+                  <label for="estimatedPomodoros" class="block text-sm font-medium text-gray-700">Estimated Pomodoros</label>
+                  <div class="mt-1">
+                    <input
+                      id="estimatedPomodoros"
+                      v-model.number="task.estimatedPomodoros"
+                      type="number"
+                      min="1"
+                      required
+                      class="shadow-sm focus:ring-[var(--primary)] focus:border-[var(--primary)] block w-full sm:text-sm border-gray-300 rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <!-- Due Date -->
+                <div class="sm:col-span-3">
+                  <label for="dueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
+                  <div class="mt-1">
+                    <input
+                      id="dueDate"
+                      v-model="task.dueDate"
+                      type="date"
+                      required
+                      pattern="\d{4}-\d{2}-\d{2}"
+                      placeholder="YYYY-MM-DD"
+                      class="shadow-sm focus:ring-[var(--primary)] focus:border-[var(--primary)] block w-full sm:text-sm border-gray-300 rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <!-- Repeat Schedule -->
+                <div class="sm:col-span-6">
+                  <RepeatScheduleSelector v-model="repeatSchedule" />
+                </div>
+              </div>
             </div>
+          </div>
 
-            <div>
-              <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-              <select
-                id="status"
-                v-model="task.status"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              >
-                <option value="BACKLOG">Backlog</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="DONE">Done</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
-              <select
-                id="priority"
-                v-model="task.priority"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              >
-                <option value="URGENT">Urgent</option>
-                <option value="HIGH">High</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="LOW">Low</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
-              <textarea
-                id="notes"
-                v-model="task.notes"
-                rows="3"
-                required
-                maxlength="2000"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              ></textarea>
-            </div>
-
-            <div>
-              <label for="estimatedPomodoros" class="block text-sm font-medium text-gray-700">Estimated Pomodoros</label>
-              <input
-                id="estimatedPomodoros"
-                v-model.number="task.estimatedPomodoros"
-                type="number"
-                min="1"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              />
-            </div>
-
-            <div>
-              <label for="dueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
-              <input
-                id="dueDate"
-                v-model="task.dueDate"
-                type="date"
-                required
-                pattern="\d{4}-\d{2}-\d{2}"
-                placeholder="YYYY-MM-DD"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              />
-            </div>
-
-            <!-- Repeat Schedule -->
-            <RepeatScheduleSelector v-model="repeatSchedule" />
-
+          <div class="pt-5">
             <div class="flex justify-end">
               <button
                 type="submit"
@@ -176,6 +175,7 @@ async function createTask() {
 
     // Add repeat schedule fields if present
     if (repeatSchedule.value.repeatType) {
+      console.log('Repeat schedule before sending:', repeatSchedule.value)
       requestBody.repeatType = repeatSchedule.value.repeatType
       requestBody.repeatInterval = repeatSchedule.value.repeatInterval
       requestBody.repeatDays = repeatSchedule.value.repeatDays
@@ -183,12 +183,15 @@ async function createTask() {
       requestBody.repeatDay = repeatSchedule.value.repeatDay
       requestBody.repeatWeekOfMonth = repeatSchedule.value.repeatWeekOfMonth
       requestBody.repeatDayOfWeek = repeatSchedule.value.repeatDayOfWeek
+      requestBody.isTemplate = true // Set isTemplate to true for repeating tasks
+      console.log('Request body with repeat schedule:', requestBody)
     }
     
-    await $fetch('/api/tasks', {
+    const response = await $fetch('/api/tasks', {
       method: 'POST',
       body: requestBody
     })
+    console.log('Server response:', response)
     
     // Redirect to tasks list after successful creation
     router.push('/app/tasks')

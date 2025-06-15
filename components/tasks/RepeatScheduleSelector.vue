@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import type { RepeatSchedule } from '~/types/task'
 
 const props = defineProps<{
@@ -149,6 +149,7 @@ const localSchedule = ref<RepeatSchedule>({ ...props.modelValue })
 watch(localSchedule, (newValue, oldValue) => {
   // Only emit if the values are actually different
   if (JSON.stringify(newValue) !== JSON.stringify(oldValue)) {
+    console.log('Emitting schedule update:', newValue)
     emit('update:modelValue', { ...newValue })
   }
 }, { deep: true })
@@ -157,6 +158,7 @@ watch(localSchedule, (newValue, oldValue) => {
 watch(() => props.modelValue, (newValue) => {
   // Only update if the values are actually different
   if (JSON.stringify(newValue) !== JSON.stringify(localSchedule.value)) {
+    console.log('Updating local schedule from props:', newValue)
     localSchedule.value = { ...newValue }
   }
 }, { deep: true })
@@ -172,7 +174,11 @@ function onRepeatTypeChange() {
     repeatWeekOfMonth: undefined,
     repeatDayOfWeek: undefined
   }
+  console.log('Repeat type changed to:', localSchedule.value.repeatType)
+  console.log('New schedule:', newSchedule)
   localSchedule.value = newSchedule
+  // Explicitly emit the update
+  emit('update:modelValue', { ...newSchedule })
 }
 
 function toggleWeekDay(dayIndex: number) {

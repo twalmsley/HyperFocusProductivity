@@ -489,7 +489,7 @@ async function saveTask(task: Partial<Task> & { repeatSchedule?: any }) {
       const schedule = task.repeatSchedule
       updateBody.repeatType = schedule.repeatType
       updateBody.repeatInterval = schedule.repeatInterval
-      updateBody.repeatDays = schedule.repeatDays
+      updateBody.repeatDays = schedule.repeatDays // The API will handle stringification
       updateBody.repeatMonth = schedule.repeatMonth
       updateBody.repeatDay = schedule.repeatDay
       updateBody.repeatWeekOfMonth = schedule.repeatWeekOfMonth

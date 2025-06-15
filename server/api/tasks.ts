@@ -39,6 +39,7 @@ export default defineEventHandler(async (event) => {
     case 'POST':
 
       const body = await readBody(event)
+      console.log('Received request body:', body)
       const { 
         title, 
         notes, 
@@ -70,29 +71,120 @@ export default defineEventHandler(async (event) => {
 
       const newPosition = (lastTask?.position ?? -1) + 1
 
-      return await prisma.task.create({
-        data: {
-          userId: user.id,
-          title: title.slice(0, 200),
-          notes: notes.slice(0, 2000),
-          estimatedPomodoros,
-          status,
-          priority,
-          dueDate,
-          position: newPosition,
+      // Validate repeat schedule if provided
+      if (repeatType) {
+        console.log('Processing repeat schedule:', {
           repeatType,
           repeatInterval,
-          repeatDays: repeatDays ? JSON.stringify(repeatDays) : null,
+          repeatDays,
           repeatMonth,
           repeatDay,
           repeatWeekOfMonth,
-          repeatDayOfWeek,
-          isTemplate: !!repeatType
-        },
+          repeatDayOfWeek
+        })
+
+        if (repeatType === 'WEEKLY' && (!repeatDays || !Array.isArray(repeatDays))) {
+          throw createError({
+            statusCode: 400,
+            message: 'Weekly repeat schedule requires repeatDays array'
+          })
+        }
+        if (repeatType === 'MONTHLY' && !repeatDay) {
+          throw createError({
+            statusCode: 400,
+            message: 'Monthly repeat schedule requires repeatDay'
+          })
+        }
+        if (repeatType === 'ANNUALLY' && (!repeatMonth || !repeatDay)) {
+          throw createError({
+            statusCode: 400,
+            message: 'Annual repeat schedule requires repeatMonth and repeatDay'
+          })
+        }
+        if (repeatType === 'MONTHLY_BY_WEEKDAY' && (!repeatWeekOfMonth || repeatDayOfWeek === undefined)) {
+          throw createError({
+            statusCode: 400,
+            message: 'Monthly by weekday repeat schedule requires repeatWeekOfMonth and repeatDayOfWeek'
+          })
+        }
+      }
+
+      // Create the task
+      const taskData = {
+        userId: user.id,
+        title: title.slice(0, 200),
+        notes: notes.slice(0, 2000),
+        estimatedPomodoros,
+        status: status as 'BACKLOG' | 'IN_PROGRESS' | 'DONE',
+        priority: priority as 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW',
+        dueDate,
+        position: newPosition,
+        repeatType,
+        repeatInterval,
+        repeatDays: repeatDays ? JSON.stringify(repeatDays) : null,
+        repeatMonth,
+        repeatDay,
+        repeatWeekOfMonth,
+        repeatDayOfWeek,
+        isTemplate: !!repeatType
+      }
+      console.log('Creating task with data:', taskData)
+
+      const newTask = await prisma.task.create({
+        data: taskData,
         include: {
           user: true
         }
       })
+      console.log('Created task:', newTask)
+
+      // If this is a repeating task, create the first occurrence
+      if (repeatType) {
+        const repeatSchedule: RepeatSchedule = {
+          repeatType: repeatType as any,
+          repeatInterval: repeatInterval || undefined,
+          repeatDays: repeatDays ? JSON.parse(JSON.stringify(repeatDays)) : undefined,
+          repeatMonth: repeatMonth || undefined,
+          repeatDay: repeatDay || undefined,
+          repeatWeekOfMonth: repeatWeekOfMonth || undefined,
+          repeatDayOfWeek: repeatDayOfWeek || undefined
+        }
+        console.log('Calculating next occurrence with schedule:', repeatSchedule)
+
+        const currentDueDate = dueDate ? new Date(dueDate) : new Date()
+        const nextDueDate = calculateNextRepeatDate(currentDueDate, repeatSchedule)
+        console.log('Next due date:', nextDueDate)
+
+        if (nextDueDate) {
+          // Create a new task for the next occurrence
+          const nextTaskData = {
+            userId: user.id,
+            title: title.slice(0, 200),
+            notes: notes.slice(0, 2000),
+            estimatedPomodoros,
+            status: 'BACKLOG' as const,
+            priority: priority as 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW',
+            dueDate: nextDueDate,
+            position: newPosition + 1,
+            repeatType,
+            repeatInterval,
+            repeatDays: repeatDays ? JSON.stringify(repeatDays) : null,
+            repeatMonth,
+            repeatDay,
+            repeatWeekOfMonth,
+            repeatDayOfWeek,
+            isTemplate: false,
+            templateTaskId: newTask.id
+          }
+          console.log('Creating next occurrence with data:', nextTaskData)
+
+          await prisma.task.create({
+            data: nextTaskData
+          })
+        }
+      }
+
+      return newTask
 
     case 'PATCH':
 
@@ -126,8 +218,37 @@ export default defineEventHandler(async (event) => {
       }
 
       // Handle repeat schedule updates
-      if (updateData.repeatDays) {
-        updateData.repeatDays = JSON.stringify(updateData.repeatDays)
+      if (updateData.repeatType) {
+        // Validate repeat schedule
+        if (updateData.repeatType === 'WEEKLY' && (!updateData.repeatDays || !Array.isArray(updateData.repeatDays))) {
+          throw createError({
+            statusCode: 400,
+            message: 'Weekly repeat schedule requires repeatDays array'
+          })
+        }
+        if (updateData.repeatType === 'MONTHLY' && !updateData.repeatDay) {
+          throw createError({
+            statusCode: 400,
+            message: 'Monthly repeat schedule requires repeatDay'
+          })
+        }
+        if (updateData.repeatType === 'ANNUALLY' && (!updateData.repeatMonth || !updateData.repeatDay)) {
+          throw createError({
+            statusCode: 400,
+            message: 'Annual repeat schedule requires repeatMonth and repeatDay'
+          })
+        }
+        if (updateData.repeatType === 'MONTHLY_BY_WEEKDAY' && (!updateData.repeatWeekOfMonth || updateData.repeatDayOfWeek === undefined)) {
+          throw createError({
+            statusCode: 400,
+            message: 'Monthly by weekday repeat schedule requires repeatWeekOfMonth and repeatDayOfWeek'
+          })
+        }
+
+        // Stringify repeatDays if it's an array
+        if (updateData.repeatDays && Array.isArray(updateData.repeatDays)) {
+          updateData.repeatDays = JSON.stringify(updateData.repeatDays)
+        }
       }
 
       // Check if task is being marked as completed and has a repeat schedule
