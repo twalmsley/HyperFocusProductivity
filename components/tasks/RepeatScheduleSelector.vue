@@ -168,7 +168,7 @@ function onRepeatTypeChange() {
   const newSchedule = {
     repeatType: localSchedule.value.repeatType,
     repeatInterval: localSchedule.value.repeatType === 'WEEKLY' ? 1 : undefined,
-    repeatDays: undefined,
+    repeatDays: localSchedule.value.repeatType === 'WEEKLY' ? [] : undefined,
     repeatMonth: undefined,
     repeatDay: undefined,
     repeatWeekOfMonth: undefined,
@@ -186,15 +186,16 @@ function toggleWeekDay(dayIndex: number) {
     localSchedule.value.repeatDays = []
   }
   
-  const index = localSchedule.value.repeatDays.indexOf(dayIndex)
-  if (index > -1) {
-    localSchedule.value.repeatDays.splice(index, 1)
+  // If the day is already selected, deselect it
+  if (localSchedule.value.repeatDays.includes(dayIndex)) {
+    localSchedule.value.repeatDays = []
   } else {
-    localSchedule.value.repeatDays.push(dayIndex)
+    // Otherwise, select only this day
+    localSchedule.value.repeatDays = [dayIndex]
   }
   
-  // Sort the days
-  localSchedule.value.repeatDays.sort()
+  // Explicitly emit the update after toggling a day
+  emit('update:modelValue', { ...localSchedule.value })
 }
 
 function formatSchedulePreview(): string {

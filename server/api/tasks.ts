@@ -138,52 +138,6 @@ export default defineEventHandler(async (event) => {
       })
       console.log('Created task:', newTask)
 
-      // If this is a repeating task, create the first occurrence
-      if (repeatType) {
-        const repeatSchedule: RepeatSchedule = {
-          repeatType: repeatType as any,
-          repeatInterval: repeatInterval || undefined,
-          repeatDays: repeatDays ? JSON.parse(JSON.stringify(repeatDays)) : undefined,
-          repeatMonth: repeatMonth || undefined,
-          repeatDay: repeatDay || undefined,
-          repeatWeekOfMonth: repeatWeekOfMonth || undefined,
-          repeatDayOfWeek: repeatDayOfWeek || undefined
-        }
-        console.log('Calculating next occurrence with schedule:', repeatSchedule)
-
-        const currentDueDate = dueDate ? new Date(dueDate) : new Date()
-        const nextDueDate = calculateNextRepeatDate(currentDueDate, repeatSchedule)
-        console.log('Next due date:', nextDueDate)
-
-        if (nextDueDate) {
-          // Create a new task for the next occurrence
-          const nextTaskData = {
-            userId: user.id,
-            title: title.slice(0, 200),
-            notes: notes.slice(0, 2000),
-            estimatedPomodoros,
-            status: 'BACKLOG' as const,
-            priority: priority as 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW',
-            dueDate: nextDueDate,
-            position: newPosition + 1,
-            repeatType,
-            repeatInterval,
-            repeatDays: repeatDays ? JSON.stringify(repeatDays) : null,
-            repeatMonth,
-            repeatDay,
-            repeatWeekOfMonth,
-            repeatDayOfWeek,
-            isTemplate: false,
-            templateTaskId: newTask.id
-          }
-          console.log('Creating next occurrence with data:', nextTaskData)
-
-          await prisma.task.create({
-            data: nextTaskData
-          })
-        }
-      }
-
       return newTask
 
     case 'PATCH':
