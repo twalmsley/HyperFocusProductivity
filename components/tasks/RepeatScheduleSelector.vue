@@ -99,6 +99,7 @@
           <select 
             id="weekOfMonth"
             v-model.number="localSchedule.repeatWeekOfMonth"
+            @change="onWeekOfMonthChange"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
             <option value="1">First</option>
             <option value="2">Second</option>
@@ -112,6 +113,7 @@
           <select 
             id="dayOfWeek"
             v-model.number="localSchedule.repeatDayOfWeek"
+            @change="onDayOfWeekChange"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
             <option v-for="(day, index) in dayNames" :key="index" :value="index">{{ day }}</option>
           </select>
@@ -174,8 +176,8 @@ function onRepeatTypeChange() {
     repeatDays: localSchedule.value.repeatType === 'WEEKLY' ? [] : undefined,
     repeatMonth: localSchedule.value.repeatType === 'ANNUALLY' ? 1 : undefined,
     repeatDay: localSchedule.value.repeatType === 'MONTHLY' || localSchedule.value.repeatType === 'ANNUALLY' ? 1 : undefined,
-    repeatWeekOfMonth: undefined,
-    repeatDayOfWeek: undefined
+    repeatWeekOfMonth: localSchedule.value.repeatType === 'MONTHLY_BY_WEEKDAY' ? 1 : undefined,
+    repeatDayOfWeek: localSchedule.value.repeatType === 'MONTHLY_BY_WEEKDAY' ? 0 : undefined
   }
   console.log('Repeat type changed to:', localSchedule.value.repeatType)
   console.log('New schedule:', newSchedule)
@@ -232,6 +234,30 @@ function onAnnualDayChange() {
     : localSchedule.value.repeatDay || 1
   if (isNaN(day) || day < 1 || day > 31) {
     localSchedule.value.repeatDay = 1
+  }
+  // Explicitly emit the update
+  emit('update:modelValue', { ...localSchedule.value })
+}
+
+function onWeekOfMonthChange() {
+  // Ensure repeatWeekOfMonth is a number between 1 and 5
+  const week = typeof localSchedule.value.repeatWeekOfMonth === 'string' 
+    ? parseInt(localSchedule.value.repeatWeekOfMonth)
+    : localSchedule.value.repeatWeekOfMonth || 1
+  if (isNaN(week) || week < 1 || week > 5) {
+    localSchedule.value.repeatWeekOfMonth = 1
+  }
+  // Explicitly emit the update
+  emit('update:modelValue', { ...localSchedule.value })
+}
+
+function onDayOfWeekChange() {
+  // Ensure repeatDayOfWeek is a number between 0 and 6
+  const day = typeof localSchedule.value.repeatDayOfWeek === 'string' 
+    ? parseInt(localSchedule.value.repeatDayOfWeek)
+    : localSchedule.value.repeatDayOfWeek || 0
+  if (isNaN(day) || day < 0 || day > 6) {
+    localSchedule.value.repeatDayOfWeek = 0
   }
   // Explicitly emit the update
   emit('update:modelValue', { ...localSchedule.value })
