@@ -63,36 +63,6 @@
       </div>
     </div>
 
-    <!-- Monthly by weekday options -->
-    <div v-if="localSchedule.repeatType === 'MONTHLY_BY_WEEKDAY'" class="space-y-4">
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="weekOfMonth" class="block text-sm font-medium text-gray-700">Week of month</label>
-          <select 
-            id="weekOfMonth"
-            v-model.number="localSchedule.repeatWeekOfMonth"
-            @change="onWeekOfMonthChange"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-            <option value="1">First</option>
-            <option value="2">Second</option>
-            <option value="3">Third</option>
-            <option value="4">Fourth</option>
-            <option value="5">Last</option>
-          </select>
-        </div>
-        <div>
-          <label for="dayOfWeek" class="block text-sm font-medium text-gray-700">Day of week</label>
-          <select 
-            id="dayOfWeek"
-            v-model.number="localSchedule.repeatDayOfWeek"
-            @change="onDayOfWeekChange"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
-            <option v-for="(day, index) in dayNames" :key="index" :value="index">{{ day }}</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
     <!-- Preview -->
     <div v-if="localSchedule.repeatType" class="p-3 bg-blue-50 rounded-md">
       <p class="text-sm text-blue-800">
