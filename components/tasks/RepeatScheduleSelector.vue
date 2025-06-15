@@ -127,6 +127,23 @@
         <strong>Preview:</strong> {{ formatSchedulePreview() }}
       </p>
     </div>
+
+    <div v-if="localSchedule.repeatType" class="mt-4">
+      <label for="repeatInterval" class="block text-sm font-medium text-gray-700">Repeat every</label>
+      <div class="mt-1 flex items-center">
+        <input
+          type="number"
+          id="repeatInterval"
+          v-model.number="localSchedule.repeatInterval"
+          @change="onIntervalChange"
+          min="1"
+          max="99"
+          class="block w-20 rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
+        <span class="ml-2 text-sm text-gray-500">
+          {{ getIntervalLabel() }}
+        </span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -172,10 +189,12 @@ function onRepeatTypeChange() {
   // Reset all fields when repeat type changes
   const newSchedule = {
     repeatType: localSchedule.value.repeatType,
-    repeatInterval: localSchedule.value.repeatType === 'WEEKLY' ? 1 : undefined,
+    // Initialize interval to 1 for all repeat types
+    repeatInterval: 1,
+    // Initialize required fields based on repeat type
     repeatDays: localSchedule.value.repeatType === 'WEEKLY' ? [] : undefined,
     repeatMonth: localSchedule.value.repeatType === 'ANNUALLY' ? 1 : undefined,
-    repeatDay: localSchedule.value.repeatType === 'MONTHLY' || localSchedule.value.repeatType === 'ANNUALLY' ? 1 : undefined,
+    repeatDay: ['MONTHLY', 'ANNUALLY'].includes(localSchedule.value.repeatType) ? 1 : undefined,
     repeatWeekOfMonth: localSchedule.value.repeatType === 'MONTHLY_BY_WEEKDAY' ? 1 : undefined,
     repeatDayOfWeek: localSchedule.value.repeatType === 'MONTHLY_BY_WEEKDAY' ? 0 : undefined
   }
@@ -184,6 +203,18 @@ function onRepeatTypeChange() {
   localSchedule.value = newSchedule
   // Explicitly emit the update
   emit('update:modelValue', { ...newSchedule })
+}
+
+function onIntervalChange() {
+  // Ensure repeatInterval is a number between 1 and 99
+  const interval = typeof localSchedule.value.repeatInterval === 'string' 
+    ? parseInt(localSchedule.value.repeatInterval)
+    : localSchedule.value.repeatInterval || 1
+  if (isNaN(interval) || interval < 1 || interval > 99) {
+    localSchedule.value.repeatInterval = 1
+  }
+  // Explicitly emit the update
+  emit('update:modelValue', { ...localSchedule.value })
 }
 
 function onMonthlyDayChange() {
@@ -301,6 +332,26 @@ function formatSchedulePreview(): string {
       }
       return 'Repeat monthly by weekday'
 
+    default:
+      return ''
+  }
+}
+
+function getIntervalLabel(): string {
+  const schedule = localSchedule.value
+  if (!schedule.repeatType) return ''
+
+  switch (schedule.repeatType as string) {
+    case 'DAILY':
+      return 'day(s)'
+    case 'WEEKLY':
+      return 'week(s)'
+    case 'MONTHLY':
+      return 'month(s)'
+    case 'ANNUALLY':
+      return 'year(s)'
+    case 'MONTHLY_BY_WEEKDAY':
+      return 'month(s)'
     default:
       return ''
   }
