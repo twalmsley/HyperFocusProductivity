@@ -72,6 +72,7 @@
           <select 
             id="annualMonth"
             v-model.number="localSchedule.repeatMonth"
+            @change="onAnnualMonthChange"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]">
             <option v-for="(month, index) in monthNames" :key="index" :value="index + 1">{{ month }}</option>
           </select>
@@ -84,6 +85,7 @@
             type="number" 
             min="1" 
             max="31"
+            @change="onAnnualDayChange"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
         </div>
       </div>
@@ -170,8 +172,8 @@ function onRepeatTypeChange() {
     repeatType: localSchedule.value.repeatType,
     repeatInterval: localSchedule.value.repeatType === 'WEEKLY' ? 1 : undefined,
     repeatDays: localSchedule.value.repeatType === 'WEEKLY' ? [] : undefined,
-    repeatMonth: undefined,
-    repeatDay: localSchedule.value.repeatType === 'MONTHLY' ? 1 : undefined,
+    repeatMonth: localSchedule.value.repeatType === 'ANNUALLY' ? 1 : undefined,
+    repeatDay: localSchedule.value.repeatType === 'MONTHLY' || localSchedule.value.repeatType === 'ANNUALLY' ? 1 : undefined,
     repeatWeekOfMonth: undefined,
     repeatDayOfWeek: undefined
   }
@@ -208,6 +210,30 @@ function toggleWeekDay(dayIndex: number) {
   }
   
   // Explicitly emit the update after toggling a day
+  emit('update:modelValue', { ...localSchedule.value })
+}
+
+function onAnnualMonthChange() {
+  // Ensure repeatMonth is a number between 1 and 12
+  const month = typeof localSchedule.value.repeatMonth === 'string' 
+    ? parseInt(localSchedule.value.repeatMonth)
+    : localSchedule.value.repeatMonth || 1
+  if (isNaN(month) || month < 1 || month > 12) {
+    localSchedule.value.repeatMonth = 1
+  }
+  // Explicitly emit the update
+  emit('update:modelValue', { ...localSchedule.value })
+}
+
+function onAnnualDayChange() {
+  // Ensure repeatDay is a number between 1 and 31
+  const day = typeof localSchedule.value.repeatDay === 'string' 
+    ? parseInt(localSchedule.value.repeatDay)
+    : localSchedule.value.repeatDay || 1
+  if (isNaN(day) || day < 1 || day > 31) {
+    localSchedule.value.repeatDay = 1
+  }
+  // Explicitly emit the update
   emit('update:modelValue', { ...localSchedule.value })
 }
 
