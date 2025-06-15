@@ -58,6 +58,7 @@
           type="number" 
           min="1" 
           max="31"
+          @change="onMonthlyDayChange"
           class="mt-1 block w-24 rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
         <p class="mt-1 text-xs text-gray-500">For months without this day, the last day of the month will be used.</p>
       </div>
@@ -170,7 +171,7 @@ function onRepeatTypeChange() {
     repeatInterval: localSchedule.value.repeatType === 'WEEKLY' ? 1 : undefined,
     repeatDays: localSchedule.value.repeatType === 'WEEKLY' ? [] : undefined,
     repeatMonth: undefined,
-    repeatDay: undefined,
+    repeatDay: localSchedule.value.repeatType === 'MONTHLY' ? 1 : undefined,
     repeatWeekOfMonth: undefined,
     repeatDayOfWeek: undefined
   }
@@ -179,6 +180,18 @@ function onRepeatTypeChange() {
   localSchedule.value = newSchedule
   // Explicitly emit the update
   emit('update:modelValue', { ...newSchedule })
+}
+
+function onMonthlyDayChange() {
+  // Ensure repeatDay is a number between 1 and 31
+  const day = typeof localSchedule.value.repeatDay === 'string' 
+    ? parseInt(localSchedule.value.repeatDay)
+    : localSchedule.value.repeatDay || 1
+  if (isNaN(day) || day < 1 || day > 31) {
+    localSchedule.value.repeatDay = 1
+  }
+  // Explicitly emit the update
+  emit('update:modelValue', { ...localSchedule.value })
 }
 
 function toggleWeekDay(dayIndex: number) {
