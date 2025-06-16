@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
         repeatDayOfWeek
       } = body
 
-      if (!title || !notes || !estimatedPomodoros || !status || !dueDate) {
+      if (!title || !estimatedPomodoros || !status || !dueDate) {
         throw createError({
           statusCode: 400,
           message: 'All fields (title, notes, estimatedPomodoros, status, dueDate) are required'

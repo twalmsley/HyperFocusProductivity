@@ -155,7 +155,7 @@ async function createTask() {
   }
 
   // Check that all required fields are filled
-  if (!task.value.title || !task.value.notes || !task.value.estimatedPomodoros || !task.value.status || !task.value.dueDate) {
+  if (!task.value.title || !task.value.estimatedPomodoros || !task.value.status || !task.value.dueDate) {
     console.error('All fields are required')
     return
   }
@@ -164,6 +164,10 @@ async function createTask() {
     // Ensure date is in ISO format
     const dueDate = task.value.dueDate ? new Date(task.value.dueDate).toISOString() : null;
     
+    if (!task.value.notes) {
+      task.value.notes = ''
+    }
+
     const requestBody: any = {
       userId: user.id,
       ...task.value,
