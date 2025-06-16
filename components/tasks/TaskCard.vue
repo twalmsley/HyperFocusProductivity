@@ -81,7 +81,7 @@
           </svg>
         </button>
         
-        <button @click="$emit('update-status', task)" class="text-gray-400 hover:text-[var(--primary)]"
+        <button @click="handleStatusUpdate(task)" class="text-gray-400 hover:text-[var(--primary)]"
           :title="task.status === 'BACKLOG' ? 'Start Task' : task.status === 'IN_PROGRESS' ? 'Complete Task' : 'Reopen Task'">
           <svg v-if="task.status === 'BACKLOG'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
@@ -112,23 +112,68 @@
       </div>
     </div>
   </div>
+
+  <!-- Status Update Confirmation Dialog -->
+  <ConfirmDialog
+    :show="showStatusConfirmDialog"
+    :title="statusConfirmDialogTitle"
+    :message="statusConfirmDialogMessage"
+    @confirm="confirmStatusUpdate"
+    @cancel="cancelStatusUpdate"
+  />
 </template>
 
 <script setup lang="ts">
 import type { Task } from '~/types/task'
+import ConfirmDialog from '~/components/ConfirmDialog.vue'
 
-defineProps<{
+const props = defineProps<{
   task: Task;
-}>()
+}>();
 
-defineEmits<{
+const emit = defineEmits<{
+  (e: 'update-status', task: Task): void;
   (e: 'view', task: Task): void;
   (e: 'edit', task: Task): void;
   (e: 'delete', task: Task): void;
-  (e: 'update-status', task: Task): void;
   (e: 'start-pomodoro', task: Task): void;
-  (e: 'extend-due-date', task: Task): void;
-}>()
+}>();
+
+// Status confirmation dialog state
+const showStatusConfirmDialog = ref(false);
+const statusConfirmDialogTitle = ref('');
+const statusConfirmDialogMessage = ref('');
+const taskToUpdate = ref<Task | null>(null);
+
+function handleStatusUpdate(task: Task) {
+  taskToUpdate.value = task;
+  
+  if (task.status === 'BACKLOG') {
+    statusConfirmDialogTitle.value = 'Start Task';
+    statusConfirmDialogMessage.value = 'Are you sure you want to start this task?';
+  } else if (task.status === 'IN_PROGRESS') {
+    statusConfirmDialogTitle.value = 'Complete Task';
+    statusConfirmDialogMessage.value = 'Are you sure you want to mark this task as completed?';
+  } else {
+    statusConfirmDialogTitle.value = 'Reopen Task';
+    statusConfirmDialogMessage.value = 'Are you sure you want to reopen this task?';
+  }
+  
+  showStatusConfirmDialog.value = true;
+}
+
+function confirmStatusUpdate() {
+  if (taskToUpdate.value) {
+    emit('update-status', taskToUpdate.value);
+  }
+  showStatusConfirmDialog.value = false;
+  taskToUpdate.value = null;
+}
+
+function cancelStatusUpdate() {
+  showStatusConfirmDialog.value = false;
+  taskToUpdate.value = null;
+}
 
 function isTaskOverdue(task: Task): boolean {
   if (!task.dueDate || task.status === 'DONE') return false
