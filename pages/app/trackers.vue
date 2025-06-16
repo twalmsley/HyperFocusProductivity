@@ -247,13 +247,19 @@ const getCellStyle = (tracker: Tracker, day: number) => {
     format(new Date(e.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
   )
   
-  if (!entry) return { backgroundColor: '#f3f4f6' }
+  const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
+  
+  if (!entry) return { 
+    backgroundColor: isToday ? '#fff3e0' : '#f3f4f6',
+    border: isToday ? '2px solid #f97316' : 'none'
+  }
   
   // Calculate the fill percentage (0-100)
   const fillPercentage = entry.value
   
   return {
-    background: `linear-gradient(to top, rgb(234, 88, 12) ${fillPercentage}%, #f3f4f6 ${fillPercentage}%)`
+    background: `linear-gradient(to top, rgb(234, 88, 12) ${fillPercentage}%, ${isToday ? '#fff3e0' : '#f3f4f6'} ${fillPercentage}%)`,
+    border: isToday ? '2px solid #f97316' : 'none'
   }
 }
 
@@ -366,7 +372,8 @@ const getTrackerValue = (tracker: Tracker, day: number) => {
   const entry = tracker.entries.find(e => 
     format(new Date(e.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
   )
-  return entry?.value || ''
+  const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
+  return entry?.value || (isToday ? 'Today' : '')
 }
 
 const getTextColorClass = (tracker: Tracker, day: number) => {
