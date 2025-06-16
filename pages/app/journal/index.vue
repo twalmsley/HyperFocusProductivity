@@ -12,7 +12,15 @@
 
       <!-- Calendar View -->
       <div class="bg-white p-6 rounded-lg shadow-sm max-w-3xl mx-auto">
-        <h2 class="text-xl font-semibold mb-4">Calendar</h2>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">Calendar</h2>
+          <button 
+            @click="jumpToToday"
+            class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Today
+          </button>
+        </div>
         <div class="calendar-grid">
           <Calendar
             v-model="selectedDate"
@@ -664,6 +672,11 @@ const fetchEntries = async () => {
   } finally {
     isLoading.value = false
   }
+}
+
+// Add this function in the script section, before the onMounted hook
+const jumpToToday = () => {
+  selectedDate.value = new Date()
 }
 
 // Initial fetch
