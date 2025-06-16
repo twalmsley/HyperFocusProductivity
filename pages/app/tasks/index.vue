@@ -17,10 +17,11 @@
       <div v-else>
         <div class="flex justify-between items-center mb-6">
           <h1 class="text-3xl font-bold">Tasks</h1>
-          <NuxtLink to="/app/tasks/new"
+          <button
+            @click="showCreateModal = true"
             class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors">
             New Task
-          </NuxtLink>
+          </button>
         </div>
 
         <!-- Filter controls -->
@@ -57,6 +58,13 @@
 
         <!-- Pagination -->
         <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredTasks.length" />
+
+        <!-- Create Task Modal -->
+        <TaskCreateModal
+          :show="showCreateModal"
+          @close="showCreateModal = false"
+          @created="handleTaskCreated"
+        />
 
         <!-- Edit Task Modal -->
         <TaskEditModal v-if="showEditModal" :show="showEditModal" :task="editingTask as Task" @close="closeEditModal"
@@ -109,6 +117,7 @@ import TaskEditModal from '~/components/tasks/TaskEditModal.vue'
 import TaskViewModal from '~/components/tasks/TaskViewModal.vue'
 import TaskDeleteModal from '~/components/tasks/TaskDeleteModal.vue'
 import TaskStats from '~/components/tasks/TaskStats.vue'
+import TaskCreateModal from '~/components/tasks/TaskCreateModal.vue'
 
 const {
   status,
@@ -375,6 +384,9 @@ const userSettings = ref<{
 const showSuccessDialog = ref(false)
 const successMessage = ref('')
 
+// Create task modal state
+const showCreateModal = ref(false)
+
 // Sort tasks by column
 function sortTasks(column: string) {
   // If clicking the same column, toggle direction
@@ -626,6 +638,10 @@ async function extendDueDate(task: Task) {
   } catch (error) {
     console.error('Failed to extend due date:', error)
   }
+}
+
+function handleTaskCreated() {
+  fetchTasks()
 }
 
 // Fetch user settings when component mounts

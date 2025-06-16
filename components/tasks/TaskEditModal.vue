@@ -44,7 +44,7 @@
         <!-- Notes -->
         <div>
           <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
-          <textarea id="notes" v-model="task.notes" rows="4" maxlength="2000" required
+          <textarea id="notes" v-model="task.notes" rows="4" maxlength="2000"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"></textarea>
         </div>
 
