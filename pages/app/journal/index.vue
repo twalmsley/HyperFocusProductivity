@@ -418,17 +418,28 @@ const entriesForSelectedDay = computed(() => {
 })
 
 const calendarAttributes = computed(() => {
-  return journalEntries.value.map(entry => ({
-    key: entry.id,
-    highlight: {
-      color: 'blue',
-      fillMode: 'light' as const,
+  const attributes = [
+    {
+      key: 'selected',
+      dot: {
+        color: '#0f172a', // very dark blue
+        class: 'selected-date-dot'
+      },
+      dates: [selectedDate.value]
     },
-    dates: [new Date(entry.createdAt)],
-    popover: {
-      label: entry.title,
-    },
-  }))
+    ...journalEntries.value.map(entry => ({
+      key: entry.id,
+      highlight: {
+        color: 'blue',
+        fillMode: 'light' as const,
+      },
+      dates: [new Date(entry.createdAt)],
+      popover: {
+        label: entry.title,
+      },
+    }))
+  ]
+  return attributes
 })
 
 // Format date for display
@@ -692,5 +703,12 @@ const onDayClick = (day: any) => {
 <style scoped>
 .calendar-grid {
   min-height: 400px;
+}
+
+:deep(.selected-date-dot) {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 2px;
 }
 </style> 
