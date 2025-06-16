@@ -215,7 +215,10 @@ const filteredTasks = computed(() => {
       tomorrow.setDate(tomorrow.getDate() + 1)
       
       const endOfWeek = new Date(today)
-      endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()))
+      endOfWeek.setTime(endOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+      const endOfMonth = new Date(today)
+      endOfMonth.setTime(endOfMonth.getTime() + 30 * 24 * 60 * 60 * 1000)
 
       if (!task.dueDate) {
         if (filters.value.dueDate !== 'none') {
@@ -234,6 +237,9 @@ const filteredTasks = computed(() => {
             break
           case 'week':
             if (taskDate < today || taskDate > endOfWeek) return false
+            break
+          case 'month':
+            if (taskDate < today || taskDate > endOfMonth) return false
             break
           case 'overdue':
             // Exclude completed tasks from overdue filter
