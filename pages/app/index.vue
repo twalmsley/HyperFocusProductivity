@@ -146,6 +146,7 @@
               id="create-content"
               v-model="newEntry.content"
               rows="6"
+              maxlength="2000"
               required
               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
             ></textarea>
@@ -164,6 +165,7 @@
                 id="create-tags"
                 v-model="newTagInput"
                 type="text"
+                maxlength="200"
                 placeholder="Add tags..."
                 @keydown.enter.prevent="addNewTag"
                 class="flex-1 min-w-[120px] rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"

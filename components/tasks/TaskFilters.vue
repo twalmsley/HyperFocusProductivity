@@ -4,7 +4,7 @@
       <!-- Search by title/notes -->
       <div class="flex-1 min-w-[200px]">
         <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-        <input id="search" v-model="filters.search" type="text" placeholder="Search in title & notes"
+        <input id="search" v-model="filters.search" type="text" placeholder="Search in title & notes" maxlength="200"
           class="w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
       </div>
 

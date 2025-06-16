@@ -102,6 +102,7 @@
           <label for="trackerName" class="block text-sm font-medium text-gray-700">Name</label>
           <input
             type="text"
+            maxlength="200"
             id="trackerName"
             v-model="trackerForm.name"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"

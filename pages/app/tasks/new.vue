@@ -19,6 +19,7 @@
                       id="title"
                       v-model="task.title"
                       type="text"
+                      maxlength="200"
                       required
                       class="shadow-sm focus:ring-[var(--primary)] focus:border-[var(--primary)] block w-full sm:text-sm border-gray-300 rounded-md"
                     />
@@ -49,6 +50,7 @@
                       id="notes"
                       v-model="task.notes"
                       rows="3"
+                      maxlength="2000"
                       required
                       class="shadow-sm focus:ring-[var(--primary)] focus:border-[var(--primary)] block w-full sm:text-sm border-gray-300 rounded-md"
                     ></textarea>

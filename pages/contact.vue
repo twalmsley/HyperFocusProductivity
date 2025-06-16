@@ -26,7 +26,7 @@
               <form class="space-y-6" @submit.prevent="handleSubmit">
                 <div>
                   <label for="name" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Name</label>
-                  <input type="text" id="name" name="name" v-model="form.name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required />
+                  <input type="text" id="name" name="name" maxlength="200" v-model="form.name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required />
                 </div>
                 
                 <div>
@@ -48,7 +48,7 @@
                 
                 <div>
                   <label for="message" class="block text-sm font-medium text-[var(--text-secondary)] mb-1">Message</label>
-                  <textarea id="message" name="message" v-model="form.message" rows="6" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required></textarea>
+                  <textarea id="message" name="message" maxlength="2000" v-model="form.message" rows="6" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent" required></textarea>
                 </div>
                 
                 <div>

@@ -68,6 +68,7 @@
                   id="content"
                   v-model="entry.content"
                   rows="12"
+                  maxlength="2000"
                   required
                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
                   placeholder="Start writing your journal entry here..."
@@ -86,6 +87,7 @@
                   id="tags"
                   v-model="tagInput"
                   type="text"
+                  maxlength="200"
                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
                   placeholder="Add tags separated by spaces, commas, or semicolons (e.g., work, personal; goals)"
                   @keydown.enter.prevent="addTag"

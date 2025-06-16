@@ -21,6 +21,7 @@
             v-model="task.groupName"
             type="text"
             list="groupNames"
+            maxlength="200"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
           />
@@ -35,6 +36,7 @@
             id="title"
             v-model="task.title"
             type="text"
+            maxlength="200"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
           />
@@ -46,6 +48,7 @@
             id="description"
             v-model="task.description"
             rows="3"
+            maxlength="2000"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
           ></textarea>
         </div>
