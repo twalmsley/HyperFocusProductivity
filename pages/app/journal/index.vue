@@ -72,8 +72,7 @@
                   </span>
                 </td>
                 <td class="px-6 py-4">
-                  <div class="text-sm text-gray-600 line-clamp-2">
-                    {{ entry.content }}
+                  <div class="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none" v-html="renderMarkdown(entry.content)">
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -133,7 +132,7 @@
               • {{ getMoodEmoji(viewingEntry.mood) }} {{ viewingEntry.mood }}
             </span>
           </div>
-          <div class="whitespace-pre-wrap text-gray-700">{{ viewingEntry?.content }}</div>
+          <div class="whitespace-pre-wrap text-gray-700 prose prose-sm max-w-none" v-html="renderMarkdown(viewingEntry?.content || '')"></div>
           <div class="flex flex-wrap gap-2">
             <span v-for="tag in viewingEntry?.tags" :key="tag"
               class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
@@ -197,14 +196,21 @@
           </div>
           <div>
             <label for="edit-content" class="block text-sm font-medium text-gray-700">Content</label>
-            <textarea
-              id="edit-content"
-              v-model="editingEntry.content"
-              rows="6"
-              maxlength="2000"
-              required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            ></textarea>
+            <div class="mt-1 grid grid-cols-2 gap-4">
+              <div>
+                <textarea
+                  id="edit-content"
+                  v-model="editingEntry.content"
+                  rows="6"
+                  maxlength="10000"
+                  required
+                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+                ></textarea>
+              </div>
+              <div class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto">
+                <div v-html="renderMarkdown(editingEntry.content || '')"></div>
+              </div>
+            </div>
           </div>
           <div>
             <label for="edit-tags" class="block text-sm font-medium text-gray-700">Tags</label>
@@ -300,14 +306,21 @@
           </div>
           <div>
             <label for="create-content" class="block text-sm font-medium text-gray-700">Content</label>
-            <textarea
-              id="create-content"
-              v-model="newEntry.content"
-              rows="6"
-              maxlength="2000"
-              required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            ></textarea>
+            <div class="mt-1 grid grid-cols-2 gap-4">
+              <div>
+                <textarea
+                  id="create-content"
+                  v-model="newEntry.content"
+                  rows="6"
+                  maxlength="10000"
+                  required
+                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+                ></textarea>
+              </div>
+              <div class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto">
+                <div v-html="renderMarkdown(newEntry.content || '')"></div>
+              </div>
+            </div>
           </div>
           <div>
             <label for="create-tags" class="block text-sm font-medium text-gray-700">Tags</label>
@@ -355,6 +368,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { Calendar } from 'v-calendar'
+import { marked } from 'marked'
 import 'v-calendar/style.css'
 
 const {
@@ -388,6 +402,14 @@ interface JournalEntry {
 const isLoading = ref(true)
 const journalEntries = ref<JournalEntry[]>([])
 const selectedDate = ref(new Date())
+
+// Configure marked options
+marked.setOptions({
+  breaks: true, // Convert line breaks to <br>
+  gfm: true,    // Enable GitHub Flavored Markdown
+  headerIds: true,
+  mangle: false
+})
 
 // Get mood emoji
 const getMoodEmoji = (mood: string | null) => {
@@ -698,6 +720,12 @@ onMounted(() => {
 const onDayClick = (day: any) => {
   selectedDate.value = day.date
 }
+
+// Update the renderMarkdown function
+const renderMarkdown = (content: string) => {
+  if (!content) return ''
+  return marked(content)
+}
 </script>
 
 <style scoped>
@@ -710,5 +738,54 @@ const onDayClick = (day: any) => {
   height: 8px;
   border-radius: 50%;
   margin-top: 2px;
+}
+
+:deep(.prose) {
+  max-width: none;
+}
+
+:deep(.prose ul) {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+:deep(.prose ol) {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+:deep(.prose h1),
+:deep(.prose h2),
+:deep(.prose h3),
+:deep(.prose h4),
+:deep(.prose h5),
+:deep(.prose h6) {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+:deep(.prose p) {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+:deep(.prose pre) {
+  background-color: #f3f4f6;
+  padding: 1em;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+}
+
+:deep(.prose code) {
+  background-color: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
 }
 </style> 
