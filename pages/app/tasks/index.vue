@@ -164,18 +164,30 @@ const filters = ref({
 const currentPage = ref(1)
 const pageSize = ref(10) // Default to 10
 
-// Load page size from localStorage on mount
+// Load page size and sort state from localStorage on mount
 onMounted(() => {
   try {
-    const saved = localStorage.getItem('taskPageSize')
-    if (saved) {
-      const parsed = parseInt(saved, 10)
+    // Load page size
+    const savedPageSize = localStorage.getItem('taskPageSize')
+    if (savedPageSize) {
+      const parsed = parseInt(savedPageSize, 10)
       if (!isNaN(parsed)) {
         pageSize.value = parsed
       }
     }
+
+    // Load sort state
+    const savedSortColumn = localStorage.getItem('taskSortColumn')
+    if (savedSortColumn) {
+      sortColumn.value = savedSortColumn
+    }
+
+    const savedSortDirection = localStorage.getItem('taskSortDirection')
+    if (savedSortDirection === 'asc' || savedSortDirection === 'desc') {
+      sortDirection.value = savedSortDirection
+    }
   } catch (error) {
-    console.error('Error loading page size from localStorage:', error)
+    console.error('Error loading state from localStorage:', error)
   }
 })
 
@@ -190,6 +202,16 @@ watch(pageSize, (newSize) => {
     localStorage.setItem('taskPageSize', newSize.toString())
   } catch (error) {
     console.error('Error saving page size to localStorage:', error)
+  }
+})
+
+// Watch for sort state changes to save to localStorage
+watch([sortColumn, sortDirection], ([newColumn, newDirection]) => {
+  try {
+    localStorage.setItem('taskSortColumn', newColumn)
+    localStorage.setItem('taskSortDirection', newDirection)
+  } catch (error) {
+    console.error('Error saving sort state to localStorage:', error)
   }
 })
 
