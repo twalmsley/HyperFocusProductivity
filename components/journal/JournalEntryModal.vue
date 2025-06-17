@@ -114,6 +114,14 @@ import { ref, watch } from 'vue'
 import { marked } from 'marked'
 import type { JournalEntryForm } from '~/types/journal'
 
+// Configure marked options for proper markdown rendering
+marked.setOptions({
+  breaks: true, // Convert line breaks to <br>
+  gfm: true,    // Enable GitHub Flavored Markdown
+  headerIds: true,
+  mangle: false
+})
+
 interface Props {
   show: boolean;
   isSaving: boolean;
@@ -206,4 +214,55 @@ function removeTag(tag: string) {
 function renderMarkdown(content: string): string {
   return marked(content || '')
 }
-</script> 
+</script>
+
+<style scoped>
+:deep(.prose) {
+  max-width: none;
+}
+
+:deep(.prose ul) {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+:deep(.prose ol) {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+:deep(.prose h1),
+:deep(.prose h2),
+:deep(.prose h3),
+:deep(.prose h4),
+:deep(.prose h5),
+:deep(.prose h6) {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+:deep(.prose p) {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+:deep(.prose pre) {
+  background-color: #f3f4f6;
+  padding: 1em;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+}
+
+:deep(.prose code) {
+  background-color: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+</style> 
