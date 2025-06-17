@@ -92,6 +92,21 @@
               Read More →
             </NuxtLink>
           </div>
+
+          <!-- Declutter Mind Post -->
+          <div class="bg-white p-8 rounded-lg shadow-md">
+            <div class="text-[var(--primary)] text-4xl mb-4">🧠</div>
+            <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-4">Declutter Your Mind to Reduce Overwhelm</h3>
+            <p class="text-[var(--text-secondary)] mb-4">
+              How trying to keep tasks in your head leads to stress, missed deadlines, and constant overwhelm - and how to fix it.
+            </p>
+            <NuxtLink 
+              to="/blog/declutter-mind" 
+              class="inline-block text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
+            >
+              Read More →
+            </NuxtLink>
+          </div>
         </div>
       </div>
     </section>
