@@ -19,4 +19,56 @@
     background-color: var(--background);
     color: var(--text-primary);
   }
+
+  /* Fix cursor visibility in input fields and textareas */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  input[type="month"],
+  input[type="week"],
+  input[type="color"],
+  input[type="file"],
+  textarea {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  /* Ensure cursor is visible when text is at the left edge */
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  input[type="search"]:focus,
+  input[type="tel"]:focus,
+  input[type="url"]:focus,
+  input[type="date"]:focus,
+  input[type="datetime-local"]:focus,
+  input[type="time"]:focus,
+  input[type="month"]:focus,
+  input[type="week"]:focus,
+  input[type="color"]:focus,
+  input[type="file"]:focus,
+  textarea:focus {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  /* Special handling for range inputs to ensure proper spacing */
+  input[type="range"] {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  /* Ensure checkbox and radio inputs have proper spacing */
+  input[type="checkbox"],
+  input[type="radio"] {
+    margin-right: 0.5rem !important;
+  }
 } 
