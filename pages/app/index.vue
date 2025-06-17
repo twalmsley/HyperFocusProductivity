@@ -90,107 +90,14 @@
     <ViewTaskModal :show="showViewModal" :task="viewingTask" @close="closeViewModal" />
 
     <!-- Create Journal Entry Modal -->
-    <div v-if="showCreateModal" class="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-xl">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">New Journal Entry</h2>
-          <button @click="closeCreateModal" class="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <form @submit.prevent="createEntry" class="space-y-4">
-          <div>
-            <label for="create-title" class="block text-sm font-medium text-gray-700">Title</label>
-            <input
-              id="create-title"
-              v-model="newEntry.title"
-              type="text"
-              maxlength="200"
-              required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            />
-          </div>
-          <div>
-            <label for="create-type" class="block text-sm font-medium text-gray-700">Entry Type</label>
-            <select
-              id="create-type"
-              v-model="newEntry.type"
-              required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            >
-              <option value="DAILY">Daily Journal</option>
-              <option value="FREEFORM">Free-form Entry</option>
-              <option value="REVIEW">Review Entry</option>
-            </select>
-          </div>
-          <div>
-            <label for="create-mood" class="block text-sm font-medium text-gray-700">Mood</label>
-            <select
-              id="create-mood"
-              v-model="newEntry.mood"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            >
-              <option value="">Select a mood...</option>
-              <option value="HAPPY">😊 Happy</option>
-              <option value="SAD">😢 Sad</option>
-              <option value="NEUTRAL">😐 Neutral</option>
-              <option value="ANGRY">😠 Angry</option>
-              <option value="EXCITED">🤩 Excited</option>
-            </select>
-          </div>
-          <div>
-            <label for="create-content" class="block text-sm font-medium text-gray-700">Content</label>
-            <textarea
-              id="create-content"
-              v-model="newEntry.content"
-              rows="6"
-              maxlength="2000"
-              required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            ></textarea>
-          </div>
-          <div>
-            <label for="create-tags" class="block text-sm font-medium text-gray-700">Tags</label>
-            <div class="mt-1 flex flex-wrap gap-2">
-              <span v-for="tag in newEntry.tags" :key="tag"
-                class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs flex items-center">
-                {{ tag }}
-                <button type="button" @click="removeNewTag(tag)" class="ml-1 text-gray-500 hover:text-gray-700">
-                  ×
-                </button>
-              </span>
-              <input
-                id="create-tags"
-                v-model="newTagInput"
-                type="text"
-                maxlength="200"
-                placeholder="Add tags..."
-                @keydown.enter.prevent="addNewTag"
-                class="flex-1 min-w-[120px] rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              />
-            </div>
-          </div>
-          <div class="flex justify-end space-x-3 mt-6">
-            <button
-              type="button"
-              @click="closeCreateModal"
-              class="px-4 py-2 text-gray-700 hover:text-gray-900"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors"
-              :disabled="isSaving"
-            >
-              {{ isSaving ? 'Creating...' : 'Create Entry' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <JournalEntryModal
+      :show="journalModal.showModal.value"
+      :is-saving="journalModal.isSaving.value"
+      :show-markdown-preview="true"
+      :max-content-length="10000"
+      @close="journalModal.closeModal"
+      @submit="handleJournalSubmit"
+    />
   </div>
 </template>
 
@@ -206,7 +113,9 @@ import TaskViewModal from '~/components/tasks/TaskViewModal.vue'
 import TaskDeleteModal from '~/components/tasks/TaskDeleteModal.vue'
 import TaskStats from '~/components/tasks/TaskStats.vue'
 import RecentJournalEntries from '~/components/journal/RecentJournalEntries.vue'
+import JournalEntryModal from '~/components/journal/JournalEntryModal.vue'
 import type { Task } from '~/types/task'
+import type { JournalEntry } from '~/types/journal'
 
 const {
   status,
@@ -238,20 +147,6 @@ interface ExtendedUser {
 
 const userSession = await getSession() as ExtendedSession
 const user = userSession?.user as ExtendedUser | undefined
-
-interface JournalEntry {
-  id: string;
-  userId: string;
-  title: string;
-  content: string;
-  type: 'DAILY' | 'FREEFORM' | 'REVIEW';
-  date: string;
-  mood: 'HAPPY' | 'SAD' | 'NEUTRAL' | 'ANGRY' | 'EXCITED' | null;
-  tags: string[];
-  templateUsed: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
 
 const isLoading = ref(false)
 const tasks = ref<Task[]>([])
@@ -451,6 +346,9 @@ function closeViewModal() {
 const isLoadingJournal = ref(false)
 const journalEntries = ref<JournalEntry[]>([])
 
+// Use the journal entry modal composable
+const journalModal = useJournalEntryModal()
+
 // Add computed property for recent journal entries
 const recentJournalEntries = computed(() => {
   if (!journalEntries.value || journalEntries.value.length === 0) return []
@@ -513,95 +411,13 @@ const formatDate = (dateString: string) => {
   })
 }
 
-// Journal entry create modal state and logic
-const showCreateModal = ref(false)
-const newEntry = ref<Partial<JournalEntry>>({
-  title: '',
-  content: '',
-  type: 'FREEFORM',
-  date: new Date().toISOString().split('T')[0],
-  tags: [],
-})
-const newTagInput = ref('')
-const isSaving = ref(false)
-
+// Update the openCreateModal function to use the composable
 function openCreateModal() {
-  newEntry.value = {
-    title: '',
-    content: '',
-    type: 'FREEFORM',
-    date: new Date().toISOString().split('T')[0],
-    tags: [],
-  }
-  newTagInput.value = ''
-  showCreateModal.value = true
+  journalModal.openModal()
 }
 
-function closeCreateModal() {
-  showCreateModal.value = false
-  newEntry.value = {
-    title: '',
-    content: '',
-    type: 'FREEFORM',
-    date: new Date().toISOString().split('T')[0],
-    tags: [],
-  }
-  newTagInput.value = ''
-}
-
-function addNewTag() {
-  if (!newTagInput.value.trim()) return
-  const tags = newTagInput.value
-    .split(/[,;\s]+/)
-    .map(tag => tag.trim().toLowerCase())
-    .filter(tag => tag.length > 0)
-  tags.forEach(tag => {
-    if (!newEntry.value.tags?.includes(tag)) {
-      newEntry.value.tags?.push(tag)
-    }
-  })
-  newTagInput.value = ''
-}
-
-function removeNewTag(tag: string) {
-  newEntry.value.tags = newEntry.value.tags?.filter(t => t !== tag)
-}
-
-async function createEntry() {
-  try {
-    isSaving.value = true
-    // Parse any remaining tags in the input field
-    if (newTagInput.value.trim()) {
-      const remainingTags = newTagInput.value
-        .split(/[,;\s]+/)
-        .map(tag => tag.trim().toLowerCase())
-        .filter(tag => tag.length > 0)
-      remainingTags.forEach(tag => {
-        if (!newEntry.value.tags?.includes(tag)) {
-          newEntry.value.tags?.push(tag)
-        }
-      })
-      newTagInput.value = ''
-    }
-    const response = await $fetch('/api/journal', {
-      method: 'POST',
-      body: {
-        title: newEntry.value.title,
-        content: newEntry.value.content,
-        type: newEntry.value.type,
-        date: newEntry.value.date,
-        mood: newEntry.value.mood,
-        tags: newEntry.value.tags,
-        templateUsed: newEntry.value.templateUsed
-      }
-    })
-    // Refresh the journal entries list
-    await fetchJournalEntries()
-    closeCreateModal()
-  } catch (error) {
-    console.error('Error creating journal entry:', error)
-  } finally {
-    isSaving.value = false
-  }
+// Add handleJournalSubmit function
+function handleJournalSubmit(entry: Partial<JournalEntry>) {
+  journalModal.createEntry(entry, fetchJournalEntries)
 }
 </script>
