@@ -19,6 +19,7 @@
             <li><NuxtLink to="/pricing" class="text-gray-200 hover:text-[var(--primary-light)] transition-colors">Pricing</NuxtLink></li>
             <li><NuxtLink to="/about" class="text-gray-200 hover:text-[var(--primary-light)] transition-colors">About</NuxtLink></li>
             <li><NuxtLink to="/contact" class="text-gray-200 hover:text-[var(--primary-light)] transition-colors">Contact Us</NuxtLink></li>
+            <li><a href="https://www.facebook.com/groups/1420522979368169" target="_blank" rel="noopener noreferrer" class="text-gray-200 hover:text-[var(--primary-light)] transition-colors">Facebook Group</a></li>
           </ul>
         </div>
 
