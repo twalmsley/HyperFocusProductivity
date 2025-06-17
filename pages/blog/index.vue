@@ -137,6 +137,21 @@
               Read More →
             </NuxtLink>
           </div>
+
+          <!-- Be Flexible Post -->
+          <div class="bg-white p-8 rounded-lg shadow-md">
+            <div class="text-[var(--primary)] text-4xl mb-4">🌱</div>
+            <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-4">Be Flexible: No Need to Be 100% Productive</h3>
+            <p class="text-[var(--text-secondary)] mb-4">
+              Why self-compassion and flexibility are more important than perfect productivity, and how to build a sustainable approach.
+            </p>
+            <NuxtLink 
+              to="/blog/be-flexible" 
+              class="inline-block text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
+            >
+              Read More →
+            </NuxtLink>
+          </div>
         </div>
       </div>
     </section>
