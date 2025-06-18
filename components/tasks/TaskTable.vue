@@ -176,6 +176,7 @@
 <script setup lang="ts">
 import SortIndicator from '~/components/SortIndicator.vue'
 import type { Task } from '~/types/task'
+import { isTaskOverdue } from '~/utils/taskUtils'
 
 defineProps<{
   tasks: Task[];
@@ -194,15 +195,4 @@ defineEmits<{
   (e: 'start-pomodoro', task: Task): void;
   (e: 'extend-due-date', task: Task): void;
 }>()
-
-// Add isTaskOverdue helper function
-function isTaskOverdue(task: Task): boolean {
-  if (!task.dueDate || task.status === 'DONE') return false
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const dueDate = new Date(task.dueDate)
-
-  return dueDate < today
-}
 </script> 
