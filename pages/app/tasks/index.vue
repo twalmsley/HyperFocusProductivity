@@ -118,6 +118,7 @@ import TaskViewModal from '~/components/tasks/TaskViewModal.vue'
 import TaskDeleteModal from '~/components/tasks/TaskDeleteModal.vue'
 import TaskStats from '~/components/tasks/TaskStats.vue'
 import TaskCreateModal from '~/components/tasks/TaskCreateModal.vue'
+import { filterTasks, type TaskFilters as TaskFiltersType } from '~/utils/taskFilters'
 
 const {
   status,
@@ -226,74 +227,7 @@ watch([sortColumn, sortDirection], ([newColumn, newDirection]) => {
 
 // Computed property for filtered tasks
 const filteredTasks = computed(() => {
-  return tasks.value.filter(task => {
-    // Status filter
-    if (filters.value.status && task.status !== filters.value.status) {
-      return false
-    }
-
-    // Priority filter
-    if (filters.value.priority && task.priority !== filters.value.priority) {
-      return false
-    }
-
-    // Due date filter
-    if (filters.value.dueDate) {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      
-      const tomorrow = new Date(today)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      
-      const endOfWeek = new Date(today)
-      endOfWeek.setTime(endOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000)
-
-      const endOfMonth = new Date(today)
-      endOfMonth.setTime(endOfMonth.getTime() + 30 * 24 * 60 * 60 * 1000)
-
-      if (!task.dueDate) {
-        if (filters.value.dueDate !== 'none') {
-          return false
-        }
-      } else {
-        const taskDate = new Date(task.dueDate)
-        taskDate.setHours(0, 0, 0, 0)
-
-        switch (filters.value.dueDate) {
-          case 'today':
-            if (taskDate.getTime() !== today.getTime()) return false
-            break
-          case 'tomorrow':
-            if (taskDate.getTime() !== tomorrow.getTime()) return false
-            break
-          case 'week':
-            if (taskDate < today || taskDate > endOfWeek) return false
-            break
-          case 'month':
-            if (taskDate < today || taskDate > endOfMonth) return false
-            break
-          case 'overdue':
-            // Exclude completed tasks from overdue filter
-            if (task.status === 'DONE') return false
-            if (taskDate >= today) return false
-            break
-          case 'none':
-            return false
-        }
-      }
-    }
-
-    // Search filter
-    if (filters.value.search) {
-      const searchLower = filters.value.search.toLowerCase()
-      return (
-        task.title.toLowerCase().includes(searchLower) ||
-        (task.notes && task.notes.toLowerCase().includes(searchLower))
-      )
-    }
-
-    return true
-  })
+  return filterTasks(tasks.value, filters.value)
 })
 
 // Computed property for sorted tasks
