@@ -65,6 +65,7 @@
 
 <script setup lang="ts">
 import type { Task } from '~/types/task'
+import { isTaskDueToday, isTaskOverdue } from '~/utils/taskUtils';
 
 const props = defineProps<{
   tasks: Task[];
@@ -101,8 +102,8 @@ function getPriorityClass(task: Task) {
 }
 
 function getDueDateClass(task: Task) {
-  if (isOverdue(task)) return 'bg-red-100 text-red-800';
-  if (isDueToday(task)) return 'bg-amber-100 text-amber-800';
+  if (isTaskOverdue(task)) return 'bg-red-100 text-red-800';
+  if (isTaskDueToday(task)) return 'bg-amber-100 text-amber-800';
   return '';
 }
 
@@ -134,22 +135,4 @@ function formatDueDate(dateString: string | null): string {
   }
 }
 
-function isOverdue(task: Task): boolean {
-  if (!task.dueDate) return false;
-  const dueDate = new Date(task.dueDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return dueDate < today;
-}
-
-function isDueToday(task: Task): boolean {
-  if (!task.dueDate) return false;
-  const dueDate = new Date(task.dueDate);
-  const today = new Date();
-  const startOfDay = new Date(today);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(today);
-  endOfDay.setHours(23, 59, 59, 999);
-  return dueDate >= startOfDay && dueDate <= endOfDay;
-}
 </script> 
