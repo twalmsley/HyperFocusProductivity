@@ -183,62 +183,6 @@ const dueTasks = computed(() => {
     })
 })
 
-// Format due date with relative terms
-function formatDueDate(dateString: string | null): string {
-  if (!dateString) return 'No due date'
-
-  const dueDate = new Date(dateString)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-
-  if (dueDate.getTime() === today.getTime()) {
-    return 'Due today'
-  } else if (dueDate.getTime() === yesterday.getTime()) {
-    return 'Due yesterday'
-  } else if (dueDate.getTime() === tomorrow.getTime()) {
-    return 'Due tomorrow'
-  } else if (dueDate < today) {
-    const diffTime = Math.abs(today.getTime() - dueDate.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} overdue`
-  } else {
-    return `Due on ${dueDate.toLocaleDateString()}`
-  }
-}
-
-// Check if task is overdue
-function isOverdue(task: Task): boolean {
-  if (!task.dueDate) return false
-  const dueDate = new Date(task.dueDate)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0) // Start of today
-  return dueDate < today
-}
-
-// Check if task is due today
-function isDueToday(task: Task): boolean {
-  if (!task.dueDate) return false
-  const dueDate = new Date(task.dueDate)
-  const today = new Date()
-
-  // Set today to start of day
-  const startOfDay = new Date(today)
-  startOfDay.setHours(0, 0, 0, 0)
-
-  // Set today to end of day
-  const endOfDay = new Date(today)
-  endOfDay.setHours(23, 59, 59, 999)
-
-  // Check if dueDate is between start and end of today
-  return dueDate >= startOfDay && dueDate <= endOfDay
-}
-
 // Fetch tasks on component mount
 async function fetchTasks() {
   if (!user) {
