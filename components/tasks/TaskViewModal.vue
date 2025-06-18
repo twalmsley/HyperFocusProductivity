@@ -118,6 +118,7 @@
 
 <script setup lang="ts">
 import type { Task, RepeatSchedule } from '~/types/task'
+import { formatSchedulePreview } from '~/utils/repeatScheduleUtils';
 
 const props = defineProps<{
   show: boolean;
@@ -130,52 +131,16 @@ defineEmits<{
 
 function formatRepeatSchedule(): string {
   if (!props.task?.repeatType) return ''
-
-  const task = props.task
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                     'July', 'August', 'September', 'October', 'November', 'December']
-  const ordinals = ['', 'First', 'Second', 'Third', 'Fourth', 'Last']
-
-  switch (task.repeatType) {
-    case 'DAILY':
-      return 'Repeat daily'
-
-    case 'WEEKLY':
-      const interval = task.repeatInterval || 1
-      if (task.repeatDays) {
-        try {
-          const days = JSON.parse(task.repeatDays).map((day: number) => dayNames[day]).join(', ')
-          return interval === 1 ? `Every ${days}` : `Every ${interval} weeks on ${days}`
-        } catch {
-          // Fallback if JSON parsing fails
-          return interval === 1 ? 'Repeat weekly' : `Every ${interval} weeks`
-        }
-      }
-      return interval === 1 ? 'Repeat weekly' : `Every ${interval} weeks`
-
-    case 'MONTHLY':
-      const day = task.repeatDay
-      return day ? `Monthly on day ${day}` : 'Repeat monthly'
-
-    case 'ANNUALLY':
-      const month = task.repeatMonth
-      const dayOfMonth = task.repeatDay
-      if (month && dayOfMonth) {
-        return `Annually on ${monthNames[month - 1]} ${dayOfMonth}`
-      }
-      return 'Repeat annually'
-
-    case 'MONTHLY_BY_WEEKDAY':
-      if (task.repeatWeekOfMonth && task.repeatDayOfWeek !== undefined) {
-        const week = ordinals[task.repeatWeekOfMonth]
-        const day = dayNames[task.repeatDayOfWeek]
-        return `${week} ${day} of every month`
-      }
-      return 'Repeat monthly by weekday'
-
-    default:
-      return ''
+  const schedule:RepeatSchedule = {
+    repeatType: props.task.repeatType,
+    repeatInterval: props.task.repeatInterval || undefined,
+    repeatDays: props.task.repeatDays ? JSON.parse(props.task.repeatDays) : undefined,
+    repeatMonth: props.task.repeatMonth || undefined,
+    repeatDay: props.task.repeatDay || undefined,
+    repeatWeekOfMonth: props.task.repeatWeekOfMonth || undefined,
+    repeatDayOfWeek: props.task.repeatDayOfWeek || undefined,
   }
+  return formatSchedulePreview(schedule)
 }
+
 </script> 

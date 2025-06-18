@@ -198,11 +198,4 @@ function clearFilters() {
   localStorage.removeItem(STORAGE_KEY)
 }
 
-const dueDateOptions = [
-  { value: 'all', label: 'All Due Dates' },
-  { value: 'today', label: 'Due Today' },
-  { value: 'tomorrow', label: 'Due Tomorrow' },
-  { value: 'this-week', label: 'Due This Week' },
-  { value: 'overdue', label: 'Overdue' },
-]
 </script> 

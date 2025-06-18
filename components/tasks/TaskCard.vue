@@ -126,6 +126,7 @@
 <script setup lang="ts">
 import type { Task } from '~/types/task'
 import ConfirmDialog from '~/components/ConfirmDialog.vue'
+import { isTaskOverdue } from '~/utils/taskUtils';
 
 const props = defineProps<{
   task: Task;
@@ -175,13 +176,4 @@ function cancelStatusUpdate() {
   taskToUpdate.value = null;
 }
 
-function isTaskOverdue(task: Task): boolean {
-  if (!task.dueDate || task.status === 'DONE') return false
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const dueDate = new Date(task.dueDate)
-
-  return dueDate < today
-}
 </script> 
