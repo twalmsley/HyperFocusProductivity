@@ -210,9 +210,8 @@ function removeTag(tag: string) {
     localEntry.value.tags = localEntry.value.tags.filter(t => t !== tag)
   }
 }
-
 function renderMarkdown(content: string): string {
-  return marked(content || '')
+  return marked(content) as string
 }
 </script>
 

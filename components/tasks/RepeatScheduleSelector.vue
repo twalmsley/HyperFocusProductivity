@@ -39,7 +39,7 @@
     <!-- Preview -->
     <div v-if="localSchedule.repeatType" class="p-3 bg-blue-50 rounded-md">
       <p class="text-sm text-blue-800">
-        <strong>Preview:</strong> {{ formatSchedulePreview() }}
+        <strong>Preview:</strong> {{ schedulePreview }}
       </p>
     </div>
 
@@ -128,7 +128,7 @@
           max="99"
           class="block w-20 rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
         <span class="ml-2 text-sm text-gray-500">
-          {{ getIntervalLabel() }}
+          {{ intervalLabel }}
         </span>
       </div>
     </div>
@@ -136,8 +136,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import type { RepeatSchedule } from '~/types/task'
+import { formatSchedulePreview, getIntervalLabel, dayNames, monthNames } from '~/utils/repeatScheduleUtils'
 
 const props = defineProps<{
   modelValue: RepeatSchedule
@@ -146,12 +147,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: RepeatSchedule): void
 }>()
-
-const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const monthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-]
 
 const localSchedule = ref<RepeatSchedule>({ ...props.modelValue })
 
@@ -173,16 +168,19 @@ watch(() => props.modelValue, (newValue) => {
 
 function onRepeatTypeChange() {
   // Reset all fields when repeat type changes
+  const repeatType = localSchedule.value.repeatType
+  if (!repeatType) return
+  
   const newSchedule = {
-    repeatType: localSchedule.value.repeatType,
+    repeatType,
     // Initialize interval to 1 for all repeat types
     repeatInterval: 1,
     // Initialize required fields based on repeat type
-    repeatDays: localSchedule.value.repeatType === 'WEEKLY' ? [] : undefined,
-    repeatMonth: localSchedule.value.repeatType === 'ANNUALLY' ? 1 : undefined,
-    repeatDay: ['MONTHLY', 'ANNUALLY'].includes(localSchedule.value.repeatType) ? 1 : undefined,
-    repeatWeekOfMonth: localSchedule.value.repeatType === 'MONTHLY_BY_WEEKDAY' ? 1 : undefined,
-    repeatDayOfWeek: localSchedule.value.repeatType === 'MONTHLY_BY_WEEKDAY' ? 0 : undefined
+    repeatDays: repeatType === 'WEEKLY' ? [] : undefined,
+    repeatMonth: repeatType === 'ANNUALLY' ? 1 : undefined,
+    repeatDay: ['MONTHLY', 'ANNUALLY'].includes(repeatType) ? 1 : undefined,
+    repeatWeekOfMonth: repeatType === 'MONTHLY_BY_WEEKDAY' ? 1 : undefined,
+    repeatDayOfWeek: repeatType === 'MONTHLY_BY_WEEKDAY' ? 0 : undefined
   }
   localSchedule.value = newSchedule
   // Explicitly emit the update
@@ -278,66 +276,7 @@ function onDayOfWeekChange() {
   emit('update:modelValue', { ...localSchedule.value })
 }
 
-function formatSchedulePreview(): string {
-  const schedule = localSchedule.value
-  if (!schedule.repeatType) return ''
-
-  const ordinals = ['', 'First', 'Second', 'Third', 'Fourth', 'Last']
-
-  switch (schedule.repeatType) {
-    case 'DAILY':
-      return 'Repeat daily'
-
-    case 'WEEKLY':
-      const interval = schedule.repeatInterval || 1
-      if (schedule.repeatDays && schedule.repeatDays.length > 0) {
-        const days = schedule.repeatDays.map(day => dayNames[day]).join(', ')
-        return interval === 1 ? `Every ${days}` : `Every ${interval} weeks on ${days}`
-      }
-      return interval === 1 ? 'Repeat weekly' : `Every ${interval} weeks`
-
-    case 'MONTHLY':
-      const day = schedule.repeatDay
-      return day ? `Monthly on day ${day}` : 'Repeat monthly'
-
-    case 'ANNUALLY':
-      const month = schedule.repeatMonth
-      const dayOfMonth = schedule.repeatDay
-      if (month && dayOfMonth) {
-        return `Annually on ${monthNames[month - 1]} ${dayOfMonth}`
-      }
-      return 'Repeat annually'
-
-    case 'MONTHLY_BY_WEEKDAY':
-      if (schedule.repeatWeekOfMonth && schedule.repeatDayOfWeek !== undefined) {
-        const week = ordinals[schedule.repeatWeekOfMonth]
-        const day = dayNames[schedule.repeatDayOfWeek]
-        return `${week} ${day} of every month`
-      }
-      return 'Repeat monthly by weekday'
-
-    default:
-      return ''
-  }
-}
-
-function getIntervalLabel(): string {
-  const schedule = localSchedule.value
-  if (!schedule.repeatType) return ''
-
-  switch (schedule.repeatType as string) {
-    case 'DAILY':
-      return 'day(s)'
-    case 'WEEKLY':
-      return 'week(s)'
-    case 'MONTHLY':
-      return 'month(s)'
-    case 'ANNUALLY':
-      return 'year(s)'
-    case 'MONTHLY_BY_WEEKDAY':
-      return 'month(s)'
-    default:
-      return ''
-  }
-}
+// Use the utility functions
+const schedulePreview = computed(() => formatSchedulePreview(localSchedule.value))
+const intervalLabel = computed(() => getIntervalLabel(localSchedule.value))
 </script> 
