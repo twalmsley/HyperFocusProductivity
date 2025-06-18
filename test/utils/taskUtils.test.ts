@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { isTaskOverdue, getDaysOverdue, isTaskDueToday, getFormattedDueDate } from '~/utils/taskUtils'
+import { isTaskOverdue, getDaysOverdue, isTaskDueToday, getFormattedDueDate, formatDueDate } from '~/utils/taskUtils'
 import type { Task } from '~/types/task'
 
 describe('Task Utils', () => {
@@ -180,6 +180,72 @@ describe('Task Utils', () => {
     it('works with different date formats', () => {
       const task = createMockTask({ dueDate: '2024-03-01T12:00:00.000Z' })
       expect(getFormattedDueDate(task)).toBe('2024-03-01')
+    })
+  })
+
+  describe('formatDueDate', () => {
+    it('returns "No due date" for null input', () => {
+      expect(formatDueDate(null)).toBe('No due date')
+    })
+
+    it('returns "No due date" for empty string', () => {
+      expect(formatDueDate('')).toBe('No due date')
+    })
+
+    it('returns "Due today" for today', () => {
+      expect(formatDueDate('2024-01-15T00:00:00Z')).toBe('Due today')
+    })
+
+    it('returns "Due today" for today with different times', () => {
+      expect(formatDueDate('2024-01-15T23:59:59Z')).toBe('Due today')
+    })
+
+    it('returns "Due yesterday" for yesterday', () => {
+      expect(formatDueDate('2024-01-14T00:00:00Z')).toBe('Due yesterday')
+    })
+
+    it('returns "Due yesterday" for yesterday with different times', () => {
+      expect(formatDueDate('2024-01-14T23:59:59Z')).toBe('Due yesterday')
+    })
+
+    it('returns "Due tomorrow" for tomorrow', () => {
+      expect(formatDueDate('2024-01-16T00:00:00Z')).toBe('Due tomorrow')
+    })
+
+    it('returns "Due tomorrow" for tomorrow with different times', () => {
+      expect(formatDueDate('2024-01-16T23:59:59Z')).toBe('Due tomorrow')
+    })
+
+    it('returns "1 day overdue" for one day overdue', () => {
+      expect(formatDueDate('2024-01-14T00:00:00Z')).toBe('Due yesterday')
+    })
+
+    it('returns "2 days overdue" for multiple days overdue', () => {
+      expect(formatDueDate('2024-01-13T00:00:00Z')).toBe('2 days overdue')
+    })
+
+    it('returns "5 days overdue" for five days overdue', () => {
+      expect(formatDueDate('2024-01-10T00:00:00Z')).toBe('5 days overdue')
+    })
+
+    it('returns "Due on [date]" for future dates', () => {
+      const result = formatDueDate('2024-01-20T00:00:00Z')
+      expect(result).toMatch(/^Due on \d{1,2}\/\d{1,2}\/\d{4}$/)
+    })
+
+    it('returns "Due on [date]" for dates far in the future', () => {
+      const result = formatDueDate('2024-12-31T00:00:00Z')
+      expect(result).toMatch(/^Due on \d{1,2}\/\d{1,2}\/\d{4}$/)
+    })
+
+    it('handles different date formats', () => {
+      expect(formatDueDate('2024-01-15')).toBe('Due today')
+      expect(formatDueDate('2024-01-15T10:30:00.000Z')).toBe('Due today')
+    })
+
+    it('handles edge cases around midnight', () => {
+      expect(formatDueDate('2024-01-15T00:00:00.001Z')).toBe('Due today')
+      expect(formatDueDate('2024-01-14T23:59:59.999Z')).toBe('Due yesterday')
     })
   })
 

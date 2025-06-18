@@ -56,4 +56,41 @@ export function isTaskDueToday(task: Task): boolean {
 export function getFormattedDueDate(task: Task): string {
   if (!task.dueDate) return '-'
   return new Date(task.dueDate).toISOString().slice(0, 10)
+}
+
+/**
+ * Formats a due date string into a human-readable format
+ * @param dateString - The date string to format (ISO string or null)
+ * @returns Human-readable date string
+ */
+export function formatDueDate(dateString: string | null): string {
+  if (!dateString) return 'No due date'
+
+  const dueDate = new Date(dateString)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  // Normalize the due date to compare only the date part
+  const normalizedDueDate = new Date(dueDate)
+  normalizedDueDate.setHours(0, 0, 0, 0)
+
+  if (normalizedDueDate.getTime() === today.getTime()) {
+    return 'Due today'
+  } else if (normalizedDueDate.getTime() === yesterday.getTime()) {
+    return 'Due yesterday'
+  } else if (normalizedDueDate.getTime() === tomorrow.getTime()) {
+    return 'Due tomorrow'
+  } else if (normalizedDueDate < today) {
+    const diffTime = Math.abs(today.getTime() - normalizedDueDate.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} overdue`
+  } else {
+    return `Due on ${dueDate.toLocaleDateString()}`
+  }
 } 

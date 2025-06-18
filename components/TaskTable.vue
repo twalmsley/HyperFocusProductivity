@@ -44,7 +44,7 @@
           </td>
           <td class="px-4 py-3">
             <div class="text-sm text-gray-500 truncate max-w-xs">
-              {{ task.notes.length > 50 ? task.notes.substring(0, 50) + '...' : task.notes }}
+              {{ task.notes && task.notes.length > 50 ? task.notes.substring(0, 50) + '...' : task.notes || '' }}
             </div>
           </td>
           <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import type { Task } from '~/types/task'
-import { isTaskDueToday, isTaskOverdue } from '~/utils/taskUtils';
+import { isTaskDueToday, isTaskOverdue, formatDueDate } from '~/utils/taskUtils';
 
 const props = defineProps<{
   tasks: Task[];
@@ -105,34 +105,6 @@ function getDueDateClass(task: Task) {
   if (isTaskOverdue(task)) return 'bg-red-100 text-red-800';
   if (isTaskDueToday(task)) return 'bg-amber-100 text-amber-800';
   return '';
-}
-
-function formatDueDate(dateString: string | null): string {
-  if (!dateString) return 'No due date';
-
-  const dueDate = new Date(dateString);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  if (dueDate.getTime() === today.getTime()) {
-    return 'Due today';
-  } else if (dueDate.getTime() === yesterday.getTime()) {
-    return 'Due yesterday';
-  } else if (dueDate.getTime() === tomorrow.getTime()) {
-    return 'Due tomorrow';
-  } else if (dueDate < today) {
-    const diffTime = Math.abs(today.getTime() - dueDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} overdue`;
-  } else {
-    return `Due on ${dueDate.toLocaleDateString()}`;
-  }
 }
 
 </script> 
