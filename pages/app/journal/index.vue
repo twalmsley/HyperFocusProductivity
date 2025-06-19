@@ -548,4 +548,19 @@ const renderMarkdown = (content: string) => {
   border-radius: 0.25rem;
   font-size: 0.875em;
 }
+
+:deep(.prose a) {
+  color: #2563eb; /* Blue color for links */
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+:deep(.prose a:hover) {
+  color: #1d4ed8; /* Darker blue on hover */
+  text-decoration: underline;
+}
+
+:deep(.prose a:visited) {
+  color: #7c3aed; /* Purple for visited links */
+}
 </style> 
