@@ -4,7 +4,7 @@
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-2xl font-bold">Trackers</h1>
       <button
-        @click="openCreateTrackerModal"
+        @click="openCreateTrackerModal()"
         class="bg-[var(--primary)] text-white px-4 py-2 rounded-md hover:bg-[var(--primary)] hover:opacity-90 transition-colors"
       >
         Create Tracker
@@ -157,12 +157,12 @@
             id="groupName"
             v-model="trackerForm.groupName"
             type="text"
-            list="groupNames"
+            list="trackerGroupNames"
             maxlength="200"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
           />
-          <datalist id="groupNames">
+          <datalist id="trackerGroupNames">
             <option v-for="group in groupNames" :key="group" :value="group" />
           </datalist>
         </div>
@@ -417,7 +417,7 @@ const openCreateTrackerModal = (groupName?: string) => {
   editingTracker.value = null
   trackerForm.value = {
     name: '',
-    groupName: groupName || ''
+    groupName: typeof groupName === 'string' ? groupName : ''
   }
   showCreateTrackerModal.value = true
 }
