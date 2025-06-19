@@ -28,30 +28,6 @@ transporter.verify(function(error, success) {
   }
 })
 
-export async function sendVerificationEmail(email: string, token: string) {
-  const verificationUrl = `${process.env.APP_URL}/verify?token=${token}`;
-  
-  const mailOptions = {
-    from: process.env.SMTP_USER,
-    to: email,
-    subject: 'Verify your email address',
-    html: `
-      <h1>Welcome to Hyper Focus!</h1>
-      <p>Please click the link below to verify your email address:</p>
-      <a href="${verificationUrl}">${verificationUrl}</a>
-      <p>This link will expire in 24 hours.</p>
-      <p>If you didn't create an account, you can safely ignore this email.</p>
-    `,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-  } catch (error: any) {
-    console.error('Error sending verification email:', error);
-    throw new Error(`Failed to send verification email: ${error.message || 'Unknown error'}`);
-  }
-}
-
 interface ContactFormData {
   name: string;
   email: string;
