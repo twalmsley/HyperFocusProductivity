@@ -89,6 +89,21 @@
         </div>
       </div>
 
+      <!-- Project filter -->
+      <div>
+        <label for="projectFilter" class="block text-sm font-medium text-gray-700 mb-1">Project</label>
+        <select
+          id="projectFilter"
+          v-model="filters.projectId"
+          class="rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+        >
+          <option value="">All Projects</option>
+          <option v-for="project in projects" :key="project.id" :value="project.id">
+            {{ project.name }}
+          </option>
+        </select>
+      </div>
+
       <!-- Due date filter -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
@@ -132,7 +147,8 @@
           <button type="button" @click="filters.dueDate = 'month'"
             :class="[
               'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
-              filters.dueDate === 'month' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+              filters.dueDate === 'month' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+              'rounded-r-md'
             ]">
             This Month
           </button>
@@ -151,20 +167,27 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
+import type { Project } from '~/types/project'
+import type { TaskFilters } from '~/utils/taskFilters'
 
 const emit = defineEmits(['update:filters'])
 
 const STORAGE_KEY = 'task-filters'
 
-const filters = ref({
+const filters = ref<TaskFilters>({
   search: '',
   status: '',
   priority: '',
-  dueDate: ''
+  dueDate: '',
+  projectId: ''
 })
 
+const projects = ref<Project[]>([])
+
 // Load filters from local storage on mount
-onMounted(() => {
+onMounted(async () => {
+  await fetchProjects()
+  
   const savedFilters = localStorage.getItem(STORAGE_KEY)
   if (savedFilters) {
     try {
@@ -179,6 +202,21 @@ onMounted(() => {
   }
 })
 
+async function fetchProjects() {
+  try {
+    const { getSession } = useAuth()
+    const userSession = await getSession()
+    const user = userSession?.user
+    
+    if (user) {
+      const response = await $fetch<Project[]>(`/api/projects?userId=${user.id}`)
+      projects.value = response
+    }
+  } catch (error) {
+    console.error('Failed to fetch projects:', error)
+  }
+}
+
 // Watch for changes in filters and emit them
 watch(filters, (newFilters) => {
   emit('update:filters', newFilters)
@@ -192,10 +230,10 @@ function clearFilters() {
     search: '',
     status: '',
     priority: '',
-    dueDate: ''
+    dueDate: '',
+    projectId: ''
   }
   // Remove from local storage
   localStorage.removeItem(STORAGE_KEY)
 }
-
 </script> 

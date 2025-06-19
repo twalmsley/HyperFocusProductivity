@@ -5,6 +5,7 @@ export interface TaskFilters {
   status: string
   priority: string
   dueDate: string
+  projectId: string
 }
 
 /**
@@ -15,6 +16,13 @@ export interface TaskFilters {
  */
 export function filterTasks(tasks: Task[], filters: TaskFilters): Task[] {
   return tasks.filter(task => {
+    // Project filter
+    if (filters.projectId) {
+      if (!task.projectId || task.projectId !== filters.projectId) {
+        return false
+      }
+    }
+
     // Status filter
     if (filters.status && task.status !== filters.status) {
       return false

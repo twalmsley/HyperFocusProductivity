@@ -25,7 +25,7 @@
         </div>
 
         <!-- Filter controls -->
-        <TaskFilters v-model:filters="filters" />
+        <TaskFiltersComponent v-model:filters="filters" />
 
         <!-- Sort controls -->
         <TaskSortControls 
@@ -109,7 +109,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { startOfTomorrow, addWeeks, addMonths, parseISO, isBefore, isSameDay, isWithinInterval, startOfToday } from 'date-fns'
 import PomodoroTimer from '~/components/PomodoroTimer.vue'
-import TaskFilters from '~/components/tasks/TaskFilters.vue'
+import TaskFiltersComponent from '~/components/tasks/TaskFilters.vue'
 import TaskCard from '~/components/tasks/TaskCard.vue'
 import TaskSortControls from '~/components/tasks/TaskSortControls.vue'
 import TaskPagination from '~/components/tasks/TaskPagination.vue'
@@ -119,6 +119,7 @@ import TaskDeleteModal from '~/components/tasks/TaskDeleteModal.vue'
 import TaskStats from '~/components/tasks/TaskStats.vue'
 import TaskCreateModal from '~/components/tasks/TaskCreateModal.vue'
 import { filterTasks, type TaskFilters as TaskFiltersType } from '~/utils/taskFilters'
+import type { Task } from '~/types/task'
 
 const {
   status,
@@ -154,8 +155,6 @@ const router = useRouter()
 
 type TaskStatus = 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
 
-import type { Task } from '~/types/task'
-
 const tasks = ref<Task[]>([])
 
 // Sorting state
@@ -163,11 +162,12 @@ const sortColumn = ref<string>('createdAt')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 
 // Filtering state
-const filters = ref({
+const filters = ref<TaskFiltersType>({
   search: '',
   status: '',
   priority: '',
-  dueDate: ''
+  dueDate: '',
+  projectId: ''
 })
 
 // Pagination state
@@ -195,6 +195,12 @@ onMounted(() => {
     const savedSortDirection = localStorage.getItem('taskSortDirection')
     if (savedSortDirection === 'asc' || savedSortDirection === 'desc') {
       sortDirection.value = savedSortDirection
+    }
+
+    // Check for project filter in URL
+    const route = useRoute()
+    if (route.query.project) {
+      filters.value.projectId = route.query.project as string
     }
   } catch (error) {
     console.error('Error loading state from localStorage:', error)

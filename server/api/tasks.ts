@@ -24,10 +24,20 @@ export default defineEventHandler(async (event) => {
 
   switch (method) {
     case 'GET':
+      const query = getQuery(event)
+      const { projectId: queryProjectId } = query
+      
+      const whereClause: any = {
+        userId: user.id,
+      }
+      
+      // Add project filter if projectId is provided
+      if (queryProjectId) {
+        whereClause.projectId = queryProjectId
+      }
+      
       return await prisma.task.findMany({
-        where: {
-          userId: user.id,
-        },
+        where: whereClause,
         include: {
           user: true,
           project: {
