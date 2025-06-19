@@ -62,8 +62,7 @@
                       </span>
                     </td>
                     <td class="px-6 py-4">
-                      <div class="text-sm text-gray-600 line-clamp-2">
-                        {{ entry.content }}
+                      <div class="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none" v-html="renderMarkdown(entry.content)">
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -104,6 +103,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { startOfTomorrow, addWeeks, addMonths, parseISO, isBefore, isSameDay, isWithinInterval, startOfToday } from 'date-fns'
+import { marked } from 'marked'
 import PomodoroTimer from '~/components/PomodoroTimer.vue'
 import TaskFilters from '~/components/tasks/TaskFilters.vue'
 import TaskTable from '~/components/tasks/TaskTable.vue'
@@ -181,6 +181,12 @@ const dueTasks = computed(() => {
       if (!b.dueDate) return -1
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
     })
+})
+
+// Configure marked options for proper markdown rendering
+marked.setOptions({
+  breaks: true, // Convert line breaks to <br>
+  gfm: true     // Enable GitHub Flavored Markdown
 })
 
 // Fetch tasks on component mount
@@ -355,6 +361,12 @@ const formatDate = (dateString: string) => {
   })
 }
 
+// Add renderMarkdown function
+const renderMarkdown = (content: string) => {
+  if (!content) return ''
+  return marked(content)
+}
+
 // Update the openCreateModal function to use the composable
 function openCreateModal() {
   journalModal.openModal()
@@ -365,3 +377,69 @@ function handleJournalSubmit(entry: Partial<JournalEntry>) {
   journalModal.createEntry(entry, fetchJournalEntries)
 }
 </script>
+
+<style scoped>
+:deep(.prose) {
+  max-width: none;
+}
+
+:deep(.prose ul) {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+:deep(.prose ol) {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+:deep(.prose h1),
+:deep(.prose h2),
+:deep(.prose h3),
+:deep(.prose h4),
+:deep(.prose h5),
+:deep(.prose h6) {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+:deep(.prose p) {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+:deep(.prose pre) {
+  background-color: #f3f4f6;
+  padding: 1em;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+}
+
+:deep(.prose code) {
+  background-color: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+:deep(.prose a) {
+  color: #2563eb; /* Blue color for links */
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+:deep(.prose a:hover) {
+  color: #1d4ed8; /* Darker blue on hover */
+  text-decoration: underline;
+}
+
+:deep(.prose a:visited) {
+  color: #7c3aed; /* Purple for visited links */
+}
+</style>
