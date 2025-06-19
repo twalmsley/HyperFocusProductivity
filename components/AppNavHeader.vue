@@ -11,18 +11,18 @@
             Dashboard
           </NuxtLink>
           <NuxtLink 
-            to="/app/tasks" 
-            class="text-gray-900 hover:text-[var(--primary)] transition-colors"
-            :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/tasks') }"
-          >
-            Tasks
-          </NuxtLink>
-          <NuxtLink 
             to="/app/projects" 
             class="text-gray-900 hover:text-[var(--primary)] transition-colors"
             :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/projects') }"
           >
             Projects
+          </NuxtLink>
+          <NuxtLink 
+            to="/app/tasks" 
+            class="text-gray-900 hover:text-[var(--primary)] transition-colors"
+            :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/tasks') }"
+          >
+            Tasks
           </NuxtLink>
           <NuxtLink 
             to="/app/cyclic-tasks" 

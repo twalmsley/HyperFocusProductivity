@@ -455,6 +455,7 @@ async function saveTask(task: Partial<Task> & { repeatSchedule?: any }) {
       priority: taskToUpdate.priority,
       estimatedPomodoros: taskToUpdate.estimatedPomodoros,
       dueDate: taskToUpdate.dueDate,
+      projectId: taskToUpdate.projectId,
       completedAt: taskToUpdate.status === 'DONE' ? new Date().toISOString() : null
     }
 
