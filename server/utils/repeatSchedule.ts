@@ -56,28 +56,40 @@ export function calculateNextRepeatDate(currentDate: Date, schedule: RepeatSched
       }
       return nextDate;
 
-    case 'MONTHLY':
+    case 'MONTHLY': {
       const monthlyInterval = schedule.repeatInterval || 1;
       const targetDay = schedule.repeatDay || currentDate.getDate();
-      nextDate.setMonth(nextDate.getMonth() + monthlyInterval);
-      
-      // Handle cases where the target day doesn't exist in the next month
-      const lastDayOfMonth = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
-      nextDate.setDate(Math.min(targetDay, lastDayOfMonth));
-      return nextDate;
+      let tempDate = new Date(currentDate);
+      for (let i = 0; i < monthlyInterval; i++) {
+        tempDate.setDate(1); // Always set to 1 before changing month
+        tempDate.setMonth(tempDate.getMonth() + 1);
+        const lastDayOfMonth = new Date(tempDate.getFullYear(), tempDate.getMonth() + 1, 0).getDate();
+        tempDate.setDate(Math.min(targetDay, lastDayOfMonth));
+      }
+      tempDate.setHours(currentDate.getHours(), currentDate.getMinutes(), currentDate.getSeconds(), currentDate.getMilliseconds());
+      return tempDate;
+    }
 
-    case 'ANNUALLY':
+    case 'ANNUALLY': {
       const annualInterval = schedule.repeatInterval || 1;
-      const targetMonth = (schedule.repeatMonth || (currentDate.getMonth() + 1)) - 1; // Convert to 0-based
+      const targetMonth = (schedule.repeatMonth || (currentDate.getMonth() + 1)) - 1; // 0-based
       const targetDayOfMonth = schedule.repeatDay || currentDate.getDate();
-      
-      nextDate.setFullYear(nextDate.getFullYear() + annualInterval);
-      nextDate.setMonth(targetMonth);
-      
-      // Handle Feb 29 on non-leap years
-      const lastDayOfTargetMonth = new Date(nextDate.getFullYear(), targetMonth + 1, 0).getDate();
-      nextDate.setDate(Math.min(targetDayOfMonth, lastDayOfTargetMonth));
+      let year = currentDate.getFullYear();
+
+      // Find the last day of the target month for this year
+      let lastDayOfTargetMonth = new Date(year, targetMonth + 1, 0).getDate();
+      let day = Math.min(targetDayOfMonth, lastDayOfTargetMonth);
+      let nextDate = new Date(year, targetMonth, day, currentDate.getHours(), currentDate.getMinutes(), currentDate.getSeconds(), currentDate.getMilliseconds());
+
+      if (nextDate <= currentDate) {
+        year += annualInterval;
+        lastDayOfTargetMonth = new Date(year, targetMonth + 1, 0).getDate();
+        day = Math.min(targetDayOfMonth, lastDayOfTargetMonth);
+        nextDate = new Date(year, targetMonth, day, currentDate.getHours(), currentDate.getMinutes(), currentDate.getSeconds(), currentDate.getMilliseconds());
+      }
+
       return nextDate;
+    }
 
     case 'MONTHLY_BY_WEEKDAY':
       if (schedule.repeatWeekOfMonth && schedule.repeatDayOfWeek !== undefined) {
