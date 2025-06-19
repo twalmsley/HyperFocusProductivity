@@ -97,6 +97,12 @@
       @close="journalModal.closeModal"
       @submit="handleJournalSubmit"
     />
+
+    <JournalEntryViewModal
+      :show="showJournalViewModal"
+      :entry="viewingJournalEntry"
+      @close="closeJournalViewModal"
+    />
   </div>
 </template>
 
@@ -114,6 +120,7 @@ import TaskDeleteModal from '~/components/tasks/TaskDeleteModal.vue'
 import TaskStats from '~/components/tasks/TaskStats.vue'
 import RecentJournalEntries from '~/components/journal/RecentJournalEntries.vue'
 import JournalEntryModal from '~/components/journal/JournalEntryModal.vue'
+import JournalEntryViewModal from '~/components/journal/JournalEntryViewModal.vue'
 import type { Task } from '~/types/task'
 import type { JournalEntry } from '~/types/journal'
 
@@ -325,9 +332,19 @@ async function fetchJournalEntries() {
   }
 }
 
-// View a journal entry
+// Add state for journal view modal
+const showJournalViewModal = ref(false)
+const viewingJournalEntry = ref<JournalEntry | null>(null)
+
+// Update the viewJournalEntry function to open the modal
 function viewJournalEntry(entry: JournalEntry) {
-  navigateTo(`/app/journal/${entry.id}`)
+  viewingJournalEntry.value = entry
+  showJournalViewModal.value = true
+}
+
+function closeJournalViewModal() {
+  showJournalViewModal.value = false
+  viewingJournalEntry.value = null
 }
 
 // Fetch tasks and journal entries on component mount
