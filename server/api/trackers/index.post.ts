@@ -23,12 +23,12 @@ export default defineEventHandler(async (event) => {
 
 
   const body = await readBody(event)
-  const { name } = body
+  const { name, groupName } = body
 
-  if (!name) {
+  if (!name || !groupName) {
     throw createError({
       statusCode: 400,
-      message: 'Name is required'
+      message: 'Name and group name are required'
     })
   }
 
@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
     const tracker = await prisma.tracker.create({
       data: {
         name,
+        groupName,
         userId: user.id
       }
     })

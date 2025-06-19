@@ -38,57 +38,110 @@
       </button>
     </div>
 
-    <!-- Trackers Grid -->
-    <div class="divide-y divide-gray-200">
-      <div v-for="tracker in trackers" :key="tracker.id" class="bg-white p-4">
-        <div class="flex items-center gap-4">
-          <h3 class="text-lg font-medium w-48">{{ tracker.name }}</h3>
-          <div class="flex-1">
-            <div class="grid grid-cols-30 gap-1">
-              <div
-                v-for="day in 30"
-                :key="day"
-                class="aspect-square rounded cursor-pointer hover:ring-2 hover:ring-[var(--primary)] transition-all relative"
-                :style="getCellStyle(tracker, day)"
-                @click="openValueModal(tracker, day)"
-                :title="getDateTooltip(day)"
+    <!-- Loading State -->
+    <div v-if="isLoading" class="text-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)] mx-auto"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="trackers.length === 0" class="text-center py-12 text-gray-500">
+      No trackers found. Create your first one!
+    </div>
+
+    <!-- Tracker Groups -->
+    <div v-else class="space-y-6">
+      <div v-for="group in groupedTrackers" :key="group.name" class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200">
+          <h2 class="text-xl font-semibold">{{ group.name }}</h2>
+          <div class="flex items-center space-x-4">
+            <button
+              @click="openCreateTrackerModal(group.name)"
+              class="text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
+              title="Add new tracker to this group"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+            <button 
+              @click="toggleGroup(group.name)"
+              class="text-gray-500 hover:text-gray-700 transition-colors"
+              :title="isGroupExpanded(group.name) ? 'Collapse group' : 'Expand group'"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                class="h-6 w-6 transform transition-transform duration-200"
+                :class="{ 'rotate-180': isGroupExpanded(group.name) }"
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
               >
-                <div 
-                  class="absolute inset-0 flex items-center justify-center text-xs font-medium"
-                  :class="getTextColorClass(tracker, day)"
-                >
-                  {{ getTrackerValue(tracker, day) }}
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="transform -translate-y-2 opacity-0"
+          enter-to-class="transform translate-y-0 opacity-100"
+          leave-active-class="transition duration-200 ease-in"
+          leave-from-class="transform translate-y-0 opacity-100"
+          leave-to-class="transform -translate-y-2 opacity-0"
+        >
+          <div v-show="isGroupExpanded(group.name)" class="divide-y divide-gray-200">
+            <div v-for="tracker in group.trackers" :key="tracker.id" class="p-4">
+              <div class="flex items-center gap-4">
+                <h3 class="text-lg font-medium w-48">{{ tracker.name }}</h3>
+                <div class="flex-1">
+                  <div class="grid grid-cols-30 gap-1">
+                    <div
+                      v-for="day in 30"
+                      :key="day"
+                      class="aspect-square rounded cursor-pointer hover:ring-2 hover:ring-[var(--primary)] transition-all relative"
+                      :style="getCellStyle(tracker, day)"
+                      @click="openValueModal(tracker, day)"
+                      :title="getDateTooltip(day)"
+                    >
+                      <div 
+                        class="absolute inset-0 flex items-center justify-center text-xs font-medium"
+                        :class="getTextColorClass(tracker, day)"
+                      >
+                        {{ getTrackerValue(tracker, day) }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex space-x-2">
+                  <button
+                    @click="editTracker(tracker)"
+                    class="text-gray-600 hover:text-[var(--primary)] relative group"
+                  >
+                    <span class="sr-only">Edit</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      Edit Tracker
+                    </span>
+                  </button>
+                  <button
+                    @click="deleteTracker(tracker)"
+                    class="text-gray-600 hover:text-red-600 relative group"
+                  >
+                    <span class="sr-only">Delete</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      Delete Tracker
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-          <div class="flex space-x-2">
-            <button
-              @click="editTracker(tracker)"
-              class="text-gray-600 hover:text-[var(--primary)] relative group"
-            >
-              <span class="sr-only">Edit</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                Edit Tracker
-              </span>
-            </button>
-            <button
-              @click="deleteTracker(tracker)"
-              class="text-gray-600 hover:text-red-600 relative group"
-            >
-              <span class="sr-only">Delete</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                Delete Tracker
-              </span>
-            </button>
-          </div>
-        </div>
+        </transition>
       </div>
     </div>
 
@@ -98,6 +151,21 @@
         <h3 class="text-lg font-medium">{{ editingTracker ? 'Edit Tracker' : 'Create Tracker' }}</h3>
       </template>
       <form @submit.prevent="saveTracker" class="space-y-4">
+        <div>
+          <label for="groupName" class="block text-sm font-medium text-gray-700">Group Name</label>
+          <input
+            id="groupName"
+            v-model="trackerForm.groupName"
+            type="text"
+            list="groupNames"
+            maxlength="200"
+            required
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+          />
+          <datalist id="groupNames">
+            <option v-for="group in groupNames" :key="group" :value="group" />
+          </datalist>
+        </div>
         <div>
           <label for="trackerName" class="block text-sm font-medium text-gray-700">Name</label>
           <input
@@ -175,7 +243,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { format, addDays, subDays } from 'date-fns'
 import BaseModal from '~/components/BaseModal.vue'
 import CreateEditTrackerModal from '~/components/trackers/CreateEditTrackerModal.vue'
@@ -184,6 +252,7 @@ import ValueSelectionModal from '~/components/trackers/ValueSelectionModal.vue'
 interface Tracker {
   id: string
   name: string
+  groupName: string
   entries: TrackerEntry[]
 }
 
@@ -200,13 +269,62 @@ const showValueModal = ref(false)
 const editingTracker = ref<Tracker | null>(null)
 const selectedTracker = ref<Tracker | null>(null)
 const selectedDay = ref(0)
+const isLoading = ref(true)
+const groupNames = ref<string[]>([])
+
+// Add state for expanded groups with localStorage persistence
+const expandedGroups = ref(new Set<string>())
 
 const trackerForm = ref({
-  name: ''
+  name: '',
+  groupName: ''
 })
 
 const valueForm = ref({
   value: 0
+})
+
+// Load expanded groups from localStorage
+const loadExpandedGroups = () => {
+  try {
+    const savedGroups = localStorage.getItem('trackersExpandedGroups')
+    if (savedGroups) {
+      expandedGroups.value = new Set(JSON.parse(savedGroups))
+    }
+  } catch (error) {
+    console.error('Error loading expanded groups from localStorage:', error)
+  }
+}
+
+// Save expanded groups to localStorage
+const saveExpandedGroups = () => {
+  try {
+    localStorage.setItem('trackersExpandedGroups', JSON.stringify([...expandedGroups.value]))
+  } catch (error) {
+    console.error('Error saving expanded groups to localStorage:', error)
+  }
+}
+
+// Group trackers by groupName
+const groupedTrackers = computed(() => {
+  const groups = {}
+  trackers.value.forEach(tracker => {
+    if (!groups[tracker.groupName]) {
+      groups[tracker.groupName] = {
+        name: tracker.groupName,
+        trackers: []
+      }
+    }
+    groups[tracker.groupName].trackers.push(tracker)
+  })
+
+  // Sort trackers within each group by name
+  Object.values(groups).forEach(group => {
+    group.trackers.sort((a, b) => a.name.localeCompare(b.name))
+  })
+
+  // Sort groups alphabetically by name
+  return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name))
 })
 
 const formatDateRange = computed(() => {
@@ -266,6 +384,7 @@ const getCellStyle = (tracker: Tracker, day: number) => {
 const editTracker = (tracker: Tracker) => {
   editingTracker.value = tracker
   trackerForm.value.name = tracker.name
+  trackerForm.value.groupName = tracker.groupName
   showCreateTrackerModal.value = true
 }
 
@@ -293,6 +412,16 @@ const openValueModal = (tracker: Tracker, day: number) => {
   showValueModal.value = true
 }
 
+// Open create modal with group name
+const openCreateTrackerModal = (groupName?: string) => {
+  editingTracker.value = null
+  trackerForm.value = {
+    name: '',
+    groupName: groupName || ''
+  }
+  showCreateTrackerModal.value = true
+}
+
 const saveTracker = async () => {
   try {
     if (editingTracker.value) {
@@ -308,7 +437,7 @@ const saveTracker = async () => {
     }
     showCreateTrackerModal.value = false
     editingTracker.value = null
-    trackerForm.value.name = ''
+    trackerForm.value = { name: '', groupName: '' }
     await fetchTrackers()
   } catch (error) {
     console.error('Failed to save tracker:', error)
@@ -345,6 +474,17 @@ const setValueAndSave = async (value: number) => {
   await saveValue()
 }
 
+// Fetch existing group names
+const fetchGroupNames = async () => {
+  try {
+    const response = await fetch('/api/trackers/groups')
+    if (!response.ok) throw new Error('Failed to fetch group names')
+    groupNames.value = await response.json()
+  } catch (error) {
+    console.error('Error fetching group names:', error)
+  }
+}
+
 const fetchTrackers = async () => {
   try {
     const start = format(startDate.value, 'yyyy-MM-dd')
@@ -364,6 +504,8 @@ const fetchTrackers = async () => {
       // Show error message to user
       alert('Failed to fetch trackers. Please try again.')
     }
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -390,15 +532,26 @@ const getDateTooltip = (day: number) => {
   return format(date, 'MMMM d, yyyy')
 }
 
-const openCreateTrackerModal = () => {
-  editingTracker.value = null
-  trackerForm.value.name = ''
-  showCreateTrackerModal.value = true
+// Toggle group expansion
+const toggleGroup = (groupName: string) => {
+  if (expandedGroups.value.has(groupName)) {
+    expandedGroups.value.delete(groupName)
+  } else {
+    expandedGroups.value.add(groupName)
+  }
+  saveExpandedGroups()
+}
+
+// Check if group is expanded
+const isGroupExpanded = (groupName: string) => {
+  return expandedGroups.value.has(groupName)
 }
 
 // Initial fetch
 onMounted(async () => {
   await fetchTrackers()
+  await fetchGroupNames()
+  loadExpandedGroups()
 })
 </script>
 
