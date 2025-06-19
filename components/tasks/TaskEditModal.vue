@@ -18,6 +18,21 @@
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]" />
         </div>
 
+        <!-- Project -->
+        <div>
+          <label for="project" class="block text-sm font-medium text-gray-700">Project (Optional)</label>
+          <select
+            id="project"
+            v-model="task.projectId"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+          >
+            <option value="">No Project</option>
+            <option v-for="project in projects" :key="project.id" :value="project.id">
+              {{ project.name }}
+            </option>
+          </select>
+        </div>
+
         <!-- Status -->
         <div>
           <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
@@ -82,9 +97,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import RepeatScheduleSelector from './RepeatScheduleSelector.vue'
 import type { Task, RepeatSchedule } from '~/types/task'
+import type { Project } from '~/types/project'
 
 const props = defineProps<{
   show: boolean;
@@ -98,6 +114,8 @@ const emit = defineEmits<{
 
 // Create a local copy of the task to avoid direct mutation
 const task = ref<Task>({ ...props.task })
+
+const projects = ref<Project[]>([])
 
 // Initialize repeat schedule from task data
 const repeatSchedule = ref<RepeatSchedule>({
@@ -117,6 +135,26 @@ function parseRepeatDays(repeatDays: string | null): number[] | undefined {
     return JSON.parse(repeatDays)
   } catch {
     return undefined
+  }
+}
+
+// Fetch projects when component mounts
+onMounted(async () => {
+  await fetchProjects()
+})
+
+async function fetchProjects() {
+  try {
+    const { getSession } = useAuth()
+    const userSession = await getSession()
+    const user = userSession?.user
+    
+    if (user) {
+      const response = await $fetch<Project[]>(`/api/projects?userId=${user.id}`)
+      projects.value = response
+    }
+  } catch (error) {
+    console.error('Failed to fetch projects:', error)
   }
 }
 

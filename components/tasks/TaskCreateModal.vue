@@ -20,6 +20,21 @@
         </div>
       </div>
 
+      <!-- Project -->
+      <div>
+        <label for="project" class="block text-sm font-medium text-gray-700">Project (Optional)</label>
+        <select
+          id="project"
+          v-model="task.projectId"
+          class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm rounded-md"
+        >
+          <option value="">No Project</option>
+          <option v-for="project in projects" :key="project.id" :value="project.id">
+            {{ project.name }}
+          </option>
+        </select>
+      </div>
+
       <!-- Priority -->
       <div>
         <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
@@ -109,6 +124,7 @@
 import BaseModal from '~/components/BaseModal.vue'
 import RepeatScheduleSelector from '~/components/tasks/RepeatScheduleSelector.vue'
 import type { RepeatSchedule } from '~/types/task'
+import type { Project } from '~/types/project'
 
 const props = defineProps<{
   show: boolean;
@@ -126,6 +142,7 @@ interface NewTask {
   status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE';
   priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
   dueDate: string;
+  projectId?: string;
 }
 
 const task = ref<NewTask>({
@@ -134,8 +151,11 @@ const task = ref<NewTask>({
   estimatedPomodoros: 1,
   status: 'BACKLOG',
   priority: 'MEDIUM',
-  dueDate: new Date().toISOString().substring(0, 10)
+  dueDate: new Date().toISOString().substring(0, 10),
+  projectId: ''
 })
+
+const projects = ref<Project[]>([])
 
 const repeatSchedule = ref<RepeatSchedule>({
   repeatType: null
@@ -144,6 +164,27 @@ const repeatSchedule = ref<RepeatSchedule>({
 const {
   getSession,
 } = useAuth()
+
+// Fetch projects when modal opens
+watch(() => props.show, async (show) => {
+  if (show) {
+    await fetchProjects()
+  }
+})
+
+async function fetchProjects() {
+  try {
+    const userSession = await getSession()
+    const user = userSession?.user
+    
+    if (user) {
+      const response = await $fetch<Project[]>(`/api/projects?userId=${user.id}`)
+      projects.value = response
+    }
+  } catch (error) {
+    console.error('Failed to fetch projects:', error)
+  }
+}
 
 async function createTask() {
   const userSession = await getSession()
@@ -171,7 +212,8 @@ async function createTask() {
     const requestBody: any = {
       userId: user.id,
       ...task.value,
-      dueDate: dueDate
+      dueDate: dueDate,
+      projectId: task.value.projectId || null
     }
 
     // Add repeat schedule fields if present
@@ -198,7 +240,8 @@ async function createTask() {
       estimatedPomodoros: 1,
       status: 'BACKLOG',
       priority: 'MEDIUM',
-      dueDate: new Date().toISOString().substring(0, 10)
+      dueDate: new Date().toISOString().substring(0, 10),
+      projectId: ''
     }
     repeatSchedule.value = { repeatType: null }
     

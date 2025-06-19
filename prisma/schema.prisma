@@ -22,6 +22,7 @@ model User {
   proStatus         Boolean         @default(false)
   settings          UserSettings?
   tasks             Task[]          @relation("UserTasks")
+  projects          Project[]       @relation("UserProjects")
   subscription      UserSubscription?
   sessions          Session[]       @relation("UserSessions")
   journalEntries    JournalEntry[]  @relation("UserJournalEntries")
@@ -29,9 +30,23 @@ model User {
   trackers          Tracker[]       @relation("UserTrackers")
 }
 
+model Project {
+  id                String    @id @default(uuid())
+  userId            String
+  name              String
+  description       String?
+  color             String?   // Hex color for project identification
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  user              User      @relation("UserProjects", fields: [userId], references: [id], onDelete: Cascade)
+  tasks             Task[]    @relation("ProjectTasks")
+}
+
 model Task {
   id                String    @id @default(uuid())
   userId            String
+  projectId         String?   // Optional link to project
   title             String
   notes             String?
   estimatedPomodoros Int?
@@ -55,6 +70,7 @@ model Task {
   templateTaskId    String?   // Reference to the original template task
   
   user              User      @relation("UserTasks", fields: [userId], references: [id])
+  project           Project?  @relation("ProjectTasks", fields: [projectId], references: [id])
 }
 
 model UserSettings {

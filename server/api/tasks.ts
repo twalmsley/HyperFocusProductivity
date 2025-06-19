@@ -29,7 +29,14 @@ export default defineEventHandler(async (event) => {
           userId: user.id,
         },
         include: {
-          user: true
+          user: true,
+          project: {
+            select: {
+              id: true,
+              name: true,
+              color: true
+            }
+          }
         },
         orderBy: {
           position: 'asc'
@@ -46,6 +53,7 @@ export default defineEventHandler(async (event) => {
         status = 'BACKLOG', 
         dueDate, 
         priority = 'MEDIUM',
+        projectId,
         repeatType,
         repeatInterval,
         repeatDays,
@@ -60,6 +68,23 @@ export default defineEventHandler(async (event) => {
           statusCode: 400,
           message: 'All fields (title, notes, estimatedPomodoros, status, dueDate) are required'
         })
+      }
+
+      // Validate projectId if provided
+      if (projectId) {
+        const project = await prisma.project.findFirst({
+          where: {
+            id: projectId,
+            userId: user.id
+          }
+        })
+        
+        if (!project) {
+          throw createError({
+            statusCode: 400,
+            message: 'Invalid project ID'
+          })
+        }
       }
 
       // Get the highest position value
@@ -102,6 +127,7 @@ export default defineEventHandler(async (event) => {
       // Create the task
       const taskData = {
         userId: user.id,
+        projectId: projectId || null,
         title: title.slice(0, 200),
         notes: notes.slice(0, 2000),
         estimatedPomodoros,
@@ -122,7 +148,14 @@ export default defineEventHandler(async (event) => {
       const newTask = await prisma.task.create({
         data: taskData,
         include: {
-          user: true
+          user: true,
+          project: {
+            select: {
+              id: true,
+              name: true,
+              color: true
+            }
+          }
         }
       })
 
@@ -157,6 +190,23 @@ export default defineEventHandler(async (event) => {
       }
       if (updateData.notes) {
         updateData.notes = updateData.notes.slice(0, 2000)
+      }
+
+      // Validate projectId if provided
+      if (updateData.projectId) {
+        const project = await prisma.project.findFirst({
+          where: {
+            id: updateData.projectId,
+            userId: user.id
+          }
+        })
+        
+        if (!project) {
+          throw createError({
+            statusCode: 400,
+            message: 'Invalid project ID'
+          })
+        }
       }
 
       // Handle repeat schedule updates
@@ -221,6 +271,7 @@ export default defineEventHandler(async (event) => {
           await prisma.task.create({
             data: {
               userId: user.id,
+              projectId: task.projectId,
               title: task.title,
               notes: task.notes,
               estimatedPomodoros: task.estimatedPomodoros,
@@ -249,7 +300,14 @@ export default defineEventHandler(async (event) => {
           completedAt: updateData.status === 'DONE' ? new Date() : updateData.status === 'BACKLOG' ? null : task.completedAt
         },
         include: {
-          user: true
+          user: true,
+          project: {
+            select: {
+              id: true,
+              name: true,
+              color: true
+            }
+          }
         }
       })
 

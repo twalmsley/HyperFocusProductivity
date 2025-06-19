@@ -15,6 +15,7 @@ export interface RepeatSchedule {
 export interface Task {
   id: string;
   userId: string;
+  projectId: string | null;
   title: string;
   notes: string | null;
   estimatedPomodoros: number | null;
@@ -36,6 +37,13 @@ export interface Task {
   repeatDayOfWeek: number | null;
   isTemplate: boolean;
   templateTaskId: string | null;
+  
+  // Optional project relation
+  project?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
   
   // Optional sessions field for detailed views
   sessions?: Array<{

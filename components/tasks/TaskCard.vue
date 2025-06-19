@@ -15,6 +15,16 @@
           </svg>
         </div>
         
+        <!-- Project Badge -->
+        <div v-if="task.project" class="flex items-center gap-2 mb-2">
+          <div 
+            v-if="task.project.color" 
+            class="w-3 h-3 rounded-full flex-shrink-0"
+            :style="{ backgroundColor: task.project.color }"
+          ></div>
+          <span class="text-sm text-gray-600">{{ task.project.name }}</span>
+        </div>
+        
         <div class="flex flex-wrap gap-2 mb-3">
           <span class="px-2 py-1 text-xs rounded-full" :class="{
             'bg-yellow-100 text-yellow-800': task.status === 'BACKLOG',
