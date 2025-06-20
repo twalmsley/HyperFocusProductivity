@@ -55,7 +55,7 @@
     <div v-else class="space-y-6">
       <div v-for="group in groupedTrackers" :key="group.name" class="bg-white rounded-lg shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 class="text-lg sm:text-xl font-semibold">{{ group.name }}</h2>
+          <h2 class="text-lg sm:text-xl font-semibold text-center flex-1">{{ group.name }}</h2>
           <div class="flex items-center space-x-2 sm:space-x-4">
             <button
               @click="openCreateTrackerModal(group.name)"
@@ -96,30 +96,30 @@
             <div v-for="tracker in group.trackers" :key="tracker.id" class="p-4">
               <!-- Mobile Layout -->
               <div class="block md:hidden">
-                <div class="flex items-center justify-between mb-3">
-                  <h3 class="text-lg font-medium">{{ tracker.name }}</h3>
-                  <div class="flex space-x-2">
+                <div class="flex items-center justify-between mb-2 sm:mb-3">
+                  <h3 class="text-base sm:text-lg font-medium pr-2">{{ tracker.name }}</h3>
+                  <div class="flex space-x-1 sm:space-x-2 flex-shrink-0">
                     <button
                       @click="editTracker(tracker)"
-                      class="text-gray-600 hover:text-[var(--primary)] relative group"
+                      class="text-gray-600 hover:text-[var(--primary)] relative group p-1"
                     >
                       <span class="sr-only">Edit</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     </button>
                     <button
                       @click="deleteTracker(tracker)"
-                      class="text-gray-600 hover:text-red-600 relative group"
+                      class="text-gray-600 hover:text-red-600 relative group p-1"
                     >
                       <span class="sr-only">Delete</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
                   </div>
                 </div>
-                <div class="grid grid-cols-6 sm:grid-cols-10 gap-1">
+                <div class="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-15 lg:grid-cols-20 xl:grid-cols-30 gap-1">
                   <div
                     v-for="day in 30"
                     :key="day"
@@ -140,9 +140,9 @@
 
               <!-- Desktop Layout -->
               <div class="hidden md:flex items-center gap-4">
-                <h3 class="text-lg font-medium w-48">{{ tracker.name }}</h3>
-                <div class="flex-1">
-                  <div class="grid grid-cols-30 gap-1">
+                <h3 class="text-lg font-medium w-32 lg:w-48 flex-shrink-0">{{ tracker.name }}</h3>
+                <div class="flex-1 min-w-0">
+                  <div class="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-15 lg:grid-cols-20 xl:grid-cols-30 gap-1">
                     <div
                       v-for="day in 30"
                       :key="day"
@@ -160,7 +160,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="flex space-x-2">
+                <div class="flex space-x-2 flex-shrink-0">
                   <button
                     @click="editTracker(tracker)"
                     class="text-gray-600 hover:text-[var(--primary)] relative group"
@@ -620,20 +620,34 @@ onMounted(async () => {
   grid-template-columns: repeat(30, minmax(0, 1fr));
 }
 
+.grid-cols-15 {
+  grid-template-columns: repeat(15, minmax(0, 1fr));
+}
+
+.grid-cols-20 {
+  grid-template-columns: repeat(20, minmax(0, 1fr));
+}
+
 /* Remove delay for tracker cell tooltips */
 .grid-cols-30 > div,
 .grid-cols-6 > div,
-.grid-cols-10 > div {
+.grid-cols-10 > div,
+.grid-cols-15 > div,
+.grid-cols-20 > div {
   pointer-events: auto;
 }
 .grid-cols-30 > div[title],
 .grid-cols-6 > div[title],
-.grid-cols-10 > div[title] {
+.grid-cols-10 > div[title],
+.grid-cols-15 > div[title],
+.grid-cols-20 > div[title] {
   position: relative;
 }
 .grid-cols-30 > div[title]:hover::after,
 .grid-cols-6 > div[title]:hover::after,
-.grid-cols-10 > div[title]:hover::after {
+.grid-cols-10 > div[title]:hover::after,
+.grid-cols-15 > div[title]:hover::after,
+.grid-cols-20 > div[title]:hover::after {
   content: attr(title);
   position: absolute;
   bottom: 100%;
