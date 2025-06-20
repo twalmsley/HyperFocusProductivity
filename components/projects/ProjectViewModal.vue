@@ -32,7 +32,7 @@
           <!-- Project Stats -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div class="text-center p-4 bg-gray-50 rounded-lg">
-              <div class="text-2xl font-bold text-[var(--primary)]">{{ project._count?.tasks || 0 }}</div>
+              <div class="text-2xl font-bold text-[var(--primary)]">{{ totalTasks }}</div>
               <div class="text-sm text-gray-600">Total Tasks</div>
             </div>
             <div class="text-center p-4 bg-gray-50 rounded-lg">
@@ -174,18 +174,19 @@ const userSettings = ref<{
 } | null>(null)
 
 const completedTasks = computed(() => {
-  if (!props.project?.tasks) return 0
-  return props.project.tasks.filter(task => task.status === 'DONE').length
+  return projectTasks.value.filter(task => task.status === 'DONE').length
 })
 
 const inProgressTasks = computed(() => {
-  if (!props.project?.tasks) return 0
-  return props.project.tasks.filter(task => task.status === 'IN_PROGRESS').length
+  return projectTasks.value.filter(task => task.status === 'IN_PROGRESS').length
 })
 
 const backlogTasks = computed(() => {
-  if (!props.project?.tasks) return 0
-  return props.project.tasks.filter(task => task.status === 'BACKLOG').length
+  return projectTasks.value.filter(task => task.status === 'BACKLOG').length
+})
+
+const totalTasks = computed(() => {
+  return projectTasks.value.length
 })
 
 // Fetch tasks when project changes
