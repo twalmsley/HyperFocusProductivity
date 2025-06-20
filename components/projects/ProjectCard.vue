@@ -29,6 +29,22 @@
             <span :class="getStateColor(projectState)">{{ projectState }}</span>
           </div>
         </div>
+
+        <!-- Task Status Breakdown -->
+        <div v-if="project._count?.tasks && project._count.tasks > 0" class="flex items-center gap-3 mt-3 text-xs">
+          <div class="flex items-center gap-1">
+            <div class="w-2 h-2 rounded-full bg-orange-400"></div>
+            <span class="text-orange-600">{{ backlogCount }} backlog</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+            <span class="text-blue-600">{{ inProgressCount }} in progress</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <div class="w-2 h-2 rounded-full bg-green-400"></div>
+            <span class="text-green-600">{{ completedCount }} completed</span>
+          </div>
+        </div>
       </div>
       
       <div class="flex items-center gap-2 ml-4">
@@ -75,6 +91,22 @@ defineEmits<{
 }>()
 
 const projectState = computed(() => getProjectState(props.project))
+
+// Calculate task counts by status
+const backlogCount = computed(() => {
+  if (!props.project.tasks) return 0
+  return props.project.tasks.filter(task => task.status === 'BACKLOG').length
+})
+
+const inProgressCount = computed(() => {
+  if (!props.project.tasks) return 0
+  return props.project.tasks.filter(task => task.status === 'IN_PROGRESS').length
+})
+
+const completedCount = computed(() => {
+  if (!props.project.tasks) return 0
+  return props.project.tasks.filter(task => task.status === 'DONE').length
+})
 
 function getStateIcon(state: ProjectState): string {
   switch (state) {
