@@ -59,6 +59,15 @@ export default defineEventHandler(async (event) => {
               userId
             },
             include: {
+              tasks: {
+                select: {
+                  id: true,
+                  title: true,
+                  status: true,
+                  priority: true,
+                  dueDate: true
+                }
+              },
               _count: {
                 select: {
                   tasks: true

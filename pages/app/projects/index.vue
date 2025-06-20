@@ -105,7 +105,7 @@ import ProjectViewModal from '~/components/projects/ProjectViewModal.vue'
 import ProjectDeleteModal from '~/components/projects/ProjectDeleteModal.vue'
 import ProjectStats from '~/components/projects/ProjectStats.vue'
 import ProjectCreateModal from '~/components/projects/ProjectCreateModal.vue'
-import { filterProjects, type ProjectFilters as ProjectFiltersType } from '~/utils/projectFilters'
+import { filterProjects, type ProjectFilters as ProjectFiltersType, getProjectState } from '~/utils/projectFilters'
 
 const {
   status,
@@ -149,7 +149,8 @@ const sortDirection = ref<'asc' | 'desc'>('desc')
 
 // Filtering state
 const filters = ref<ProjectFiltersType>({
-  search: ''
+  search: '',
+  state: ''
 })
 
 // Pagination state
@@ -237,6 +238,10 @@ const sortedProjects = computed(() => {
         valA = a._count?.tasks || 0
         valB = b._count?.tasks || 0
         break
+      case 'state':
+        valA = getProjectState(a)
+        valB = getProjectState(b)
+        break
       default:
         valA = a[sortColumn.value as keyof typeof a] || ''
         valB = b[sortColumn.value as keyof typeof b] || ''
@@ -310,6 +315,8 @@ async function confirmDeleteProject() {
   if (!user || !projectToDelete.value) return
 
   try {
+    const projectName = projectToDelete.value.name
+    
     await $fetch('/api/projects', {
       method: 'DELETE',
       query: {
@@ -324,7 +331,7 @@ async function confirmDeleteProject() {
     projectToDelete.value = null
 
     // Show success message
-    successMessage.value = `Project "${projectToDelete.value?.name}" deleted successfully`
+    successMessage.value = `Project "${projectName}" deleted successfully`
     showSuccessDialog.value = true
   } catch (error) {
     console.error('Failed to delete project:', error)

@@ -36,6 +36,15 @@
         Tasks
         <SortIndicator :active="sortColumn === 'taskCount'" :direction="sortDirection" />
       </button>
+      
+      <button
+        @click="$emit('sort', 'state')"
+        class="flex items-center gap-1 px-3 py-1 text-sm rounded-md transition-colors"
+        :class="sortColumn === 'state' ? 'bg-[var(--primary)] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+      >
+        State
+        <SortIndicator :active="sortColumn === 'state'" :direction="sortDirection" />
+      </button>
     </div>
   </div>
 </template>

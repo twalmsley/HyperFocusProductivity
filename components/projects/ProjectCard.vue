@@ -24,6 +24,10 @@
             <Icon name="lucide:calendar" class="w-4 h-4" />
             <span>{{ formatDate(project.createdAt) }}</span>
           </div>
+          <div class="flex items-center gap-1">
+            <Icon :name="getStateIcon(projectState)" class="w-4 h-4" />
+            <span :class="getStateColor(projectState)">{{ projectState }}</span>
+          </div>
         </div>
       </div>
       
@@ -56,18 +60,51 @@
 
 <script setup lang="ts">
 import type { Project } from '~/types/project'
+import { getProjectState, type ProjectState } from '~/utils/projectFilters'
 
 interface Props {
   project: Project
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 defineEmits<{
   view: [project: Project]
   edit: [project: Project]
   delete: [project: Project]
 }>()
+
+const projectState = computed(() => getProjectState(props.project))
+
+function getStateIcon(state: ProjectState): string {
+  switch (state) {
+    case 'No Tasks':
+      return 'lucide:circle'
+    case 'Not Started':
+      return 'lucide:clock'
+    case 'In Progress':
+      return 'lucide:play-circle'
+    case 'Completed':
+      return 'lucide:check-circle'
+    default:
+      return 'lucide:circle'
+  }
+}
+
+function getStateColor(state: ProjectState): string {
+  switch (state) {
+    case 'No Tasks':
+      return 'text-gray-500'
+    case 'Not Started':
+      return 'text-yellow-600'
+    case 'In Progress':
+      return 'text-blue-600'
+    case 'Completed':
+      return 'text-green-600'
+    default:
+      return 'text-gray-500'
+  }
+}
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
