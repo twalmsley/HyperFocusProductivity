@@ -2,12 +2,13 @@
   <AppNavHeader />
   <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-2xl font-bold">Trackers</h1>
+      <h1 class="text-xl sm:text-2xl font-bold">Trackers</h1>
       <button
         @click="openCreateTrackerModal()"
-        class="bg-[var(--primary)] text-white px-4 py-2 rounded-md hover:bg-[var(--primary)] hover:opacity-90 transition-colors"
+        class="bg-[var(--primary)] text-white px-3 sm:px-4 py-2 rounded-md hover:bg-[var(--primary)] hover:opacity-90 transition-colors text-sm sm:text-base"
       >
-        Create Tracker
+        <span class="hidden sm:inline">Create Tracker</span>
+        <span class="sm:hidden">Create</span>
       </button>
     </div>
 
@@ -15,24 +16,26 @@
     <div class="flex items-center justify-between mb-6">
       <button
         @click="navigateDateRange(30)"
-        class="p-2 hover:bg-gray-100 rounded-md flex items-center gap-2"
+        class="p-2 hover:bg-gray-100 rounded-md flex items-center gap-1 sm:gap-2"
         :disabled="isAtNewestDate"
         :class="{ 'opacity-50 cursor-not-allowed': isAtNewestDate }"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
-        <span>Newer Dates</span>
+        <span class="hidden sm:inline">Newer Dates</span>
+        <span class="sm:hidden">Newer</span>
       </button>
-      <div class="text-lg font-medium">
+      <div class="text-base sm:text-lg font-medium text-center px-2">
         {{ formatDateRange }}
       </div>
       <button
         @click="navigateDateRange(-30)"
-        class="p-2 hover:bg-gray-100 rounded-md flex items-center gap-2"
+        class="p-2 hover:bg-gray-100 rounded-md flex items-center gap-1 sm:gap-2"
       >
-        <span>Older Dates</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <span class="hidden sm:inline">Older Dates</span>
+        <span class="sm:hidden">Older</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
       </button>
@@ -52,14 +55,14 @@
     <div v-else class="space-y-6">
       <div v-for="group in groupedTrackers" :key="group.name" class="bg-white rounded-lg shadow-sm overflow-hidden">
         <div class="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 class="text-xl font-semibold">{{ group.name }}</h2>
-          <div class="flex items-center space-x-4">
+          <h2 class="text-lg sm:text-xl font-semibold">{{ group.name }}</h2>
+          <div class="flex items-center space-x-2 sm:space-x-4">
             <button
               @click="openCreateTrackerModal(group.name)"
               class="text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
               title="Add new tracker to this group"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
             </button>
@@ -70,7 +73,7 @@
             >
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
-                class="h-6 w-6 transform transition-transform duration-200"
+                class="h-5 w-5 sm:h-6 sm:w-6 transform transition-transform duration-200"
                 :class="{ 'rotate-180': isGroupExpanded(group.name) }"
                 fill="none" 
                 viewBox="0 0 24 24" 
@@ -91,7 +94,52 @@
         >
           <div v-show="isGroupExpanded(group.name)" class="divide-y divide-gray-200">
             <div v-for="tracker in group.trackers" :key="tracker.id" class="p-4">
-              <div class="flex items-center gap-4">
+              <!-- Mobile Layout -->
+              <div class="block md:hidden">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-lg font-medium">{{ tracker.name }}</h3>
+                  <div class="flex space-x-2">
+                    <button
+                      @click="editTracker(tracker)"
+                      class="text-gray-600 hover:text-[var(--primary)] relative group"
+                    >
+                      <span class="sr-only">Edit</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      @click="deleteTracker(tracker)"
+                      class="text-gray-600 hover:text-red-600 relative group"
+                    >
+                      <span class="sr-only">Delete</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="grid grid-cols-6 sm:grid-cols-10 gap-1">
+                  <div
+                    v-for="day in 30"
+                    :key="day"
+                    class="aspect-square rounded cursor-pointer hover:ring-2 hover:ring-[var(--primary)] transition-all relative"
+                    :style="getCellStyle(tracker, day)"
+                    @click="openValueModal(tracker, day)"
+                    :title="getDateTooltip(day)"
+                  >
+                    <div 
+                      class="absolute inset-0 flex items-center justify-center text-xs font-medium"
+                      :class="getTextColorClass(tracker, day)"
+                    >
+                      {{ getTrackerValue(tracker, day) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Desktop Layout -->
+              <div class="hidden md:flex items-center gap-4">
                 <h3 class="text-lg font-medium w-48">{{ tracker.name }}</h3>
                 <div class="flex-1">
                   <div class="grid grid-cols-30 gap-1">
@@ -249,6 +297,12 @@ import BaseModal from '~/components/BaseModal.vue'
 import CreateEditTrackerModal from '~/components/trackers/CreateEditTrackerModal.vue'
 import ValueSelectionModal from '~/components/trackers/ValueSelectionModal.vue'
 
+interface TrackerEntry {
+  id: string
+  date: string | Date
+  value: number
+}
+
 interface Tracker {
   id: string
   name: string
@@ -256,10 +310,9 @@ interface Tracker {
   entries: TrackerEntry[]
 }
 
-interface TrackerEntry {
-  id: string
-  date: Date
-  value: number
+interface TrackerGroup {
+  name: string
+  trackers: Tracker[]
 }
 
 const trackers = ref<Tracker[]>([])
@@ -306,8 +359,8 @@ const saveExpandedGroups = () => {
 }
 
 // Group trackers by groupName
-const groupedTrackers = computed(() => {
-  const groups = {}
+const groupedTrackers = computed((): TrackerGroup[] => {
+  const groups: Record<string, TrackerGroup> = {}
   trackers.value.forEach(tracker => {
     if (!groups[tracker.groupName]) {
       groups[tracker.groupName] = {
@@ -494,7 +547,14 @@ const fetchTrackers = async () => {
         'Content-Type': 'application/json'
       }
     })
-    trackers.value = response
+    // Transform the response to match our interface
+    trackers.value = response.map((tracker: any) => ({
+      ...tracker,
+      entries: tracker.entries.map((entry: any) => ({
+        ...entry,
+        date: new Date(entry.date)
+      }))
+    }))
   } catch (error: any) {
     console.error('Failed to fetch trackers:', error)
     if (error.statusCode === 401) {
@@ -561,13 +621,19 @@ onMounted(async () => {
 }
 
 /* Remove delay for tracker cell tooltips */
-.grid-cols-30 > div {
+.grid-cols-30 > div,
+.grid-cols-6 > div,
+.grid-cols-10 > div {
   pointer-events: auto;
 }
-.grid-cols-30 > div[title] {
+.grid-cols-30 > div[title],
+.grid-cols-6 > div[title],
+.grid-cols-10 > div[title] {
   position: relative;
 }
-.grid-cols-30 > div[title]:hover::after {
+.grid-cols-30 > div[title]:hover::after,
+.grid-cols-6 > div[title]:hover::after,
+.grid-cols-10 > div[title]:hover::after {
   content: attr(title);
   position: absolute;
   bottom: 100%;
