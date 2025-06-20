@@ -25,7 +25,7 @@
         </div>
 
         <!-- Filter controls -->
-        <ProjectFilters v-model:filters="filters" />
+        <ProjectFilters :filters="filters" @update:filters="(newFilters) => filters = newFilters" />
 
         <!-- Sort controls -->
         <ProjectSortControls 
@@ -35,8 +35,9 @@
         />
 
         <!-- Project cards -->
-        <div v-if="projects.length === 0" class="bg-white rounded-lg shadow-sm p-6 text-gray-600">
-          <p>Your projects will appear here.</p>
+        <div v-if="filteredProjects.length === 0" class="bg-white rounded-lg shadow-sm p-6 text-gray-600">
+          <p v-if="projects.length === 0">Your projects will appear here.</p>
+          <p v-else>No projects match your search criteria.</p>
         </div>
         <div v-else class="space-y-4">
           <ProjectCard
@@ -147,7 +148,7 @@ const sortColumn = ref<string>('createdAt')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 
 // Filtering state
-const filters = ref({
+const filters = ref<ProjectFiltersType>({
   search: ''
 })
 
@@ -256,7 +257,9 @@ const sortedProjects = computed(() => {
 const paginatedProjects = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
-  return sortedProjects.value.slice(start, end)
+  const paginated = sortedProjects.value.slice(start, end)
+  
+  return paginated
 })
 
 // Variables for delete confirmation

@@ -34,13 +34,13 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const localFilters = ref<ProjectFilters>({ ...props.filters })
+// Initialize with proper structure to ensure reactivity
+const localFilters = ref<ProjectFilters>({
+  search: props.filters.search || ''
+})
 
+// Watch for changes in localFilters and emit them
 watch(localFilters, (newFilters) => {
   emit('update:filters', newFilters)
-}, { deep: true })
-
-watch(() => props.filters, (newFilters) => {
-  localFilters.value = { ...newFilters }
 }, { deep: true })
 </script> 
