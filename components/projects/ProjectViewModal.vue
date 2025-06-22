@@ -136,7 +136,7 @@
 
   <!-- Task Modals -->
   <TaskViewModal v-if="showTaskViewModal" :show="showTaskViewModal" :task="selectedTask" @close="closeTaskViewModal" />
-  <TaskEditModal v-if="showTaskEditModal" :show="showTaskEditModal" :task="selectedTask" @close="closeTaskEditModal" @save="saveTask" />
+  <TaskEditModal v-if="showTaskEditModal && selectedTask" :show="showTaskEditModal" :task="selectedTask" @close="closeTaskEditModal" @save="saveTask" />
   <TaskDeleteModal v-if="showTaskDeleteModal" :show="showTaskDeleteModal" :task="selectedTask" @cancel="closeTaskDeleteModal" @confirm="confirmDeleteTask" />
   <TaskCreateModal v-if="showCreateTaskModal" :show="showCreateTaskModal" :preselected-project-id="project?.id" :preselected-project-name="project?.name" @close="closeCreateTaskModal" @created="handleTaskCreated" />
   <PomodoroTimer v-if="showPomodoroTimer" :total-rounds="selectedTask?.estimatedPomodoros || 1" :focus-duration="userSettings?.focusDuration || 25" :short-break-duration="userSettings?.shortBreakDuration || 5" :long-break-duration="userSettings?.longBreakDuration || 15" :long-break-interval="userSettings?.longBreakInterval || 4" :completed-pomodoros="selectedTask?.completedPomodoros || 0" @close="closePomodoroTimer" @update:completed-pomodoros="updateCompletedPomodoros" />
@@ -260,13 +260,47 @@ function closeTaskEditModal() {
   selectedTask.value = null
 }
 
-async function saveTask(task: Partial<Task> & { repeatSchedule?: any }) {
-  if (!selectedTask.value) return
+async function saveTask(taskData: Task & { repeatSchedule: any }) {
+  if (!selectedTask.value) {
+    return
+  }
 
   try {
+    // Extract the task data and repeat schedule
+    const { repeatSchedule, id, userId, createdAt, sessions, ...taskUpdate } = taskData
+    
+    // Prepare the request body with only updatable fields
+    const requestBody: any = {
+      id: selectedTask.value.id,
+      title: taskUpdate.title,
+      notes: taskUpdate.notes,
+      estimatedPomodoros: taskUpdate.estimatedPomodoros,
+      completedPomodoros: taskUpdate.completedPomodoros,
+      status: taskUpdate.status,
+      priority: taskUpdate.priority,
+      projectId: taskUpdate.projectId,
+      position: taskUpdate.position
+    }
+
+    // Convert due date to ISO string if it exists
+    if (taskUpdate.dueDate) {
+      requestBody.dueDate = new Date(taskUpdate.dueDate + 'T00:00:00.000Z').toISOString()
+    }
+
+    // Add repeat schedule fields if present
+    if (repeatSchedule && repeatSchedule.repeatType) {
+      requestBody.repeatType = repeatSchedule.repeatType
+      requestBody.repeatInterval = repeatSchedule.repeatInterval
+      requestBody.repeatDays = repeatSchedule.repeatDays
+      requestBody.repeatMonth = repeatSchedule.repeatMonth
+      requestBody.repeatDay = repeatSchedule.repeatDay
+      requestBody.repeatWeekOfMonth = repeatSchedule.repeatWeekOfMonth
+      requestBody.repeatDayOfWeek = repeatSchedule.repeatDayOfWeek
+    }
+
     const updatedTask = await $fetch<Task>('/api/tasks', {
       method: 'PATCH',
-      body: task
+      body: requestBody
     })
 
     // Update the task in the local state

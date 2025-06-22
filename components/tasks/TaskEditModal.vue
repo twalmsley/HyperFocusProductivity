@@ -113,7 +113,11 @@ const emit = defineEmits<{
 }>()
 
 // Create a local copy of the task to avoid direct mutation
-const task = ref<Task>({ ...props.task })
+const task = ref<Task>({ 
+  ...props.task,
+  // Format due date for date input (YYYY-MM-DD)
+  dueDate: props.task.dueDate ? new Date(props.task.dueDate).toISOString().split('T')[0] : ''
+})
 
 const projects = ref<Project[]>([])
 
@@ -160,7 +164,11 @@ async function fetchProjects() {
 
 // Watch for changes in the task prop
 watch(() => props.task, (newTask) => {
-  task.value = { ...newTask }
+  task.value = { 
+    ...newTask,
+    // Format due date for date input (YYYY-MM-DD)
+    dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString().split('T')[0] : ''
+  }
   
   // Update repeat schedule
   repeatSchedule.value = {
@@ -175,9 +183,11 @@ watch(() => props.task, (newTask) => {
 }, { deep: true })
 
 function handleSave() {
-  emit('save', { 
+  const taskData = { 
     ...task.value, 
     repeatSchedule: repeatSchedule.value 
-  })
+  }
+  
+  emit('save', taskData)
 }
 </script> 
