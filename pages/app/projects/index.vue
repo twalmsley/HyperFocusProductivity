@@ -398,6 +398,9 @@ async function saveProject(project: Partial<Project>) {
 function handleProjectCreated() {
   fetchProjects()
   
+  // Close the create modal
+  showCreateModal.value = false
+  
   // Show success message
   successMessage.value = 'Project created successfully'
   showSuccessDialog.value = true
