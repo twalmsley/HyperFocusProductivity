@@ -40,10 +40,6 @@
             {{ project.name }}
           </option>
         </select>
-        <!-- Debug info -->
-        <p class="mt-1 text-xs text-gray-400">
-          Debug: preselectedProjectId={{ props.preselectedProjectId }}, preselectedProjectName={{ props.preselectedProjectName }}
-        </p>
       </div>
 
       <!-- Priority -->
@@ -220,7 +216,6 @@ async function fetchProjects() {
     if (user) {
       const response = await $fetch<Project[]>(`/api/projects?userId=${user.id}`)
       projects.value = response
-      console.log('Projects loaded:', projects.value.length, 'projects')
     }
   } catch (error) {
     console.error('Failed to fetch projects:', error)
@@ -249,13 +244,6 @@ async function createTask() {
     if (!task.value.notes) {
       task.value.notes = ''
     }
-
-    // Debug logging
-    console.log('Creating task with projectId:', {
-      preselectedProjectId: props.preselectedProjectId,
-      selectedProjectId: selectedProjectId.value,
-      finalProjectId: selectedProjectId.value || null
-    })
 
     const requestBody: any = {
       userId: user.id,

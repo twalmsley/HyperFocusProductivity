@@ -413,12 +413,6 @@ function closeCreateTaskModal() {
 
 async function handleTaskCreated(createdTask: Task) {
   try {
-    console.log('Task created from project modal:', {
-      projectId: props.project?.id,
-      createdTaskProjectId: createdTask.projectId,
-      task: createdTask
-    })
-    
     // Add the new task to the list
     projectTasks.value.push(createdTask)
     
