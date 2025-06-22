@@ -15,6 +15,20 @@
           {{ project.description }}
         </p>
         
+        <!-- Progress Bar and Percentage -->
+        <div v-if="project._count?.tasks && project._count.tasks > 0" class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-700">Progress</span>
+            <span class="text-sm font-semibold text-gray-900">{{ completionPercentage }}%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              class="bg-[var(--primary)] h-2 rounded-full transition-all duration-300"
+              :style="{ width: `${completionPercentage}%` }"
+            ></div>
+          </div>
+        </div>
+        
         <div class="flex items-center gap-4 text-sm text-gray-500">
           <div class="flex items-center gap-1">
             <Icon name="lucide:list-todo" class="w-4 h-4" />
@@ -106,6 +120,15 @@ const inProgressCount = computed(() => {
 const completedCount = computed(() => {
   if (!props.project.tasks) return 0
   return props.project.tasks.filter(task => task.status === 'DONE').length
+})
+
+// Calculate completion percentage
+const completionPercentage = computed(() => {
+  const totalTasks = props.project._count?.tasks || 0
+  if (totalTasks === 0) return 0
+  
+  const completedTasks = completedCount.value
+  return Math.round((completedTasks / totalTasks) * 100)
 })
 
 function getStateIcon(state: ProjectState): string {
