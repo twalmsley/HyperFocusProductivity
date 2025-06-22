@@ -1,11 +1,11 @@
 <template>
   <AppNavHeader />
   <div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-8">
-      <h1 class="text-xl sm:text-2xl font-bold">Trackers</h1>
+    <div class="flex justify-center items-center mb-8 relative">
+      <h1 class="text-xl sm:text-2xl font-bold">Habit Trackers</h1>
       <button
         @click="openCreateTrackerModal()"
-        class="bg-[var(--primary)] text-white px-3 sm:px-4 py-2 rounded-md hover:bg-[var(--primary)] hover:opacity-90 transition-colors text-sm sm:text-base"
+        class="absolute right-0 bg-[var(--primary)] text-white px-3 sm:px-4 py-2 rounded-md hover:bg-[var(--primary)] hover:opacity-90 transition-colors text-sm sm:text-base"
       >
         <span class="hidden sm:inline">Create Tracker</span>
         <span class="sm:hidden">Create</span>

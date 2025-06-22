@@ -2,7 +2,7 @@
   <div>
     <AppNavHeader />
     <main class="container mx-auto px-4 py-8">
-      <h1 class="text-3xl font-bold mb-6">Welcome to HyperFocusProductivity</h1>
+      <h1 class="text-3xl font-bold mb-6 text-center">Dashboard</h1>
       <!-- Subscription Section -->
       <div v-if="userSession?.blocked">
         <h2 class="text-xl font-semibold mb-4">Subscription no longer active, please update your payment method</h2>

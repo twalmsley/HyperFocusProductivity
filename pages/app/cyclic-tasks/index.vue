@@ -2,11 +2,11 @@
   <div>
     <AppNavHeader />
     <main class="container mx-auto px-4 py-8">
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex justify-center items-center mb-6 relative">
         <h1 class="text-3xl font-bold">Cyclic Tasks</h1>
         <button
           @click="showCreateModal = true"
-          class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors"
+          class="absolute right-0 bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors"
         >
           New Cyclic Task
         </button>

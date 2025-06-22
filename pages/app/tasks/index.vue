@@ -15,11 +15,11 @@
       </div>
 
       <div v-else>
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-center items-center mb-6 relative">
           <h1 class="text-3xl font-bold">Tasks</h1>
           <button
             @click="showCreateModal = true"
-            class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors">
+            class="absolute right-0 bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors">
             New Task
           </button>
         </div>
