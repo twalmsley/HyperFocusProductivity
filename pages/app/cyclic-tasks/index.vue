@@ -23,9 +23,9 @@
 
       <div v-else class="space-y-6">
         <div v-for="group in groupedTasks" :key="group.name" class="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div class="flex items-center justify-between p-4 border-b border-gray-200">
+          <div class="flex items-center justify-center p-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold">{{ group.name }}</h2>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-4 absolute right-25">
               <button
                 @click="openCreateModal(group.name)"
                 class="text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
