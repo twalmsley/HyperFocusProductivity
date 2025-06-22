@@ -24,8 +24,15 @@ export function filterTasks(tasks: Task[], filters: TaskFilters): Task[] {
     }
 
     // Status filter
-    if (filters.status && task.status !== filters.status) {
-      return false
+    if (filters.status) {
+      if (filters.status === 'NOT_DONE') {
+        // NOT_DONE includes both BACKLOG and IN_PROGRESS tasks
+        if (task.status !== 'BACKLOG' && task.status !== 'IN_PROGRESS') {
+          return false
+        }
+      } else if (task.status !== filters.status) {
+        return false
+      }
     }
 
     // Priority filter

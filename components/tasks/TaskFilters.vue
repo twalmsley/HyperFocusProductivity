@@ -34,6 +34,13 @@
             ]">
             In Progress
           </button>
+          <button type="button" @click="filters.status = 'NOT_DONE'"
+            :class="[
+              'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
+              filters.status === 'NOT_DONE' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+            ]">
+            Not Done
+          </button>
           <button type="button" @click="filters.status = 'DONE'"
             :class="[
               'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
@@ -206,9 +213,9 @@ async function fetchProjects() {
   try {
     const { getSession } = useAuth()
     const userSession = await getSession()
-    const user = userSession?.user
+    const user = userSession?.user as { id: string; email?: string; name?: string; image?: string } | undefined
     
-    if (user) {
+    if (user?.id) {
       const response = await $fetch<Project[]>(`/api/projects?userId=${user.id}`)
       projects.value = response
     }

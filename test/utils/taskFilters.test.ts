@@ -184,6 +184,19 @@ describe('filterTasks', () => {
       expect(result[0].status).toBe('DONE')
     })
 
+    it('should filter by NOT_DONE status (BACKLOG and IN_PROGRESS)', () => {
+      const filters: TaskFilters = {
+        search: '',
+        status: 'NOT_DONE',
+        priority: '',
+        dueDate: ''
+      }
+
+      const result = filterTasks(mockTasks, filters)
+      expect(result).toHaveLength(4) // 3 BACKLOG + 1 IN_PROGRESS
+      expect(result.every(task => task.status === 'BACKLOG' || task.status === 'IN_PROGRESS')).toBe(true)
+    })
+
     it('should return empty array for non-existent status', () => {
       const filters: TaskFilters = {
         search: '',
