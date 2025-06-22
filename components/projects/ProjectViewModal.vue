@@ -55,6 +55,13 @@
               <h4 class="text-lg font-medium text-gray-900">Tasks</h4>
               <div class="flex items-center gap-2">
                 <button
+                  @click="showCreateTaskModal = true"
+                  class="px-3 py-1 text-sm bg-[var(--primary)] text-white rounded-md hover:bg-[var(--button-hover)] transition-colors"
+                >
+                  <Icon name="lucide:plus" class="w-4 h-4 mr-1" />
+                  Add Task
+                </button>
+                <button
                   @click="refreshTasks"
                   class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
                   :disabled="isLoadingTasks"
@@ -63,7 +70,7 @@
                 </button>
                 <NuxtLink
                   :to="`/app/tasks?project=${project.id}`"
-                  class="px-3 py-1 text-sm bg-[var(--primary)] text-white rounded-md hover:bg-[var(--button-hover)] transition-colors"
+                  class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
                 >
                   View All Tasks
                 </NuxtLink>
@@ -77,12 +84,12 @@
             <div v-else-if="projectTasks.length === 0" class="text-center py-8 text-gray-500">
               <Icon name="lucide:list-todo" class="w-12 h-12 mx-auto mb-4 text-gray-300" />
               <p>No tasks in this project yet.</p>
-              <NuxtLink
-                :to="`/app/tasks?project=${project.id}`"
+              <button
+                @click="showCreateTaskModal = true"
                 class="inline-block mt-2 px-4 py-2 text-sm bg-[var(--primary)] text-white rounded-md hover:bg-[var(--button-hover)] transition-colors"
               >
                 Create First Task
-              </NuxtLink>
+              </button>
             </div>
             <div v-else class="space-y-3 max-h-96 overflow-y-auto">
               <TaskCard
@@ -131,6 +138,7 @@
   <TaskViewModal v-if="showTaskViewModal" :show="showTaskViewModal" :task="selectedTask" @close="closeTaskViewModal" />
   <TaskEditModal v-if="showTaskEditModal" :show="showTaskEditModal" :task="selectedTask" @close="closeTaskEditModal" @save="saveTask" />
   <TaskDeleteModal v-if="showTaskDeleteModal" :show="showTaskDeleteModal" :task="selectedTask" @cancel="closeTaskDeleteModal" @confirm="confirmDeleteTask" />
+  <TaskCreateModal v-if="showCreateTaskModal" :show="showCreateTaskModal" :preselected-project-id="project?.id" :preselected-project-name="project?.name" @close="closeCreateTaskModal" @created="handleTaskCreated" />
   <PomodoroTimer v-if="showPomodoroTimer" :total-rounds="selectedTask?.estimatedPomodoros || 1" :focus-duration="userSettings?.focusDuration || 25" :short-break-duration="userSettings?.shortBreakDuration || 5" :long-break-duration="userSettings?.longBreakDuration || 15" :long-break-interval="userSettings?.longBreakInterval || 4" :completed-pomodoros="selectedTask?.completedPomodoros || 0" @close="closePomodoroTimer" @update:completed-pomodoros="updateCompletedPomodoros" />
 </template>
 
@@ -142,6 +150,7 @@ import TaskCard from '~/components/tasks/TaskCard.vue'
 import TaskViewModal from '~/components/tasks/TaskViewModal.vue'
 import TaskEditModal from '~/components/tasks/TaskEditModal.vue'
 import TaskDeleteModal from '~/components/tasks/TaskDeleteModal.vue'
+import TaskCreateModal from '~/components/tasks/TaskCreateModal.vue'
 import PomodoroTimer from '~/components/PomodoroTimer.vue'
 
 interface Props {
@@ -164,6 +173,7 @@ const showTaskViewModal = ref(false)
 const showTaskEditModal = ref(false)
 const showTaskDeleteModal = ref(false)
 const showPomodoroTimer = ref(false)
+const showCreateTaskModal = ref(false)
 
 // User settings for pomodoro
 const userSettings = ref<{
@@ -394,6 +404,28 @@ function formatDate(dateString: string): string {
     month: 'short',
     day: 'numeric'
   })
+}
+
+function closeCreateTaskModal() {
+  showCreateTaskModal.value = false
+}
+
+async function handleTaskCreated(createdTask: Task) {
+  try {
+    console.log('Task created from project modal:', {
+      projectId: props.project?.id,
+      createdTaskProjectId: createdTask.projectId,
+      task: createdTask
+    })
+    
+    // Add the new task to the list
+    projectTasks.value.push(createdTask)
+    closeCreateTaskModal()
+    // Refresh to update counts and ensure consistency
+    await refreshTasks()
+  } catch (error) {
+    console.error('Failed to handle task creation:', error)
+  }
 }
 
 onMounted(async () => {

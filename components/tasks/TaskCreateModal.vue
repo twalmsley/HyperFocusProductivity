@@ -23,9 +23,16 @@
       <!-- Project -->
       <div>
         <label for="project" class="block text-sm font-medium text-gray-700">Project (Optional)</label>
+        <div v-if="props.preselectedProjectId && props.preselectedProjectName" class="mt-1">
+          <div class="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm text-gray-700">
+            <strong>{{ props.preselectedProjectName }}</strong>
+            <p class="text-xs text-gray-500 mt-1">Task will be automatically linked to this project</p>
+          </div>
+        </div>
         <select
+          v-else
           id="project"
-          v-model="task.projectId"
+          v-model="selectedProjectId"
           class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm rounded-md"
         >
           <option value="">No Project</option>
@@ -33,6 +40,10 @@
             {{ project.name }}
           </option>
         </select>
+        <!-- Debug info -->
+        <p class="mt-1 text-xs text-gray-400">
+          Debug: preselectedProjectId={{ props.preselectedProjectId }}, preselectedProjectName={{ props.preselectedProjectName }}
+        </p>
       </div>
 
       <!-- Priority -->
@@ -128,11 +139,13 @@ import type { Project } from '~/types/project'
 
 const props = defineProps<{
   show: boolean;
+  preselectedProjectId?: string;
+  preselectedProjectName?: string;
 }>();
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'created'): void;
+  (e: 'created', task: any): void;
 }>();
 
 interface NewTask {
@@ -161,6 +174,21 @@ const repeatSchedule = ref<RepeatSchedule>({
   repeatType: null
 })
 
+// Computed property for project selection
+const selectedProjectId = computed({
+  get: () => {
+    // If there's a preselected project ID, use it
+    if (props.preselectedProjectId) {
+      return props.preselectedProjectId
+    }
+    // Otherwise use the task's project ID
+    return task.value.projectId || ''
+  },
+  set: (value: string) => {
+    task.value.projectId = value
+  }
+})
+
 const {
   getSession,
 } = useAuth()
@@ -169,6 +197,18 @@ const {
 watch(() => props.show, async (show) => {
   if (show) {
     await fetchProjects()
+  } else {
+    // Reset form when modal closes
+    task.value = {
+      title: '',
+      notes: '',
+      estimatedPomodoros: 1,
+      status: 'BACKLOG',
+      priority: 'MEDIUM',
+      dueDate: new Date().toISOString().substring(0, 10),
+      projectId: ''
+    }
+    repeatSchedule.value = { repeatType: null }
   }
 })
 
@@ -180,6 +220,7 @@ async function fetchProjects() {
     if (user) {
       const response = await $fetch<Project[]>(`/api/projects?userId=${user.id}`)
       projects.value = response
+      console.log('Projects loaded:', projects.value.length, 'projects')
     }
   } catch (error) {
     console.error('Failed to fetch projects:', error)
@@ -209,11 +250,18 @@ async function createTask() {
       task.value.notes = ''
     }
 
+    // Debug logging
+    console.log('Creating task with projectId:', {
+      preselectedProjectId: props.preselectedProjectId,
+      selectedProjectId: selectedProjectId.value,
+      finalProjectId: selectedProjectId.value || null
+    })
+
     const requestBody: any = {
       userId: user.id,
       ...task.value,
       dueDate: dueDate,
-      projectId: task.value.projectId || null
+      projectId: selectedProjectId.value || null
     }
 
     // Add repeat schedule fields if present
@@ -228,7 +276,7 @@ async function createTask() {
       requestBody.isTemplate = true // Set isTemplate to true for repeating tasks
     }
     
-    await $fetch('/api/tasks', {
+    const createdTask = await $fetch('/api/tasks', {
       method: 'POST',
       body: requestBody
     })
@@ -241,12 +289,12 @@ async function createTask() {
       status: 'BACKLOG',
       priority: 'MEDIUM',
       dueDate: new Date().toISOString().substring(0, 10),
-      projectId: ''
+      projectId: props.preselectedProjectId || ''
     }
     repeatSchedule.value = { repeatType: null }
     
-    // Emit created event and close modal
-    emit('created')
+    // Emit created event with the created task and close modal
+    emit('created', createdTask)
     emit('close')
   } catch (error) {
     console.error('Failed to create task:', error)
