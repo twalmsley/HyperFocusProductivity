@@ -68,7 +68,7 @@
           @save="saveProject" />
 
         <!-- View Project Modal -->
-        <ProjectViewModal v-if="showViewModal" :show="showViewModal" :project="selectedProject" @close="closeViewModal" />
+        <ProjectViewModal v-if="showViewModal" :show="showViewModal" :project="selectedProject" @close="closeViewModal" @project-updated="handleProjectUpdated" />
 
         <!-- Delete Confirmation Modal -->
         <ProjectDeleteModal v-if="showDeleteConfirm" :show="showDeleteConfirm" :project="projectToDelete" @cancel="cancelDelete"
@@ -404,6 +404,19 @@ function handleProjectCreated() {
   // Show success message
   successMessage.value = 'Project created successfully'
   showSuccessDialog.value = true
+}
+
+function handleProjectUpdated(updatedProject: Project) {
+  // Update the project in the local state
+  const index = projects.value.findIndex(p => p.id === updatedProject.id)
+  if (index !== -1) {
+    projects.value[index] = updatedProject
+  }
+  
+  // Also update the selected project if it's the same one
+  if (selectedProject.value && selectedProject.value.id === updatedProject.id) {
+    selectedProject.value = updatedProject
+  }
 }
 
 // Fetch projects when component mounts

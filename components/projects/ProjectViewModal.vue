@@ -162,6 +162,7 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   close: []
+  projectUpdated: [project: Project]
 }>()
 
 const projectTasks = ref<Task[]>([])
@@ -420,6 +421,33 @@ async function handleTaskCreated(createdTask: Task) {
     
     // Add the new task to the list
     projectTasks.value.push(createdTask)
+    
+    // Update the project data to reflect the new task
+    if (props.project) {
+      const updatedProject = { ...props.project }
+      
+      // Update the task count
+      if (updatedProject._count) {
+        updatedProject._count.tasks = (updatedProject._count.tasks || 0) + 1
+      } else {
+        updatedProject._count = { tasks: 1 }
+      }
+      
+      // Add the new task to the tasks array if it exists
+      if (updatedProject.tasks) {
+        updatedProject.tasks.push({
+          id: createdTask.id,
+          title: createdTask.title,
+          status: createdTask.status,
+          priority: createdTask.priority,
+          dueDate: createdTask.dueDate
+        })
+      }
+      
+      // Emit the updated project data
+      emit('projectUpdated', updatedProject)
+    }
+    
     closeCreateTaskModal()
     // Refresh to update counts and ensure consistency
     await refreshTasks()
