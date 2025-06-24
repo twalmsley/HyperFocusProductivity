@@ -32,7 +32,7 @@
     <!-- Calendar Grid -->
     <div class="bg-white rounded-lg shadow-sm overflow-hidden">
       <!-- Day Headers -->
-      <div class="grid grid-cols-7 bg-gray-50 border-b">
+      <div class="grid grid-cols-7 bg-gray-50 border-b hidden md:grid">
         <div
           v-for="day in weekDays"
           :key="day"
@@ -43,7 +43,7 @@
       </div>
 
       <!-- Calendar Days -->
-      <div class="grid grid-cols-7">
+      <div class="grid grid-cols-1 md:grid-cols-7">
         <div
           v-for="day in calendarDays"
           :key="day.date"
@@ -52,16 +52,17 @@
             {
               'bg-gray-50': !day.isCurrentMonth,
               'bg-blue-50': day.isToday,
-              'hover:bg-gray-50': day.isCurrentMonth
+              'hover:bg-gray-50': day.isCurrentMonth,
+              'border-r-0': true // Remove right border on mobile
             }
           ]"
           @dragover="handleDragOverWithDate($event, day.date)"
           @drop="handleDrop($event, day.date)"
         >
-          <!-- Date Number -->
+          <!-- Date Number with day name on mobile -->
           <div
             :class="[
-              'text-sm font-medium mb-2',
+              'text-sm font-medium mb-2 flex items-center',
               {
                 'text-gray-400': !day.isCurrentMonth,
                 'text-blue-600 bg-blue-100 rounded-full w-6 h-6 flex items-center justify-center': day.isToday,
@@ -69,6 +70,9 @@
               }
             ]"
           >
+            <span class="md:hidden mr-2 text-xs text-gray-500 font-normal">
+              {{ format(day.date, 'EEE') }}
+            </span>
             {{ day.dayNumber }}
           </div>
 
@@ -316,10 +320,6 @@ onMounted(() => {
 
 /* Responsive design for mobile */
 @media (max-width: 768px) {
-  .task-calendar .grid-cols-7 {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-  }
-  
   .task-calendar .min-h-\[120px\] {
     min-height: 80px;
   }
