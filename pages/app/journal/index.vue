@@ -44,73 +44,57 @@
           <div v-else-if="entriesForSelectedDay.length === 0" class="text-center text-gray-500 py-4">
             No entries for this day. Click "New Entry" to create one!
           </div>
-          <div v-else class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mood</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="entry in entriesForSelectedDay" :key="entry.id" 
-                    class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">{{ entry.title }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+          <div v-else class="grid gap-4">
+            <div v-for="entry in entriesForSelectedDay" :key="entry.id" 
+                class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+              <!-- Header -->
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ entry.title }}</h3>
+                  <div class="flex items-center gap-3 text-sm text-gray-500">
+                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
                       {{ entry.type }}
                     </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span v-if="entry.mood" class="text-xl" :title="entry.mood">
-                      {{ getMoodEmoji(entry.mood) }}
+                    <span>{{ formatTime(entry.createdAt) }}</span>
+                    <span v-if="entry.mood" class="flex items-center gap-1">
+                      {{ getMoodEmoji(entry.mood) }} {{ entry.mood }}
                     </span>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none" v-html="renderMarkdown(entry.content)">
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ formatTime(entry.createdAt) }}
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="flex flex-wrap gap-1">
-                      <span v-for="tag in entry.tags" :key="tag"
-                        class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                        {{ tag }}
-                      </span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div class="flex items-center space-x-3">
-                      <button @click="viewEntry(entry)" class="text-gray-400 hover:text-gray-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-                        </svg>
-                      </button>
-                      <button @click="editEntry(entry)" class="text-gray-400 hover:text-gray-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                      </button>
-                      <button @click="confirmDelete(entry)" class="text-gray-400 hover:text-gray-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button @click="viewEntry(entry)" class="text-gray-400 hover:text-gray-600 p-1 rounded" title="View">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button @click="editEntry(entry)" class="text-gray-400 hover:text-gray-600 p-1 rounded" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                  </button>
+                  <button @click="confirmDelete(entry)" class="text-gray-400 hover:text-gray-600 p-1 rounded" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Content -->
+              <div class="mb-3">
+                <div class="text-gray-700 prose prose-sm max-w-none line-clamp-4" v-html="renderMarkdown(entry.content)">
+                </div>
+              </div>
+
+              <!-- Tags -->
+              <div v-if="entry.tags && entry.tags.length > 0" class="flex flex-wrap gap-1">
+                <span v-for="tag in entry.tags" :key="tag"
+                  class="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-medium">
+                  #{{ tag }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -539,5 +523,13 @@ const renderMarkdown = (content: string) => {
   min-height: var(--vc-day-content-min-height);
   min-width: var(--vc-day-content-min-width);
   font-size: var(--vc-day-content-font-size);
+}
+
+/* Line clamp utility for content truncation */
+.line-clamp-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style> 
