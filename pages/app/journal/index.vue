@@ -10,105 +10,108 @@
         </button>
       </div>
 
-      <!-- Calendar View -->
-      <div class="bg-white p-4 rounded-lg shadow-sm max-w-xs">
-        <div class="flex items-center mb-2">
-          <h2 class="text-xl font-semibold">Calendar</h2>
-          <button 
-            @click="jumpToToday"
-            class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-3 py-1.5 rounded-lg transition-colors text-sm"
-          >
-            Today
-          </button>
+      <!-- Side by side layout -->
+      <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Calendar View -->
+        <div class="bg-white p-4 rounded-lg shadow-sm lg:w-80 flex-shrink-0">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-xl font-semibold">Calendar</h2>
+            <button 
+              @click="jumpToToday"
+              class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-3 py-1.5 rounded-lg transition-colors text-sm"
+            >
+              Today
+            </button>
+          </div>
+          <div class="calendar-grid">
+            <Calendar
+              v-model="selectedDate"
+              :attributes="calendarAttributes"
+              @dayclick="onDayClick"
+              is-expanded
+              trim-weeks
+              :first-day-of-week="1"
+            />
+          </div>
         </div>
-        <div class="calendar-grid">
-          <Calendar
-            v-model="selectedDate"
-            :attributes="calendarAttributes"
-            @dayclick="onDayClick"
-            is-expanded
-            trim-weeks
-            :first-day-of-week="1"
-          />
-        </div>
-      </div>
 
-      <!-- Entries for Selected Day -->
-      <div class="bg-white p-4 rounded-lg shadow-sm mt-4">
-        <h2 class="text-xl font-semibold mb-3">Entries for {{ formatDate(selectedDate.toISOString()) }}</h2>
-        <div v-if="isLoading" class="text-center py-4">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)] mx-auto"></div>
-        </div>
-        <div v-else-if="entriesForSelectedDay.length === 0" class="text-center text-gray-500 py-4">
-          No entries for this day. Click "New Entry" to create one!
-        </div>
-        <div v-else class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mood</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="entry in entriesForSelectedDay" :key="entry.id" 
-                  class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900">{{ entry.title }}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                    {{ entry.type }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span v-if="entry.mood" class="text-xl" :title="entry.mood">
-                    {{ getMoodEmoji(entry.mood) }}
-                  </span>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none" v-html="renderMarkdown(entry.content)">
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ formatTime(entry.createdAt) }}
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex flex-wrap gap-1">
-                    <span v-for="tag in entry.tags" :key="tag"
-                      class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                      {{ tag }}
+        <!-- Entries for Selected Day -->
+        <div class="bg-white p-4 rounded-lg shadow-sm flex-1 min-w-0">
+          <h2 class="text-xl font-semibold mb-3">Entries for {{ formatDate(selectedDate.toISOString()) }}</h2>
+          <div v-if="isLoading" class="text-center py-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)] mx-auto"></div>
+          </div>
+          <div v-else-if="entriesForSelectedDay.length === 0" class="text-center text-gray-500 py-4">
+            No entries for this day. Click "New Entry" to create one!
+          </div>
+          <div v-else class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mood</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="entry in entriesForSelectedDay" :key="entry.id" 
+                    class="hover:bg-gray-50 transition-colors">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">{{ entry.title }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                      {{ entry.type }}
                     </span>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div class="flex items-center space-x-3">
-                    <button @click="viewEntry(entry)" class="text-gray-400 hover:text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-                      </svg>
-                    </button>
-                    <button @click="editEntry(entry)" class="text-gray-400 hover:text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                      </svg>
-                    </button>
-                    <button @click="confirmDelete(entry)" class="text-gray-400 hover:text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span v-if="entry.mood" class="text-xl" :title="entry.mood">
+                      {{ getMoodEmoji(entry.mood) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none" v-html="renderMarkdown(entry.content)">
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ formatTime(entry.createdAt) }}
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex flex-wrap gap-1">
+                      <span v-for="tag in entry.tags" :key="tag"
+                        class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                        {{ tag }}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div class="flex items-center space-x-3">
+                      <button @click="viewEntry(entry)" class="text-gray-400 hover:text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                      <button @click="editEntry(entry)" class="text-gray-400 hover:text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                      </button>
+                      <button @click="confirmDelete(entry)" class="text-gray-400 hover:text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </main>
