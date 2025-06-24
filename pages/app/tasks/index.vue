@@ -17,47 +17,88 @@
       <div v-else>
         <div class="flex justify-center items-center mb-6 relative">
           <h1 class="text-3xl font-bold">Tasks</h1>
-          <button
-            @click="showCreateModal = true"
-            class="absolute right-0 bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors">
-            New Task
-          </button>
+          <div class="absolute right-0 flex items-center space-x-4">
+            <!-- View Toggle -->
+            <div class="flex bg-gray-100 rounded-lg p-1">
+              <button
+                @click="viewMode = 'list'"
+                :class="[
+                  'px-3 py-1 rounded-md text-sm font-medium transition-colors',
+                  viewMode === 'list'
+                    ? 'bg-white text-[var(--primary)] shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                ]"
+              >
+                List
+              </button>
+              <button
+                @click="viewMode = 'calendar'"
+                :class="[
+                  'px-3 py-1 rounded-md text-sm font-medium transition-colors',
+                  viewMode === 'calendar'
+                    ? 'bg-white text-[var(--primary)] shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                ]"
+              >
+                Calendar
+              </button>
+            </div>
+            <button
+              @click="showCreateModal = true"
+              class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors">
+              New Task
+            </button>
+          </div>
         </div>
 
         <!-- Filter controls -->
         <TaskFiltersComponent v-model:filters="filters" />
 
-        <!-- Sort controls -->
-        <TaskSortControls 
-          :sort-column="sortColumn"
-          :sort-direction="sortDirection"
-          :show-due-date="true"
-          @sort="sortTasks"
-        />
+        <!-- List View -->
+        <div v-if="viewMode === 'list'">
+          <!-- Sort controls -->
+          <TaskSortControls 
+            :sort-column="sortColumn"
+            :sort-direction="sortDirection"
+            :show-due-date="true"
+            @sort="sortTasks"
+          />
 
-        <!-- Task cards -->
-        <div v-if="tasks.length === 0" class="bg-white rounded-lg shadow-sm p-6 text-gray-600">
-          <p>Your tasks will appear here.</p>
+          <!-- Task cards -->
+          <div v-if="tasks.length === 0" class="bg-white rounded-lg shadow-sm p-6 text-gray-600">
+            <p>Your tasks will appear here.</p>
+          </div>
+          <div v-else class="space-y-4">
+            <TaskCard
+              v-for="task in paginatedTasks"
+              :key="task.id"
+              :task="task"
+              @view="viewTask"
+              @edit="editTask"
+              @delete="confirmDelete"
+              @update-status="updateTaskStatus"
+              @start-pomodoro="startPomodoro"
+              @extend-due-date="extendDueDate"
+            />
+          </div>
+
+          <!-- Task Stats -->
+          <TaskStats :tasks="filteredTasks" :filter="getValidFilterType(filters.dueDate)" />
+
+          <!-- Pagination -->
+          <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredTasks.length" />
         </div>
-        <div v-else class="space-y-4">
-          <TaskCard
-            v-for="task in paginatedTasks"
-            :key="task.id"
-            :task="task"
+
+        <!-- Calendar View -->
+        <div v-else>
+          <TaskCalendar
+            :tasks="filteredTasks"
             @view="viewTask"
-            @edit="editTask"
-            @delete="confirmDelete"
             @update-status="updateTaskStatus"
             @start-pomodoro="startPomodoro"
-            @extend-due-date="extendDueDate"
+            @update-due-date="updateTaskDueDate"
           />
         </div>
-
-        <!-- Task Stats -->
-        <TaskStats :tasks="filteredTasks" :filter="filters.dueDate || 'all'" />
-
-        <!-- Pagination -->
-        <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredTasks.length" />
 
         <!-- Create Task Modal -->
         <TaskCreateModal
@@ -118,6 +159,7 @@ import TaskViewModal from '~/components/tasks/TaskViewModal.vue'
 import TaskDeleteModal from '~/components/tasks/TaskDeleteModal.vue'
 import TaskStats from '~/components/tasks/TaskStats.vue'
 import TaskCreateModal from '~/components/tasks/TaskCreateModal.vue'
+import TaskCalendar from '~/components/tasks/TaskCalendar.vue'
 import { filterTasks, type TaskFilters as TaskFiltersType } from '~/utils/taskFilters'
 import type { Task } from '~/types/task'
 
@@ -157,6 +199,9 @@ type TaskStatus = 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
 
 const tasks = ref<Task[]>([])
 
+// View mode state
+const viewMode = ref<'list' | 'calendar'>('list')
+
 // Sorting state
 const sortColumn = ref<string>('createdAt')
 const sortDirection = ref<'asc' | 'desc'>('desc')
@@ -177,6 +222,12 @@ const pageSize = ref(10) // Default to 10
 // Load page size and sort state from localStorage on mount
 onMounted(() => {
   try {
+    // Load view mode
+    const savedViewMode = localStorage.getItem('taskViewMode')
+    if (savedViewMode === 'list' || savedViewMode === 'calendar') {
+      viewMode.value = savedViewMode
+    }
+
     // Load page size
     const savedPageSize = localStorage.getItem('taskPageSize')
     if (savedPageSize) {
@@ -210,6 +261,15 @@ onMounted(() => {
 // Watch for changes that should reset pagination
 watch([filters, sortColumn, sortDirection], () => {
   currentPage.value = 1
+})
+
+// Watch for view mode changes to save to localStorage
+watch(viewMode, (newMode) => {
+  try {
+    localStorage.setItem('taskViewMode', newMode)
+  } catch (error) {
+    console.error('Error saving view mode to localStorage:', error)
+  }
 })
 
 // Watch for page size changes to save to localStorage
@@ -581,8 +641,44 @@ async function extendDueDate(task: Task) {
   }
 }
 
+// Handle drag and drop from calendar
+async function updateTaskDueDate(task: Task, newDate: Date) {
+  if (!user) return
+
+  try {
+    const updatedTask = await $fetch('/api/tasks', {
+      method: 'PATCH',
+      body: {
+        id: task.id,
+        dueDate: newDate.toISOString()
+      }
+    }) as Task
+
+    // Update the task in the local state
+    const index = tasks.value.findIndex(t => t.id === updatedTask.id)
+    if (index !== -1) {
+      tasks.value[index] = updatedTask
+    }
+
+    // Show success message
+    successMessage.value = `Task "${task.title}" moved to ${newDate.toLocaleDateString()}`
+    showSuccessDialog.value = true
+  } catch (error) {
+    console.error('Failed to update task due date:', error)
+  }
+}
+
 function handleTaskCreated() {
   fetchTasks()
+}
+
+function getValidFilterType(dueDate: string): 'all' | 'overdue' | 'today' | 'tomorrow' | 'week' | 'month' {
+  if (dueDate === 'overdue') return 'overdue'
+  if (dueDate === 'today') return 'today'
+  if (dueDate === 'tomorrow') return 'tomorrow'
+  if (dueDate === 'week') return 'week'
+  if (dueDate === 'month') return 'month'
+  return 'all'
 }
 
 // Fetch user settings when component mounts

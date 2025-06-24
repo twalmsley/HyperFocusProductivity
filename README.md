@@ -1,6 +1,6 @@
 # Hyper Focus Productivity Web App
 
-Good. Here’s a clear breakdown of the **core feature scope** for the HyperFocusProductivity MVP, covering the **Timer**, **Task List**, and **Session Log** modules. This scope should be tight enough for a fast launch, but cleanly extendable for future features.
+Good. Here's a clear breakdown of the **core feature scope** for the HyperFocusProductivity MVP, covering the **Timer**, **Task List**, and **Session Log** modules. This scope should be tight enough for a fast launch, but cleanly extendable for future features.
 
 ---
 
@@ -67,7 +67,7 @@ Good. Here’s a clear breakdown of the **core feature scope** for the HyperFocu
 
   * Chronological list
   * Filter by date or task
-  * Summary stats (e.g. today’s Pomodoros, top task)
+  * Summary stats (e.g. today's Pomodoros, top task)
 
 ---
 
@@ -160,3 +160,16 @@ bun run preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+## Features
+
+### Task Management
+- Create, edit, and delete tasks
+- Set due dates, priorities, and estimated pomodoros
+- Task status tracking (Backlog, In Progress, Done)
+- **Calendar view with drag and drop rescheduling**
+- List view with sorting and filtering
+- Task filtering by status, priority, due date, and project
+- Task search functionality
+- Pagination support
+- Task statistics and workload visualization

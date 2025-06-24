@@ -27,7 +27,7 @@ interface Task {
 
 const props = defineProps<{
   tasks: Task[],
-  filter: 'all' | 'overdue' | 'today' | 'week' | 'month'
+  filter: 'all' | 'overdue' | 'today' | 'tomorrow' | 'week' | 'month'
 }>()
 
 const totalTasks = computed(() => props.tasks.length)
@@ -44,6 +44,7 @@ const getMaxPomodoros = (filter: string) => {
       return 1000
     case 'overdue':
     case 'today':
+    case 'tomorrow':
       return 16
     case 'week':
       return 112
