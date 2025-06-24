@@ -11,12 +11,12 @@
       </div>
 
       <!-- Calendar View -->
-      <div class="bg-white p-6 rounded-lg shadow-sm max-w-3xl mx-auto">
-        <div class="flex justify-between items-center mb-4">
+      <div class="bg-white p-4 rounded-lg shadow-sm max-w-xs">
+        <div class="flex items-center mb-2">
           <h2 class="text-xl font-semibold">Calendar</h2>
           <button 
             @click="jumpToToday"
-            class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors"
+            class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-3 py-1.5 rounded-lg transition-colors text-sm"
           >
             Today
           </button>
@@ -34,8 +34,8 @@
       </div>
 
       <!-- Entries for Selected Day -->
-      <div class="bg-white p-6 rounded-lg shadow-sm mt-6">
-        <h2 class="text-xl font-semibold mb-4">Entries for {{ formatDate(selectedDate.toISOString()) }}</h2>
+      <div class="bg-white p-4 rounded-lg shadow-sm mt-4">
+        <h2 class="text-xl font-semibold mb-3">Entries for {{ formatDate(selectedDate.toISOString()) }}</h2>
         <div v-if="isLoading" class="text-center py-4">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)] mx-auto"></div>
         </div>
@@ -385,6 +385,11 @@ const closeEditModal = () => {
   editingEntry.value = {}
 }
 
+// Add removeTag function
+const removeTag = (tagToRemove: string) => {
+  editingEntry.value.tags = editingEntry.value.tags?.filter(tag => tag !== tagToRemove) || []
+}
+
 // Add create modal functions
 const openCreateModal = () => {
   journalModal.openModal()
@@ -424,7 +429,7 @@ const saveEdit = async () => {
 
 // Modify the createEntry function
 const createEntry = async () => {
-  await journalModal.createEntry(fetchEntries)
+  await journalModal.createEntry({}, fetchEntries)
 }
 
 // Add handleJournalSubmit function
@@ -454,8 +459,9 @@ const fetchEntries = async () => {
   try {
     isLoading.value = true
     const response = await $fetch('/api/journal')
-    // Sort entries by createdAt in descending order (most recent first)
-    journalEntries.value = response.sort((a: JournalEntry, b: JournalEntry) => 
+    // Ensure response is an array and sort entries by createdAt in descending order (most recent first)
+    const entries = Array.isArray(response) ? response : []
+    journalEntries.value = entries.sort((a: any, b: any) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
   } catch (error) {
@@ -488,7 +494,7 @@ const renderMarkdown = (content: string) => {
 
 <style scoped>
 .calendar-grid {
-  min-height: 400px;
+  min-height: 300px;
 }
 
 :deep(.selected-date-dot) {
@@ -496,5 +502,39 @@ const renderMarkdown = (content: string) => {
   height: 8px;
   border-radius: 50%;
   margin-top: 2px;
+}
+
+/* Make calendar more compact */
+:deep(.vc-container) {
+  --vc-pane-padding: 8px;
+  --vc-day-content-margin: 2px;
+  --vc-day-content-padding: 4px;
+  --vc-day-content-min-height: 32px;
+  --vc-day-content-min-width: 32px;
+  --vc-day-content-font-size: 14px;
+  --vc-header-padding: 8px;
+  --vc-weekday-padding: 4px;
+  --vc-weekday-font-size: 12px;
+}
+
+:deep(.vc-header) {
+  padding: var(--vc-header-padding);
+}
+
+:deep(.vc-weeks) {
+  padding: var(--vc-pane-padding);
+}
+
+:deep(.vc-weekday) {
+  padding: var(--vc-weekday-padding);
+  font-size: var(--vc-weekday-font-size);
+}
+
+:deep(.vc-day-content) {
+  margin: var(--vc-day-content-margin);
+  padding: var(--vc-day-content-padding);
+  min-height: var(--vc-day-content-min-height);
+  min-width: var(--vc-day-content-min-width);
+  font-size: var(--vc-day-content-font-size);
 }
 </style> 
