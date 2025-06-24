@@ -30,3 +30,4 @@ logs
 /prisma/*.db-journal
 
 docker-compose.yml
+docker-compose-live.yml

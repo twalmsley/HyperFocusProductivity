@@ -152,6 +152,21 @@
               Read More →
             </NuxtLink>
           </div>
+
+          <!-- Projects Breakdown Post -->
+          <div class="bg-white p-8 rounded-lg shadow-md">
+            <div class="text-[var(--primary)] text-4xl mb-4">📋</div>
+            <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-4">Breaking Down Big Tasks: How Projects Help You Get Started</h3>
+            <p class="text-[var(--text-secondary)] mb-4">
+              Transform overwhelming tasks into manageable chunks and build momentum with our Projects feature to overcome task inertia.
+            </p>
+            <NuxtLink 
+              to="/blog/projects-breakdown" 
+              class="inline-block text-[var(--primary)] hover:text-[var(--button-hover)] transition-colors"
+            >
+              Read More →
+            </NuxtLink>
+          </div>
         </div>
       </div>
     </section>
