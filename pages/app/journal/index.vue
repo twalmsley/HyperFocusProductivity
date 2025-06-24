@@ -101,7 +101,7 @@
     </main>
     <!-- View Modal -->
     <div v-if="showViewModal" class="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-xl">
+      <div class="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto shadow-xl">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold">{{ viewingEntry?.title }}</h2>
           <button @click="closeViewModal" class="text-gray-500 hover:text-gray-700">
@@ -132,7 +132,7 @@
 
     <!-- Edit Modal -->
     <div v-if="showEditModal" class="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-xl">
+      <div class="bg-white rounded-lg p-6 w-full max-w-5xl mx-4 max-h-[90vh] overflow-y-auto shadow-xl">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold">Edit Journal Entry</h2>
           <button @click="closeEditModal" class="text-gray-500 hover:text-gray-700">
@@ -142,59 +142,61 @@
           </button>
         </div>
         <form @submit.prevent="saveEdit" class="space-y-4">
-          <div>
-            <label for="edit-title" class="block text-sm font-medium text-gray-700">Title</label>
-            <input
-              id="edit-title"
-              v-model="editingEntry.title"
-              type="text"
-              maxlength="200"
-              required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            />
-          </div>
-          <div>
-            <label for="edit-type" class="block text-sm font-medium text-gray-700">Entry Type</label>
-            <select
-              id="edit-type"
-              v-model="editingEntry.type"
-              required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            >
-              <option value="DAILY">Daily Journal</option>
-              <option value="FREEFORM">Free-form Entry</option>
-              <option value="REVIEW">Review Entry</option>
-            </select>
-          </div>
-          <div>
-            <label for="edit-mood" class="block text-sm font-medium text-gray-700">Mood</label>
-            <select
-              id="edit-mood"
-              v-model="editingEntry.mood"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-            >
-              <option value="">Select a mood...</option>
-              <option value="HAPPY">😊 Happy</option>
-              <option value="SAD">😢 Sad</option>
-              <option value="NEUTRAL">😐 Neutral</option>
-              <option value="ANGRY">😠 Angry</option>
-              <option value="EXCITED">🤩 Excited</option>
-            </select>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div>
+              <label for="edit-title" class="block text-sm font-medium text-gray-700">Title</label>
+              <input
+                id="edit-title"
+                v-model="editingEntry.title"
+                type="text"
+                maxlength="200"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+              />
+            </div>
+            <div>
+              <label for="edit-type" class="block text-sm font-medium text-gray-700">Entry Type</label>
+              <select
+                id="edit-type"
+                v-model="editingEntry.type"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+              >
+                <option value="DAILY">Daily Journal</option>
+                <option value="FREEFORM">Free-form Entry</option>
+                <option value="REVIEW">Review Entry</option>
+              </select>
+            </div>
+            <div>
+              <label for="edit-mood" class="block text-sm font-medium text-gray-700">Mood</label>
+              <select
+                id="edit-mood"
+                v-model="editingEntry.mood"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+              >
+                <option value="">Select a mood...</option>
+                <option value="HAPPY">😊 Happy</option>
+                <option value="SAD">😢 Sad</option>
+                <option value="NEUTRAL">😐 Neutral</option>
+                <option value="ANGRY">😠 Angry</option>
+                <option value="EXCITED">🤩 Excited</option>
+              </select>
+            </div>
           </div>
           <div>
             <label for="edit-content" class="block text-sm font-medium text-gray-700">Content</label>
-            <div class="mt-1 grid grid-cols-2 gap-4">
+            <div class="mt-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
                 <textarea
                   id="edit-content"
                   v-model="editingEntry.content"
-                  rows="6"
+                  rows="12"
                   maxlength="10000"
                   required
                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
                 ></textarea>
               </div>
-              <div class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto">
+              <div class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto max-h-96">
                 <div v-html="renderMarkdown(editingEntry.content || '')"></div>
               </div>
             </div>

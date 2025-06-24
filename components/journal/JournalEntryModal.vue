@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-xl">
+    <div class="bg-white rounded-lg p-6 w-full max-w-5xl mx-4 max-h-[90vh] overflow-y-auto shadow-xl">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">New Journal Entry</h2>
         <button @click="handleClose" class="text-gray-500 hover:text-gray-700">
@@ -10,59 +10,61 @@
         </button>
       </div>
       <form @submit.prevent="handleSubmit" class="space-y-4">
-        <div>
-          <label for="create-title" class="block text-sm font-medium text-gray-700">Title</label>
-          <input
-            id="create-title"
-            v-model="localEntry.title"
-            type="text"
-            :maxlength="maxTitleLength"
-            required
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-          />
-        </div>
-        <div>
-          <label for="create-type" class="block text-sm font-medium text-gray-700">Entry Type</label>
-          <select
-            id="create-type"
-            v-model="localEntry.type"
-            required
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-          >
-            <option value="DAILY">Daily Journal</option>
-            <option value="FREEFORM">Free-form Entry</option>
-            <option value="REVIEW">Review Entry</option>
-          </select>
-        </div>
-        <div>
-          <label for="create-mood" class="block text-sm font-medium text-gray-700">Mood</label>
-          <select
-            id="create-mood"
-            v-model="localEntry.mood"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-          >
-            <option value="">Select a mood...</option>
-            <option value="HAPPY">😊 Happy</option>
-            <option value="SAD">😢 Sad</option>
-            <option value="NEUTRAL">😐 Neutral</option>
-            <option value="ANGRY">😠 Angry</option>
-            <option value="EXCITED">🤩 Excited</option>
-          </select>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div>
+            <label for="create-title" class="block text-sm font-medium text-gray-700">Title</label>
+            <input
+              id="create-title"
+              v-model="localEntry.title"
+              type="text"
+              :maxlength="maxTitleLength"
+              required
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            />
+          </div>
+          <div>
+            <label for="create-type" class="block text-sm font-medium text-gray-700">Entry Type</label>
+            <select
+              id="create-type"
+              v-model="localEntry.type"
+              required
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            >
+              <option value="DAILY">Daily Journal</option>
+              <option value="FREEFORM">Free-form Entry</option>
+              <option value="REVIEW">Review Entry</option>
+            </select>
+          </div>
+          <div>
+            <label for="create-mood" class="block text-sm font-medium text-gray-700">Mood</label>
+            <select
+              id="create-mood"
+              v-model="localEntry.mood"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+            >
+              <option value="">Select a mood...</option>
+              <option value="HAPPY">😊 Happy</option>
+              <option value="SAD">😢 Sad</option>
+              <option value="NEUTRAL">😐 Neutral</option>
+              <option value="ANGRY">😠 Angry</option>
+              <option value="EXCITED">🤩 Excited</option>
+            </select>
+          </div>
         </div>
         <div>
           <label for="create-content" class="block text-sm font-medium text-gray-700">Content</label>
-          <div class="mt-1" :class="showMarkdownPreview ? 'grid grid-cols-2 gap-4' : ''">
+          <div class="mt-1" :class="showMarkdownPreview ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''">
             <div>
               <textarea
                 id="create-content"
                 v-model="localEntry.content"
-                rows="6"
+                rows="12"
                 :maxlength="maxContentLength"
                 required
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
               ></textarea>
             </div>
-            <div v-if="showMarkdownPreview" class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto">
+            <div v-if="showMarkdownPreview" class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto max-h-96">
               <div v-html="renderMarkdown(localEntry.content || '')"></div>
             </div>
           </div>
