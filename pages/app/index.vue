@@ -86,7 +86,12 @@
       </div>
     </main>
 
-    <ViewTaskModal :show="showViewModal" :task="viewingTask" @close="closeViewModal" />
+    <ViewTaskModal 
+      v-if="viewingTask" 
+      :show="showViewModal" 
+      :task="viewingTask" 
+      @close="closeViewModal" 
+    />
 
     <!-- Create Journal Entry Modal -->
     <JournalEntryModal
@@ -285,7 +290,7 @@ async function reopenTask(task: Task) {
 
 // Add state for view modal
 const showViewModal = ref(false)
-const viewingTask = ref<Partial<Task>>({})
+const viewingTask = ref<Task | null>(null)
 
 // Function to open view modal
 function viewTask(task: Task) {
@@ -296,7 +301,7 @@ function viewTask(task: Task) {
 // Function to close view modal
 function closeViewModal() {
   showViewModal.value = false
-  viewingTask.value = {}
+  viewingTask.value = null
 }
 
 // Add journal entries state
