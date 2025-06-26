@@ -219,6 +219,9 @@ const filters = ref<TaskFiltersType>({
 const currentPage = ref(1)
 const pageSize = ref(10) // Default to 10
 
+// Flag to track if this is the initial load
+const isInitialLoad = ref(true)
+
 // Load page size and sort state from localStorage on mount
 onMounted(() => {
   try {
@@ -248,7 +251,18 @@ onMounted(() => {
       sortDirection.value = savedSortDirection
     }
 
-    // Check for project filter in URL
+    // Load filters from localStorage
+    const savedFilters = localStorage.getItem('taskFilters')
+    if (savedFilters) {
+      try {
+        const parsedFilters = JSON.parse(savedFilters)
+        filters.value = { ...filters.value, ...parsedFilters }
+      } catch (e) {
+        console.error('Error parsing saved filters:', e)
+      }
+    }
+
+    // Check for project filter in URL (this should override localStorage)
     const route = useRoute()
     if (route.query.project) {
       filters.value.projectId = route.query.project as string
@@ -290,6 +304,26 @@ watch([sortColumn, sortDirection], ([newColumn, newDirection]) => {
     console.error('Error saving sort state to localStorage:', error)
   }
 })
+
+// Watch for filter changes and refetch tasks
+watch(filters, async (newFilters) => {
+  // Only refetch if this is not the initial load
+  if (!isInitialLoad.value) {
+    // Reset pagination when filters change
+    currentPage.value = 1
+    // Fetch tasks with new filters
+    await fetchTasks(newFilters)
+  }
+}, { deep: true })
+
+// Watch for filter changes to save to localStorage
+watch(filters, (newFilters) => {
+  try {
+    localStorage.setItem('taskFilters', JSON.stringify(newFilters))
+  } catch (error) {
+    console.error('Error saving filters to localStorage:', error)
+  }
+}, { deep: true })
 
 // Computed property for sorted tasks (now works directly with fetched tasks)
 const sortedTasks = computed(() => {
@@ -351,14 +385,6 @@ const paginatedTasks = computed(() => {
   const end = start + pageSize.value
   return sortedTasks.value.slice(start, end)
 })
-
-// Watch for filter changes and refetch tasks
-watch(filters, async (newFilters) => {
-  // Reset pagination when filters change
-  currentPage.value = 1
-  // Fetch tasks with new filters
-  await fetchTasks(newFilters)
-}, { deep: true })
 
 // Variables for delete confirmation
 const showDeleteConfirm = ref(false)
@@ -700,5 +726,7 @@ function getValidFilterType(dueDate: string): 'all' | 'overdue' | 'today' | 'tom
 onMounted(async () => {
   fetchUserSettings()
   await fetchTasks(filters.value)
+  // Mark initial load as complete
+  isInitialLoad.value = false
 })
 </script>
