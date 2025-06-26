@@ -85,15 +85,14 @@
               <!-- Content -->
               <div class="mb-3">
                 <div class="text-gray-700 prose prose-sm max-w-none line-clamp-4">
-                  <!-- For partial entries, we don't have content, so show a placeholder -->
-                  <span class="text-gray-500 italic">Content preview not available in calendar view. Click "View" to see full entry.</span>
+                  {{ entry.content || 'No content available' }}
                 </div>
               </div>
 
               <!-- Tags -->
               <div class="flex flex-wrap gap-1">
                 <span class="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-medium">
-                  Tags not shown in calendar view
+                  Tags available in full view
                 </span>
               </div>
             </div>
@@ -425,7 +424,8 @@ const saveEdit = async () => {
         date: response.date,
         type: response.type,
         mood: response.mood,
-        createdAt: response.createdAt
+        createdAt: response.createdAt,
+        content: response.content
       }
     }
 
@@ -478,7 +478,8 @@ const fetchEntriesForMonth = async (year?: number, month?: number) => {
       date: entry.date,
       type: entry.type,
       mood: entry.mood,
-      createdAt: entry.createdAt
+      createdAt: entry.createdAt,
+      content: entry.content
     })) as PartialJournalEntry[]
   } catch (error) {
     console.error('Error fetching journal entries:', error)

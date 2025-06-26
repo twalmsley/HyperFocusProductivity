@@ -19,6 +19,7 @@ export interface PartialJournalEntry {
   type: 'DAILY' | 'FREEFORM' | 'REVIEW';
   mood: 'HAPPY' | 'SAD' | 'NEUTRAL' | 'ANGRY' | 'EXCITED' | null;
   createdAt: string;
+  content: string;
 }
 
 export interface JournalEntryForm {

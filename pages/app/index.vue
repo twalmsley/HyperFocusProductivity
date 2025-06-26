@@ -63,8 +63,7 @@
                     </td>
                     <td class="px-6 py-4">
                       <div class="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none">
-                        <!-- For partial entries, we don't have content, so show a placeholder -->
-                        <span class="text-gray-500 italic">Content preview not available. Click to view full entry.</span>
+                        {{ entry.content || 'No content available' }}
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -73,7 +72,7 @@
                     <td class="px-6 py-4">
                       <div class="flex flex-wrap gap-1">
                         <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                          Tags not shown in preview
+                          Tags available in full view
                         </span>
                       </div>
                     </td>
@@ -339,7 +338,7 @@ async function fetchJournalEntries() {
     journalEntries.value = entries.map(entry => ({
       id: entry.id,
       title: entry.title,
-      content: '', // Not available in partial view
+      content: entry.content || '', // Use content from partial API
       type: entry.type,
       date: entry.date,
       mood: entry.mood,

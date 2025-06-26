@@ -26,11 +26,11 @@
           {{ formatDate(entry.createdAt) }}
         </div>
         <div class="mt-2 text-sm text-gray-600 line-clamp-2">
-          <span class="text-gray-500 italic">Content preview not available. Click to view full entry.</span>
+          {{ entry.content || 'No content available' }}
         </div>
         <div class="mt-2 flex flex-wrap gap-2">
           <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-            Tags not shown in preview
+            Tags available in full view
           </span>
         </div>
       </div>

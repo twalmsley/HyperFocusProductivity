@@ -49,14 +49,21 @@ export default defineEventHandler(async (event) => {
         date: true,
         type: true,
         mood: true,
-        createdAt: true
+        createdAt: true,
+        content: true
       },
       orderBy: {
         date: 'desc'
       }
     })
 
-    return entries
+    // Truncate content to 50 characters for each entry
+    const truncatedEntries = entries.map(entry => ({
+      ...entry,
+      content: entry.content ? (entry.content.length > 50 ? entry.content.substring(0, 50) + '...' : entry.content) : ''
+    }))
+
+    return truncatedEntries
   } catch (error) {
     console.error('Error fetching partial journal entries:', error)
     throw createError({
