@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { getServerSession } from '#auth'
 import { subDays, startOfDay, endOfDay } from 'date-fns'
+import { getQuery } from 'h3'
 
 const prisma = new PrismaClient()
 
@@ -22,9 +23,24 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Calculate date range
-  const endDate = endOfDay(new Date())
-  const startDate = startOfDay(subDays(endDate, 29))
+  // Get query parameters for date range
+  const query = getQuery(event)
+  const startParam = query.start as string
+  const endParam = query.end as string
+
+  // Calculate date range based on query parameters or default to last 30 days
+  let startDate: Date
+  let endDate: Date
+
+  if (startParam && endParam) {
+    // Use provided date range
+    startDate = startOfDay(new Date(startParam))
+    endDate = endOfDay(new Date(endParam))
+  } else {
+    // Default to last 30 days
+    endDate = endOfDay(new Date())
+    startDate = startOfDay(subDays(endDate, 29))
+  }
 
   try {
     const trackers = await prisma.tracker.findMany({
