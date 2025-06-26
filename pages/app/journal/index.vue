@@ -25,6 +25,7 @@
           </div>
           <div class="calendar-grid">
             <Calendar
+              :key="calendarKey"
               v-model="selectedDate"
               :attributes="calendarAttributes"
               @dayclick="onDayClick"
@@ -247,7 +248,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { Calendar } from 'v-calendar'
 import { marked } from 'marked'
 import JournalEntryModal from '~/components/journal/JournalEntryModal.vue'
@@ -307,6 +308,12 @@ const entriesForSelectedDay = computed(() => {
     const entryDate = new Date(entry.date)
     return entryDate.toDateString() === selectedDate.value.toDateString()
   })
+})
+
+// Add a computed property for calendar key that changes when entries change
+const calendarKey = computed(() => {
+  const titlesHash = journalEntries.value.map(entry => entry.title).join('|')
+  return `calendar-${currentYear.value}-${currentMonth.value}-${titlesHash}`
 })
 
 const calendarAttributes = computed(() => {
@@ -415,19 +422,8 @@ const saveEdit = async () => {
       }
     })
 
-    // Update the entry in the local list if it's in the current month
-    const index = journalEntries.value.findIndex(e => e.id === response.id)
-    if (index !== -1) {
-      journalEntries.value[index] = {
-        id: response.id,
-        title: response.title,
-        date: response.date,
-        type: response.type,
-        mood: response.mood,
-        createdAt: response.createdAt,
-        content: response.content
-      }
-    }
+    // Refresh the entries for the current month to update calendar display
+    await fetchEntriesForMonth()
 
     closeEditModal()
   } catch (error) {
@@ -437,14 +433,12 @@ const saveEdit = async () => {
   }
 }
 
-// Modify the createEntry function
-const createEntry = async () => {
-  await journalModal.createEntry({}, fetchEntriesForMonth)
-}
-
 // Add handleJournalSubmit function
-function handleJournalSubmit(entry: Partial<JournalEntry>) {
-  journalModal.createEntry(entry, fetchEntriesForMonth)
+async function handleJournalSubmit(entry: Partial<JournalEntry>) {
+  await journalModal.createEntry(entry, async () => {
+    // Refresh the entries for the current month to update calendar display
+    await fetchEntriesForMonth()
+  })
 }
 
 // Delete a specific entry
@@ -481,6 +475,9 @@ const fetchEntriesForMonth = async (year?: number, month?: number) => {
       createdAt: entry.createdAt,
       content: entry.content
     })) as PartialJournalEntry[]
+    
+    // Small delay to ensure reactive updates are processed
+    await nextTick()
   } catch (error) {
     console.error('Error fetching journal entries:', error)
   } finally {

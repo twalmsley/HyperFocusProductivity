@@ -425,7 +425,10 @@ function openCreateModal() {
 }
 
 // Add handleJournalSubmit function
-function handleJournalSubmit(entry: Partial<JournalEntry>) {
-  journalModal.createEntry(entry, fetchJournalEntries)
+async function handleJournalSubmit(entry: Partial<JournalEntry>) {
+  await journalModal.createEntry(entry, async () => {
+    // Refresh the journal entries to show the new entry
+    await fetchJournalEntries()
+  })
 }
 </script>
