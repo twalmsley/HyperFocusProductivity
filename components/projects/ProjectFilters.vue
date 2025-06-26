@@ -22,7 +22,7 @@
         <div class="inline-flex rounded-md shadow-sm" role="group">
           <button 
             type="button" 
-            @click="localFilters.state = ''"
+            @click="clearFilters"
             :class="[
               'px-4 py-2 text-sm font-medium border border-gray-300',
               localFilters.state === '' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
@@ -33,7 +33,7 @@
           </button>
           <button 
             type="button" 
-            @click="localFilters.state = 'No Tasks'"
+            @click="updateFilter('state', 'No Tasks')"
             :class="[
               'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
               localFilters.state === 'No Tasks' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -43,7 +43,7 @@
           </button>
           <button 
             type="button" 
-            @click="localFilters.state = 'Not Started'"
+            @click="updateFilter('state', 'Not Started')"
             :class="[
               'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
               localFilters.state === 'Not Started' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -53,7 +53,7 @@
           </button>
           <button 
             type="button" 
-            @click="localFilters.state = 'In Progress'"
+            @click="updateFilter('state', 'In Progress')"
             :class="[
               'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
               localFilters.state === 'In Progress' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -63,7 +63,7 @@
           </button>
           <button 
             type="button" 
-            @click="localFilters.state = 'Completed'"
+            @click="updateFilter('state', 'Completed')"
             :class="[
               'px-4 py-2 text-sm font-medium border-t border-b border-r border-gray-300',
               localFilters.state === 'Completed' ? 'bg-[var(--primary)] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
@@ -79,28 +79,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import type { ProjectFilters } from '~/utils/projectFilters'
 
-interface Props {
-  filters: ProjectFilters
-}
+const props = defineProps<{ filters: ProjectFilters }>()
+const emit = defineEmits(['update:filters'])
 
-interface Emits {
-  'update:filters': [filters: ProjectFilters]
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
-
-// Initialize with proper structure to ensure reactivity
+// Local copy of filters
 const localFilters = ref<ProjectFilters>({
   search: props.filters.search || '',
   state: props.filters.state || ''
 })
 
-// Watch for changes in localFilters and emit them
-watch(localFilters, (newFilters) => {
-  emit('update:filters', newFilters)
-}, { deep: true })
+// Sync localFilters from props on mount/prop change
+watch(() => props.filters, (newFilters) => {
+  localFilters.value = {
+    search: newFilters.search || '',
+    state: newFilters.state || ''
+  }
+}, { immediate: true, deep: true })
+
+// Handler for filter changes (call this in your UI events)
+function updateFilter(key: keyof ProjectFilters, value: string) {
+  if (localFilters.value[key] !== value) {
+    localFilters.value[key] = value
+    emit('update:filters', { ...localFilters.value })
+  }
+}
+
+// Handler for clearing all filters
+function clearFilters() {
+  localFilters.value = { search: '', state: '' }
+  emit('update:filters', { ...localFilters.value })
+}
 </script> 
