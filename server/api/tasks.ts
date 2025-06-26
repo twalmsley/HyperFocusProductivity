@@ -25,15 +25,115 @@ export default defineEventHandler(async (event) => {
   switch (method) {
     case 'GET':
       const query = getQuery(event)
-      const { projectId: queryProjectId } = query
+      const { 
+        projectId: queryProjectId,
+        search: querySearch,
+        status: queryStatus,
+        priority: queryPriority,
+        dueDate: queryDueDate,
+        userId: queryUserId
+      } = query
       
       const whereClause: any = {
-        userId: user.id,
+        userId: queryUserId || user.id,
       }
       
       // Add project filter if projectId is provided
       if (queryProjectId) {
         whereClause.projectId = queryProjectId
+      }
+
+      // Add status filter
+      if (queryStatus) {
+        if (queryStatus === 'NOT_DONE') {
+          // NOT_DONE includes both BACKLOG and IN_PROGRESS tasks
+          whereClause.status = {
+            in: ['BACKLOG', 'IN_PROGRESS']
+          }
+        } else {
+          whereClause.status = queryStatus
+        }
+      }
+
+      // Add priority filter
+      if (queryPriority) {
+        whereClause.priority = queryPriority
+      }
+
+      // Add due date filter
+      if (queryDueDate) {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        
+        const endOfWeek = new Date(today)
+        endOfWeek.setTime(endOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+        const endOfMonth = new Date(today)
+        endOfMonth.setTime(endOfMonth.getTime() + 30 * 24 * 60 * 60 * 1000)
+
+        // Check if it's a valid due date filter
+        const validDueDateFilters = ['today', 'tomorrow', 'week', 'month', 'overdue', 'none']
+        if (validDueDateFilters.includes(queryDueDate as string)) {
+          switch (queryDueDate) {
+            case 'today':
+              whereClause.dueDate = {
+                gte: today,
+                lt: tomorrow
+              }
+              break
+            case 'tomorrow':
+              whereClause.dueDate = {
+                gte: tomorrow,
+                lt: new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
+              }
+              break
+            case 'week':
+              whereClause.dueDate = {
+                gte: today,
+                lte: endOfWeek
+              }
+              break
+            case 'month':
+              whereClause.dueDate = {
+                gte: today,
+                lte: endOfMonth
+              }
+              break
+            case 'overdue':
+              // Exclude completed tasks from overdue filter
+              whereClause.status = {
+                not: 'DONE'
+              }
+              whereClause.dueDate = {
+                lt: today
+              }
+              break
+            case 'none':
+              whereClause.dueDate = null
+              break
+          }
+        }
+      }
+
+      // Add search filter
+      if (querySearch) {
+        whereClause.OR = [
+          {
+            title: {
+              contains: querySearch as string,
+              mode: 'insensitive'
+            }
+          },
+          {
+            notes: {
+              contains: querySearch as string,
+              mode: 'insensitive'
+            }
+          }
+        ]
       }
       
       return await prisma.task.findMany({

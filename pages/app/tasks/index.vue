@@ -83,16 +83,16 @@
           </div>
 
           <!-- Task Stats -->
-          <TaskStats :tasks="filteredTasks" :filter="getValidFilterType(filters.dueDate)" />
+          <TaskStats :tasks="tasks" :filter="getValidFilterType(filters.dueDate)" />
 
           <!-- Pagination -->
-          <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredTasks.length" />
+          <TaskPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="tasks.length" />
         </div>
 
         <!-- Calendar View -->
         <div v-else>
           <TaskCalendar
-            :tasks="filteredTasks"
+            :tasks="tasks"
             @view="viewTask"
             @update-status="updateTaskStatus"
             @start-pomodoro="startPomodoro"
@@ -160,7 +160,7 @@ import TaskDeleteModal from '~/components/tasks/TaskDeleteModal.vue'
 import TaskStats from '~/components/tasks/TaskStats.vue'
 import TaskCreateModal from '~/components/tasks/TaskCreateModal.vue'
 import TaskCalendar from '~/components/tasks/TaskCalendar.vue'
-import { filterTasks, type TaskFilters as TaskFiltersType } from '~/utils/taskFilters'
+import type { TaskFilters as TaskFiltersType } from '~/utils/taskFilters'
 import type { Task } from '~/types/task'
 
 const {
@@ -259,7 +259,7 @@ onMounted(() => {
 })
 
 // Watch for changes that should reset pagination
-watch([filters, sortColumn, sortDirection], () => {
+watch([sortColumn, sortDirection], () => {
   currentPage.value = 1
 })
 
@@ -291,16 +291,11 @@ watch([sortColumn, sortDirection], ([newColumn, newDirection]) => {
   }
 })
 
-// Computed property for filtered tasks
-const filteredTasks = computed(() => {
-  return filterTasks(tasks.value, filters.value)
-})
-
-// Computed property for sorted tasks
+// Computed property for sorted tasks (now works directly with fetched tasks)
 const sortedTasks = computed(() => {
-  if (!filteredTasks.value.length) return []
+  if (!tasks.value.length) return []
 
-  const sorted = [...filteredTasks.value].sort((a, b) => {
+  const sorted = [...tasks.value].sort((a, b) => {
     let valA, valB
 
     // Handle different data types for sorting
@@ -356,6 +351,14 @@ const paginatedTasks = computed(() => {
   const end = start + pageSize.value
   return sortedTasks.value.slice(start, end)
 })
+
+// Watch for filter changes and refetch tasks
+watch(filters, async (newFilters) => {
+  // Reset pagination when filters change
+  currentPage.value = 1
+  // Fetch tasks with new filters
+  await fetchTasks(newFilters)
+}, { deep: true })
 
 // Variables for delete confirmation
 const showDeleteConfirm = ref(false)
@@ -425,7 +428,7 @@ async function updateTaskStatus(task: Task) {
 
     // If this was a repeating task that was completed, refresh the task list to show the new repeat task
     if (newStatus === 'DONE' && task.repeatType) {
-      await fetchTasks()
+      await fetchTasks(filters.value)
     }
   } catch (error) {
     console.error('Failed to update task:', error)
@@ -467,11 +470,23 @@ async function confirmDeleteTask() {
 }
 
 // Fetch tasks
-async function fetchTasks() {
+async function fetchTasks(filterParams?: TaskFiltersType) {
   if (!user) return
 
   try {
-    const response = await $fetch<Task[]>(`/api/tasks?userId=${user.id}`)
+    const params = new URLSearchParams()
+    params.append('userId', user.id)
+    
+    // Add filter parameters if provided
+    if (filterParams) {
+      if (filterParams.search) params.append('search', filterParams.search)
+      if (filterParams.status) params.append('status', filterParams.status)
+      if (filterParams.priority) params.append('priority', filterParams.priority)
+      if (filterParams.dueDate) params.append('dueDate', filterParams.dueDate)
+      if (filterParams.projectId) params.append('projectId', filterParams.projectId)
+    }
+
+    const response = await $fetch<Task[]>(`/api/tasks?${params.toString()}`)
     tasks.value = response
   } catch (error) {
     console.error('Failed to fetch tasks:', error)
@@ -552,7 +567,7 @@ async function saveTask(task: Partial<Task> & { repeatSchedule?: any }) {
     
     // Refresh tasks to get any newly created repeat tasks
     if (task.repeatSchedule && updatedTask.status === 'DONE') {
-      await fetchTasks()
+      await fetchTasks(filters.value)
     }
   } catch (error) {
     console.error('Failed to update task:', error)
@@ -669,7 +684,7 @@ async function updateTaskDueDate(task: Task, newDate: Date) {
 }
 
 function handleTaskCreated() {
-  fetchTasks()
+  fetchTasks(filters.value)
 }
 
 function getValidFilterType(dueDate: string): 'all' | 'overdue' | 'today' | 'tomorrow' | 'week' | 'month' {
@@ -684,6 +699,6 @@ function getValidFilterType(dueDate: string): 'all' | 'overdue' | 'today' | 'tom
 // Fetch user settings when component mounts
 onMounted(async () => {
   fetchUserSettings()
-  await fetchTasks()
+  await fetchTasks(filters.value)
 })
 </script>
