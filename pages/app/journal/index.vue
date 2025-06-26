@@ -23,6 +23,10 @@
               Today
             </button>
           </div>
+          <div v-if="isMonthLoading" class="text-center py-2 mb-2">
+            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--primary)] mx-auto"></div>
+            <span class="text-xs text-gray-500">Loading month...</span>
+          </div>
           <div class="calendar-grid">
             <Calendar
               :key="calendarKey"
@@ -271,6 +275,7 @@ definePageMeta({
 })
 
 const isLoading = ref(true)
+const isMonthLoading = ref(false)
 const journalEntries = ref<PartialJournalEntry[]>([])
 const selectedDate = ref(new Date())
 const currentMonth = ref(new Date().getMonth() + 1)
@@ -491,19 +496,38 @@ const onMonthChange = (month: any) => {
   const newYear = month.year
   
   if (newMonth !== currentMonth.value || newYear !== currentYear.value) {
+    // Store the currently selected date before changing months
+    const currentSelectedDate = selectedDate.value
+    
     currentMonth.value = newMonth
     currentYear.value = newYear
-    fetchEntriesForMonth(newYear, newMonth)
+    
+    // Set month loading state
+    isMonthLoading.value = true
+    
+    // Fetch entries for the new month
+    fetchEntriesForMonth(newYear, newMonth).then(() => {
+      // After fetching new data, check if the selected date is still valid
+      // If the selected date is not in the current month, keep it but it won't have entries
+      // If it is in the current month, the entries will be automatically filtered
+      selectedDate.value = currentSelectedDate
+      isMonthLoading.value = false
+    }).catch(() => {
+      isMonthLoading.value = false
+    })
   }
 }
 
 // Add this function in the script section, before the onMounted hook
 const jumpToToday = () => {
-  selectedDate.value = new Date()
   const today = new Date()
   const todayMonth = today.getMonth() + 1
   const todayYear = today.getFullYear()
   
+  // Set the selected date to today
+  selectedDate.value = today
+  
+  // Only fetch new data if we're changing months
   if (todayMonth !== currentMonth.value || todayYear !== currentYear.value) {
     currentMonth.value = todayMonth
     currentYear.value = todayYear

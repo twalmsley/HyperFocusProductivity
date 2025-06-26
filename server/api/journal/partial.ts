@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
 
   // Calculate the start and end of the month
   const startDate = new Date(year, month - 1, 1)
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999)
+  const endDate = new Date(year, month, 1) // first day of next month
 
   try {
     const entries = await prisma.journalEntry.findMany({
@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
         userId: user.id,
         date: {
           gte: startDate,
-          lte: endDate
+          lt: endDate // strictly less than first day of next month
         }
       },
       select: {
