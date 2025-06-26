@@ -23,17 +23,15 @@
               Today
             </button>
           </div>
-          <div v-if="isMonthLoading" class="text-center py-2 mb-2">
-            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--primary)] mx-auto"></div>
-            <span class="text-xs text-gray-500">Loading month...</span>
-          </div>
           <div class="calendar-grid">
             <Calendar
               :key="calendarKey"
               v-model="selectedDate"
+              v-model:from-page="currentPage"
               :attributes="calendarAttributes"
               @dayclick="onDayClick"
-              @monthchange="onMonthChange"
+              @update:modelValue="onDateUpdate"
+              @update:from-page="onPageUpdate"
               is-expanded
               trim-weeks
               :first-day-of-week="1"
@@ -275,11 +273,9 @@ definePageMeta({
 })
 
 const isLoading = ref(true)
-const isMonthLoading = ref(false)
 const journalEntries = ref<PartialJournalEntry[]>([])
 const selectedDate = ref(new Date())
-const currentMonth = ref(new Date().getMonth() + 1)
-const currentYear = ref(new Date().getFullYear())
+const currentPage = ref({ month: new Date().getMonth(), year: new Date().getFullYear() })
 
 // Configure marked options
 marked.setOptions({
@@ -318,7 +314,7 @@ const entriesForSelectedDay = computed(() => {
 // Add a computed property for calendar key that changes when entries change
 const calendarKey = computed(() => {
   const titlesHash = journalEntries.value.map(entry => entry.title).join('|')
-  return `calendar-${currentYear.value}-${currentMonth.value}-${titlesHash}`
+  return `calendar-${currentPage.value.year}-${currentPage.value.month}-${titlesHash}`
 })
 
 const calendarAttributes = computed(() => {
@@ -465,10 +461,9 @@ const confirmDelete = async (entry: PartialJournalEntry) => {
 const fetchEntriesForMonth = async (year?: number, month?: number) => {
   try {
     isLoading.value = true
-    const targetYear = year || currentYear.value
-    const targetMonth = month || currentMonth.value
     
-    const response = await $fetch(`/api/journal/partial?year=${targetYear}&month=${targetMonth}`)
+    const response = await $fetch(`/api/journal/partial`)
+    
     // Ensure response is an array and properly typed
     const entries = Array.isArray(response) ? response : []
     journalEntries.value = entries.map(entry => ({
@@ -492,47 +487,25 @@ const fetchEntriesForMonth = async (year?: number, month?: number) => {
 
 // Watch for month changes in the calendar
 const onMonthChange = (month: any) => {
-  const newMonth = month.month + 1
-  const newYear = month.year
-  
-  if (newMonth !== currentMonth.value || newYear !== currentYear.value) {
-    // Store the currently selected date before changing months
-    const currentSelectedDate = selectedDate.value
-    
-    currentMonth.value = newMonth
-    currentYear.value = newYear
-    
-    // Set month loading state
-    isMonthLoading.value = true
-    
-    // Fetch entries for the new month
-    fetchEntriesForMonth(newYear, newMonth).then(() => {
-      // After fetching new data, check if the selected date is still valid
-      // If the selected date is not in the current month, keep it but it won't have entries
-      // If it is in the current month, the entries will be automatically filtered
-      selectedDate.value = currentSelectedDate
-      isMonthLoading.value = false
-    }).catch(() => {
-      isMonthLoading.value = false
-    })
-  }
+  // No longer needed since we load all entries
 }
+
+// Add a watch on selectedDate to handle month changes when navigating
+watch(selectedDate, (newDate) => {
+  // No longer needed since we load all entries
+})
+
+// Add a watch on currentPage as backup
+watch(currentPage, (newPage) => {
+  // No longer needed since we load all entries
+})
 
 // Add this function in the script section, before the onMounted hook
 const jumpToToday = () => {
   const today = new Date()
-  const todayMonth = today.getMonth() + 1
-  const todayYear = today.getFullYear()
   
   // Set the selected date to today
   selectedDate.value = today
-  
-  // Only fetch new data if we're changing months
-  if (todayMonth !== currentMonth.value || todayYear !== currentYear.value) {
-    currentMonth.value = todayMonth
-    currentYear.value = todayYear
-    fetchEntriesForMonth(todayYear, todayMonth)
-  }
 }
 
 // Initial fetch
@@ -548,6 +521,15 @@ const onDayClick = (day: any) => {
 const renderMarkdown = (content: string) => {
   if (!content) return ''
   return marked(content)
+}
+
+// Add new functions for date and page updates
+const onDateUpdate = (date: any) => {
+  selectedDate.value = date
+}
+
+const onPageUpdate = (page: any) => {
+  // No longer needed since we load all entries
 }
 </script>
 
