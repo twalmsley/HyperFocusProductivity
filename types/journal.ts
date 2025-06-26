@@ -12,6 +12,15 @@ export interface JournalEntry {
   updatedAt: string;
 }
 
+export interface PartialJournalEntry {
+  id: string;
+  title: string;
+  date: string;
+  type: 'DAILY' | 'FREEFORM' | 'REVIEW';
+  mood: 'HAPPY' | 'SAD' | 'NEUTRAL' | 'ANGRY' | 'EXCITED' | null;
+  createdAt: string;
+}
+
 export interface JournalEntryForm {
   title: string;
   content: string;

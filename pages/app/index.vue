@@ -62,7 +62,9 @@
                       </span>
                     </td>
                     <td class="px-6 py-4">
-                      <div class="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none" v-html="renderMarkdown(entry.content)">
+                      <div class="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none">
+                        <!-- For partial entries, we don't have content, so show a placeholder -->
+                        <span class="text-gray-500 italic">Content preview not available. Click to view full entry.</span>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -70,9 +72,8 @@
                     </td>
                     <td class="px-6 py-4">
                       <div class="flex flex-wrap gap-1">
-                        <span v-for="tag in entry.tags" :key="tag"
-                          class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                          {{ tag }}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                          Tags not shown in preview
                         </span>
                       </div>
                     </td>
@@ -326,8 +327,28 @@ async function fetchJournalEntries() {
 
   try {
     isLoadingJournal.value = true
-    const response = await $fetch<JournalEntry[]>('/api/journal')
-    journalEntries.value = response.sort((a, b) => 
+    const today = new Date()
+    const currentYear = today.getFullYear()
+    const currentMonth = today.getMonth() + 1
+    
+    // Use the partial API for better performance
+    const response = await $fetch(`/api/journal/partial?year=${currentYear}&month=${currentMonth}`)
+    const entries = Array.isArray(response) ? response : []
+    
+    // Convert to full JournalEntry format for compatibility
+    journalEntries.value = entries.map(entry => ({
+      id: entry.id,
+      title: entry.title,
+      content: '', // Not available in partial view
+      type: entry.type,
+      date: entry.date,
+      mood: entry.mood,
+      tags: [], // Not available in partial view
+      templateUsed: null,
+      createdAt: entry.createdAt,
+      updatedAt: entry.createdAt, // Use createdAt as fallback
+      userId: user.id
+    })).sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
   } catch (error) {
@@ -342,9 +363,19 @@ const showJournalViewModal = ref(false)
 const viewingJournalEntry = ref<JournalEntry | null>(null)
 
 // Update the viewJournalEntry function to open the modal
-function viewJournalEntry(entry: JournalEntry) {
-  viewingJournalEntry.value = entry
-  showJournalViewModal.value = true
+async function viewJournalEntry(entry: JournalEntry) {
+  try {
+    // Fetch the full entry if we only have partial data
+    if (!entry.content) {
+      const fullEntry = await $fetch<JournalEntry>(`/api/journal/${entry.id}`)
+      viewingJournalEntry.value = fullEntry
+    } else {
+      viewingJournalEntry.value = entry
+    }
+    showJournalViewModal.value = true
+  } catch (error) {
+    console.error('Error fetching full journal entry:', error)
+  }
 }
 
 function closeJournalViewModal() {

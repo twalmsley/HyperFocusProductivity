@@ -173,3 +173,78 @@ Check out the [deployment documentation](https://nuxt.com/docs/getting-started/d
 - Task search functionality
 - Pagination support
 - Task statistics and workload visualization
+
+### Journal System
+- **Optimized Calendar View**: The journal main page now fetches only partial details for the current month, improving performance significantly
+- **Lazy Loading**: Full journal entries are only fetched when viewing or editing
+- **Monthly Data Loading**: When the calendar month changes, only entries for that month are loaded
+- Create, edit, and delete journal entries
+- Multiple entry types (Daily, Free-form, Review)
+- Mood tracking
+- Tag support
+- Markdown support
+
+### Focus Tools
+- Pomodoro timer
+- Focus session tracking
+- Break management
+
+## Performance Optimizations
+
+### Journal System
+The journal system has been optimized for better performance:
+
+1. **Partial Data Fetching**: The main journal page (`/app/journal`) now fetches only essential data for the calendar view:
+   - Entry ID, title, date, type, mood, and creation time
+   - Content and tags are not loaded initially
+
+2. **Monthly Loading**: Only entries for the current month are loaded by default
+
+3. **On-Demand Full Loading**: When a user clicks to view or edit an entry, the full entry (including content and tags) is fetched from the API
+
+4. **Calendar Month Changes**: When navigating between months in the calendar, only entries for the selected month are fetched
+
+5. **Dashboard Optimization**: The main dashboard also uses the partial API for recent journal entries
+
+### API Endpoints
+- `GET /api/journal` - Fetch all journal entries (full data)
+- `GET /api/journal/partial?year={year}&month={month}` - Fetch partial entries for a specific month
+- `GET /api/journal/{id}` - Fetch a specific journal entry (full data)
+- `POST /api/journal` - Create a new journal entry
+- `PATCH /api/journal/{id}` - Update a journal entry
+- `DELETE /api/journal/{id}` - Delete a journal entry
+
+## Technology Stack
+
+- **Frontend**: Nuxt 3, Vue 3, TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js
+- **Calendar**: v-calendar
+- **Markdown**: marked
+
+## Getting Started
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up environment variables
+4. Run database migrations: `npx prisma migrate dev`
+5. Start the development server: `npm run dev`
+
+## Environment Variables
+
+Create a `.env` file with the following variables:
+
+```env
+DATABASE_URL="postgresql://..."
+NEXTAUTH_SECRET="your-secret"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+## Database Schema
+
+The application uses PostgreSQL with the following main tables:
+- `User` - User accounts
+- `Task` - Task management
+- `JournalEntry` - Journal entries
+- `FocusSession` - Focus session tracking

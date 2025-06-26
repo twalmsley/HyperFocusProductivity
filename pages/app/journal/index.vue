@@ -28,6 +28,7 @@
               v-model="selectedDate"
               :attributes="calendarAttributes"
               @dayclick="onDayClick"
+              @monthchange="onMonthChange"
               is-expanded
               trim-weeks
               :first-day-of-week="1"
@@ -83,15 +84,16 @@
 
               <!-- Content -->
               <div class="mb-3">
-                <div class="text-gray-700 prose prose-sm max-w-none line-clamp-4" v-html="renderMarkdown(entry.content)">
+                <div class="text-gray-700 prose prose-sm max-w-none line-clamp-4">
+                  <!-- For partial entries, we don't have content, so show a placeholder -->
+                  <span class="text-gray-500 italic">Content preview not available in calendar view. Click "View" to see full entry.</span>
                 </div>
               </div>
 
               <!-- Tags -->
-              <div v-if="entry.tags && entry.tags.length > 0" class="flex flex-wrap gap-1">
-                <span v-for="tag in entry.tags" :key="tag"
-                  class="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-medium">
-                  #{{ tag }}
+              <div class="flex flex-wrap gap-1">
+                <span class="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-medium">
+                  Tags not shown in calendar view
                 </span>
               </div>
             </div>
@@ -246,11 +248,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { Calendar } from 'v-calendar'
 import { marked } from 'marked'
 import JournalEntryModal from '~/components/journal/JournalEntryModal.vue'
-import type { JournalEntry } from '~/types/journal'
+import type { JournalEntry, PartialJournalEntry } from '~/types/journal'
 import 'v-calendar/style.css'
 
 const {
@@ -269,8 +271,10 @@ definePageMeta({
 })
 
 const isLoading = ref(true)
-const journalEntries = ref<JournalEntry[]>([])
+const journalEntries = ref<PartialJournalEntry[]>([])
 const selectedDate = ref(new Date())
+const currentMonth = ref(new Date().getMonth() + 1)
+const currentYear = ref(new Date().getFullYear())
 
 // Configure marked options
 marked.setOptions({
@@ -301,7 +305,7 @@ const formatTime = (dateString: string) => {
 // Computed property for entries on selected day
 const entriesForSelectedDay = computed(() => {
   return journalEntries.value.filter(entry => {
-    const entryDate = new Date(entry.createdAt)
+    const entryDate = new Date(entry.date)
     return entryDate.toDateString() === selectedDate.value.toDateString()
   })
 })
@@ -322,7 +326,7 @@ const calendarAttributes = computed(() => {
         color: 'blue',
         fillMode: 'light' as const,
       },
-      dates: [new Date(entry.createdAt)],
+      dates: [new Date(entry.date)],
       popover: {
         label: entry.title,
       },
@@ -350,10 +354,15 @@ const isSaving = ref(false)
 // Use the journal entry modal composable
 const journalModal = useJournalEntryModal()
 
-// Modify the viewEntry function
-const viewEntry = (entry: JournalEntry) => {
-  viewingEntry.value = entry
-  showViewModal.value = true
+// Modify the viewEntry function to fetch full entry
+const viewEntry = async (entry: PartialJournalEntry) => {
+  try {
+    const fullEntry = await $fetch<JournalEntry>(`/api/journal/${entry.id}`)
+    viewingEntry.value = fullEntry
+    showViewModal.value = true
+  } catch (error) {
+    console.error('Error fetching full journal entry:', error)
+  }
 }
 
 // Add closeViewModal function
@@ -362,10 +371,15 @@ const closeViewModal = () => {
   viewingEntry.value = {}
 }
 
-// Modify the editEntry function
-const editEntry = (entry: JournalEntry) => {
-  editingEntry.value = { ...entry }
-  showEditModal.value = true
+// Modify the editEntry function to fetch full entry
+const editEntry = async (entry: PartialJournalEntry) => {
+  try {
+    const fullEntry = await $fetch<JournalEntry>(`/api/journal/${entry.id}`)
+    editingEntry.value = { ...fullEntry }
+    showEditModal.value = true
+  } catch (error) {
+    console.error('Error fetching full journal entry:', error)
+  }
 }
 
 // Add closeEditModal function
@@ -402,10 +416,17 @@ const saveEdit = async () => {
       }
     })
 
-    // Update the entry in the local list
+    // Update the entry in the local list if it's in the current month
     const index = journalEntries.value.findIndex(e => e.id === response.id)
     if (index !== -1) {
-      journalEntries.value[index] = response
+      journalEntries.value[index] = {
+        id: response.id,
+        title: response.title,
+        date: response.date,
+        type: response.type,
+        mood: response.mood,
+        createdAt: response.createdAt
+      }
     }
 
     closeEditModal()
@@ -418,41 +439,47 @@ const saveEdit = async () => {
 
 // Modify the createEntry function
 const createEntry = async () => {
-  await journalModal.createEntry({}, fetchEntries)
+  await journalModal.createEntry({}, fetchEntriesForMonth)
 }
 
 // Add handleJournalSubmit function
 function handleJournalSubmit(entry: Partial<JournalEntry>) {
-  journalModal.createEntry(entry, fetchEntries)
+  journalModal.createEntry(entry, fetchEntriesForMonth)
 }
 
 // Delete a specific entry
-const confirmDelete = async (entry: JournalEntry) => {
+const confirmDelete = async (entry: PartialJournalEntry) => {
   if (confirm('Are you sure you want to delete this journal entry? This action cannot be undone.')) {
     try {
       await $fetch(`/api/journal/${entry.id}`, {
         method: 'DELETE'
       })
-      // Refresh the entries list
-      await fetchEntries()
-      // Navigate back to the main journal page
-      navigateTo('/app/journal')
+      // Refresh the entries list for current month
+      await fetchEntriesForMonth()
     } catch (error) {
       console.error('Error deleting journal entry:', error)
     }
   }
 }
 
-// Fetch journal entries
-const fetchEntries = async () => {
+// Fetch partial journal entries for a specific month
+const fetchEntriesForMonth = async (year?: number, month?: number) => {
   try {
     isLoading.value = true
-    const response = await $fetch('/api/journal')
-    // Ensure response is an array and sort entries by createdAt in descending order (most recent first)
+    const targetYear = year || currentYear.value
+    const targetMonth = month || currentMonth.value
+    
+    const response = await $fetch(`/api/journal/partial?year=${targetYear}&month=${targetMonth}`)
+    // Ensure response is an array and properly typed
     const entries = Array.isArray(response) ? response : []
-    journalEntries.value = entries.sort((a: any, b: any) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
+    journalEntries.value = entries.map(entry => ({
+      id: entry.id,
+      title: entry.title,
+      date: entry.date,
+      type: entry.type,
+      mood: entry.mood,
+      createdAt: entry.createdAt
+    })) as PartialJournalEntry[]
   } catch (error) {
     console.error('Error fetching journal entries:', error)
   } finally {
@@ -460,14 +487,35 @@ const fetchEntries = async () => {
   }
 }
 
+// Watch for month changes in the calendar
+const onMonthChange = (month: any) => {
+  const newMonth = month.month + 1
+  const newYear = month.year
+  
+  if (newMonth !== currentMonth.value || newYear !== currentYear.value) {
+    currentMonth.value = newMonth
+    currentYear.value = newYear
+    fetchEntriesForMonth(newYear, newMonth)
+  }
+}
+
 // Add this function in the script section, before the onMounted hook
 const jumpToToday = () => {
   selectedDate.value = new Date()
+  const today = new Date()
+  const todayMonth = today.getMonth() + 1
+  const todayYear = today.getFullYear()
+  
+  if (todayMonth !== currentMonth.value || todayYear !== currentYear.value) {
+    currentMonth.value = todayMonth
+    currentYear.value = todayYear
+    fetchEntriesForMonth(todayYear, todayMonth)
+  }
 }
 
 // Initial fetch
 onMounted(() => {
-  fetchEntries()
+  fetchEntriesForMonth()
 })
 
 const onDayClick = (day: any) => {

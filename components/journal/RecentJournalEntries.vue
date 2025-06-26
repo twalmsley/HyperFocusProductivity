@@ -26,12 +26,11 @@
           {{ formatDate(entry.createdAt) }}
         </div>
         <div class="mt-2 text-sm text-gray-600 line-clamp-2">
-          {{ entry.content }}
+          <span class="text-gray-500 italic">Content preview not available. Click to view full entry.</span>
         </div>
         <div class="mt-2 flex flex-wrap gap-2">
-          <span v-for="tag in entry.tags" :key="tag"
-            class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-            {{ tag }}
+          <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+            Tags not shown in preview
           </span>
         </div>
       </div>
