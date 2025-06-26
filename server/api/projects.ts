@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     switch (method) {
       case 'GET':
         const query = getQuery(event)
-        const { id } = query
+        const { id, search: querySearch, state: queryState } = query
 
         if (id) {
           // Get single project
@@ -53,11 +53,32 @@ export default defineEventHandler(async (event) => {
 
           return project
         } else {
-          // Get all projects for user
+          // Build where clause for filtering
+          const whereClause: any = {
+            userId
+          }
+
+          // Add search filter
+          if (querySearch) {
+            whereClause.OR = [
+              {
+                name: {
+                  contains: querySearch as string,
+                  mode: 'insensitive'
+                }
+              },
+              {
+                description: {
+                  contains: querySearch as string,
+                  mode: 'insensitive'
+                }
+              }
+            ]
+          }
+
+          // Get all projects for user with filters
           const projects = await prisma.project.findMany({
-            where: {
-              userId
-            },
+            where: whereClause,
             include: {
               tasks: {
                 select: {
@@ -79,7 +100,34 @@ export default defineEventHandler(async (event) => {
             }
           })
 
-          return projects
+          // Apply state filter on the server side if needed
+          let filteredProjects = projects
+          if (queryState) {
+            filteredProjects = projects.filter(project => {
+              const taskCount = project._count?.tasks || 0
+              
+              if (taskCount === 0) {
+                return queryState === 'No Tasks'
+              }
+              
+              if (project.tasks && project.tasks.length > 0) {
+                const allBacklog = project.tasks.every(task => task.status === 'BACKLOG')
+                const allCompleted = project.tasks.every(task => task.status === 'DONE')
+                
+                if (allCompleted) {
+                  return queryState === 'Completed'
+                } else if (allBacklog) {
+                  return queryState === 'Not Started'
+                } else {
+                  return queryState === 'In Progress'
+                }
+              }
+              
+              return queryState === 'In Progress'
+            })
+          }
+
+          return filteredProjects
         }
 
       case 'POST':

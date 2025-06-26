@@ -37,9 +37,8 @@
         />
 
         <!-- Project cards -->
-        <div v-if="filteredProjects.length === 0" class="bg-white rounded-lg shadow-sm p-6 text-gray-600">
-          <p v-if="projects.length === 0">Your projects will appear here.</p>
-          <p v-else>No projects match your search criteria.</p>
+        <div v-if="projects.length === 0" class="bg-white rounded-lg shadow-sm p-6 text-gray-600">
+          <p>Your projects will appear here.</p>
         </div>
         <div v-else class="space-y-4">
           <ProjectCard
@@ -53,10 +52,10 @@
         </div>
 
         <!-- Project Stats -->
-        <ProjectStats :projects="filteredProjects" />
+        <ProjectStats :projects="projects" />
 
         <!-- Pagination -->
-        <ProjectPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredProjects.length" />
+        <ProjectPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="projects.length" />
 
         <!-- Create Project Modal -->
         <ProjectCreateModal
@@ -107,7 +106,8 @@ import ProjectViewModal from '~/components/projects/ProjectViewModal.vue'
 import ProjectDeleteModal from '~/components/projects/ProjectDeleteModal.vue'
 import ProjectStats from '~/components/projects/ProjectStats.vue'
 import ProjectCreateModal from '~/components/projects/ProjectCreateModal.vue'
-import { filterProjects, type ProjectFilters as ProjectFiltersType, getProjectState } from '~/utils/projectFilters'
+import { getProjectState } from '~/utils/projectFilters'
+import type { ProjectFilters as ProjectFiltersType } from '~/utils/projectFilters'
 
 const {
   status,
@@ -159,6 +159,9 @@ const filters = ref<ProjectFiltersType>({
 const currentPage = ref(1)
 const pageSize = ref(10) // Default to 10
 
+// Flag to track if this is the initial load
+const isInitialLoad = ref(true)
+
 // Load page size and sort state from localStorage on mount
 onMounted(() => {
   try {
@@ -180,6 +183,17 @@ onMounted(() => {
     const savedSortDirection = localStorage.getItem('projectSortDirection')
     if (savedSortDirection === 'asc' || savedSortDirection === 'desc') {
       sortDirection.value = savedSortDirection
+    }
+
+    // Load filters from localStorage
+    const savedFilters = localStorage.getItem('projectFilters')
+    if (savedFilters) {
+      try {
+        const parsedFilters = JSON.parse(savedFilters)
+        filters.value = { ...filters.value, ...parsedFilters }
+      } catch (e) {
+        console.error('Error parsing saved filters:', e)
+      }
     }
   } catch (error) {
     console.error('Error loading state from localStorage:', error)
@@ -210,16 +224,31 @@ watch([sortColumn, sortDirection], ([newColumn, newDirection]) => {
   }
 })
 
-// Computed property for filtered projects
-const filteredProjects = computed(() => {
-  return filterProjects(projects.value, filters.value)
-})
+// Watch for filter changes and refetch projects
+watch(filters, async (newFilters) => {
+  // Only refetch if this is not the initial load
+  if (!isInitialLoad.value) {
+    // Reset pagination when filters change
+    currentPage.value = 1
+    // Fetch projects with new filters
+    await fetchProjects(newFilters)
+  }
+}, { deep: true })
 
-// Computed property for sorted projects
+// Watch for filter changes to save to localStorage
+watch(filters, (newFilters) => {
+  try {
+    localStorage.setItem('projectFilters', JSON.stringify(newFilters))
+  } catch (error) {
+    console.error('Error saving filters to localStorage:', error)
+  }
+}, { deep: true })
+
+// Computed property for sorted projects (now works directly with fetched projects)
 const sortedProjects = computed(() => {
-  if (!filteredProjects.value.length) return []
+  if (!projects.value.length) return []
 
-  const sorted = [...filteredProjects.value].sort((a, b) => {
+  const sorted = [...projects.value].sort((a, b) => {
     let valA, valB
 
     // Handle different data types for sorting
@@ -264,9 +293,7 @@ const sortedProjects = computed(() => {
 const paginatedProjects = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
-  const paginated = sortedProjects.value.slice(start, end)
-  
-  return paginated
+  return sortedProjects.value.slice(start, end)
 })
 
 // Variables for delete confirmation
@@ -341,11 +368,20 @@ async function confirmDeleteProject() {
 }
 
 // Fetch projects
-async function fetchProjects() {
+async function fetchProjects(filterParams?: ProjectFiltersType) {
   if (!user) return
 
   try {
-    const response = await $fetch<Project[]>(`/api/projects?userId=${user.id}`)
+    const params = new URLSearchParams()
+    params.append('userId', user.id)
+    
+    // Add filter parameters if provided
+    if (filterParams) {
+      if (filterParams.search) params.append('search', filterParams.search)
+      if (filterParams.state) params.append('state', filterParams.state)
+    }
+
+    const response = await $fetch<Project[]>(`/api/projects?${params.toString()}`)
     projects.value = response
   } catch (error) {
     console.error('Failed to fetch projects:', error)
@@ -398,7 +434,7 @@ async function saveProject(project: Partial<Project>) {
 }
 
 function handleProjectCreated() {
-  fetchProjects()
+  fetchProjects(filters.value)
   
   // Close the create modal
   showCreateModal.value = false
@@ -423,6 +459,8 @@ function handleProjectUpdated(updatedProject: Project) {
 
 // Fetch projects when component mounts
 onMounted(async () => {
-  await fetchProjects()
+  await fetchProjects(filters.value)
+  // Mark initial load as complete
+  isInitialLoad.value = false
 })
 </script> 
