@@ -64,7 +64,7 @@
           </span>
         </div>
 
-        <p v-if="task.notes" class="text-sm text-gray-600 line-clamp-2">{{ task.notes }}</p>
+        <div v-if="task.notes" class="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none" v-html="renderMarkdown(task.notes)"></div>
       </div>
 
       <div class="flex items-center gap-2 ml-4">
@@ -136,7 +136,14 @@
 <script setup lang="ts">
 import type { Task } from '~/types/task'
 import ConfirmDialog from '~/components/ConfirmDialog.vue'
-import { isTaskOverdue } from '~/utils/taskUtils';
+import { isTaskOverdue } from '~/utils/taskUtils'
+import { marked } from 'marked'
+
+// Configure marked options for proper markdown rendering
+marked.setOptions({
+  breaks: true, // Convert line breaks to <br>
+  gfm: true     // Enable GitHub Flavored Markdown
+})
 
 const props = defineProps<{
   task: Task;
@@ -155,6 +162,11 @@ const showStatusConfirmDialog = ref(false);
 const statusConfirmDialogTitle = ref('');
 const statusConfirmDialogMessage = ref('');
 const taskToUpdate = ref<Task | null>(null);
+
+function renderMarkdown(content: string): string {
+  if (!content) return ''
+  return marked(content) as string
+}
 
 function handleStatusUpdate(task: Task) {
   taskToUpdate.value = task;

@@ -43,9 +43,7 @@
             </span>
           </td>
           <td class="px-4 py-3">
-            <div class="text-sm text-gray-500 truncate max-w-xs">
-              {{ task.notes && task.notes.length > 50 ? task.notes.substring(0, 50) + '...' : task.notes || '' }}
-            </div>
+            <div class="text-sm text-gray-500 truncate max-w-xs prose prose-sm max-w-none" v-html="renderMarkdown(task.notes && task.notes.length > 50 ? task.notes.substring(0, 50) + '...' : task.notes || '')"></div>
           </td>
           <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
             <div class="flex justify-end space-x-2">
@@ -65,7 +63,14 @@
 
 <script setup lang="ts">
 import type { Task } from '~/types/task'
-import { isTaskDueToday, isTaskOverdue, formatDueDate } from '~/utils/taskUtils';
+import { isTaskDueToday, isTaskOverdue, formatDueDate } from '~/utils/taskUtils'
+import { marked } from 'marked'
+
+// Configure marked options for proper markdown rendering
+marked.setOptions({
+  breaks: true, // Convert line breaks to <br>
+  gfm: true     // Enable GitHub Flavored Markdown
+})
 
 const props = defineProps<{
   tasks: Task[];
@@ -77,6 +82,11 @@ const props = defineProps<{
 defineEmits<{
   (e: 'view-task', task: Task): void;
 }>();
+
+function renderMarkdown(content: string): string {
+  if (!content) return ''
+  return marked(content) as string
+}
 
 function getRowClass(task: Task) {
   if (task.status === 'DONE') return 'bg-green-50 hover:bg-green-100';

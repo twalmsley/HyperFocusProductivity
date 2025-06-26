@@ -59,8 +59,15 @@
         <!-- Notes -->
         <div>
           <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
-          <textarea id="notes" v-model="task.notes" rows="4" maxlength="2000"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"></textarea>
+          <div class="mt-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <textarea id="notes" v-model="task.notes" rows="4" maxlength="2000"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"></textarea>
+            </div>
+            <div class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto max-h-32">
+              <div v-html="renderMarkdown(task.notes || '')"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Estimated Pomodoros -->
@@ -101,6 +108,13 @@ import { ref, watch, onMounted } from 'vue'
 import RepeatScheduleSelector from './RepeatScheduleSelector.vue'
 import type { Task, RepeatSchedule } from '~/types/task'
 import type { Project } from '~/types/project'
+import { marked } from 'marked'
+
+// Configure marked options for proper markdown rendering
+marked.setOptions({
+  breaks: true, // Convert line breaks to <br>
+  gfm: true     // Enable GitHub Flavored Markdown
+})
 
 const props = defineProps<{
   show: boolean;
@@ -111,6 +125,11 @@ const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'save', task: Task & { repeatSchedule: RepeatSchedule }): void;
 }>()
+
+function renderMarkdown(content: string): string {
+  if (!content) return ''
+  return marked(content) as string
+}
 
 // Create a local copy of the task to avoid direct mutation
 const task = ref<Task>({ 

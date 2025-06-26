@@ -39,7 +39,7 @@
         <!-- Notes -->
         <div>
           <h4 class="text-sm font-medium text-gray-500">Notes</h4>
-          <p class="mt-1 text-gray-900 whitespace-pre-wrap">{{ task?.notes || 'No notes' }}</p>
+          <div class="mt-1 text-gray-900 prose prose-sm max-w-none" v-html="renderMarkdown(task?.notes || 'No notes')"></div>
         </div>
 
         <!-- Repeat Schedule -->
@@ -118,7 +118,14 @@
 
 <script setup lang="ts">
 import type { Task, RepeatSchedule } from '~/types/task'
-import { formatSchedulePreview } from '~/utils/repeatScheduleUtils';
+import { formatSchedulePreview } from '~/utils/repeatScheduleUtils'
+import { marked } from 'marked'
+
+// Configure marked options for proper markdown rendering
+marked.setOptions({
+  breaks: true, // Convert line breaks to <br>
+  gfm: true     // Enable GitHub Flavored Markdown
+})
 
 const props = defineProps<{
   show: boolean;
@@ -128,6 +135,11 @@ const props = defineProps<{
 defineEmits<{
   (e: 'close'): void;
 }>()
+
+function renderMarkdown(content: string): string {
+  if (!content) return ''
+  return marked(content) as string
+}
 
 function formatRepeatSchedule(): string {
   if (!props.task?.repeatType) return ''

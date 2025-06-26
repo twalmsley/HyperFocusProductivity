@@ -22,9 +22,7 @@
         <!-- Notes -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-          <div class="w-full p-2 bg-gray-50 rounded-md border border-gray-200 whitespace-pre-wrap">
-            {{ task.notes }}
-          </div>
+          <div class="w-full p-2 bg-gray-50 rounded-md border border-gray-200 prose prose-sm max-w-none" v-html="renderMarkdown(task.notes || '')"></div>
         </div>
 
         <!-- Status -->
@@ -72,6 +70,13 @@
 
 <script setup lang="ts">
 import type { Task } from '~/types/task'
+import { marked } from 'marked'
+
+// Configure marked options for proper markdown rendering
+marked.setOptions({
+  breaks: true, // Convert line breaks to <br>
+  gfm: true     // Enable GitHub Flavored Markdown
+})
 
 defineProps<{
   show: boolean;
@@ -81,4 +86,9 @@ defineProps<{
 defineEmits<{
   (e: 'close'): void;
 }>();
+
+function renderMarkdown(content: string): string {
+  if (!content) return ''
+  return marked(content) as string
+}
 </script> 

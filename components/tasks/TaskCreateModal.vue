@@ -61,14 +61,19 @@
       <!-- Notes -->
       <div>
         <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
-        <div class="mt-1">
-          <textarea
-            id="notes"
-            v-model="task.notes"
-            rows="3"
-            maxlength="2000"
-            class="shadow-sm focus:ring-[var(--primary)] focus:border-[var(--primary)] block w-full sm:text-sm border-gray-300 rounded-md"
-          ></textarea>
+        <div class="mt-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <textarea
+              id="notes"
+              v-model="task.notes"
+              rows="3"
+              maxlength="2000"
+              class="shadow-sm focus:ring-[var(--primary)] focus:border-[var(--primary)] block w-full sm:text-sm border-gray-300 rounded-md"
+            ></textarea>
+          </div>
+          <div class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto max-h-32">
+            <div v-html="renderMarkdown(task.notes || '')"></div>
+          </div>
         </div>
       </div>
 
@@ -132,6 +137,13 @@ import BaseModal from '~/components/BaseModal.vue'
 import RepeatScheduleSelector from '~/components/tasks/RepeatScheduleSelector.vue'
 import type { RepeatSchedule } from '~/types/task'
 import type { Project } from '~/types/project'
+import { marked } from 'marked'
+
+// Configure marked options for proper markdown rendering
+marked.setOptions({
+  breaks: true, // Convert line breaks to <br>
+  gfm: true     // Enable GitHub Flavored Markdown
+})
 
 const props = defineProps<{
   show: boolean;
@@ -143,6 +155,11 @@ const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'created', task: any): void;
 }>();
+
+function renderMarkdown(content: string): string {
+  if (!content) return ''
+  return marked(content) as string
+}
 
 interface NewTask {
   title: string;

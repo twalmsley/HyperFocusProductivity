@@ -97,9 +97,7 @@
             </div>
           </td>
           <td class="px-2 py-2 hidden sm:table-cell">
-            <div class="text-xs text-gray-500 truncate">
-              {{ task.notes || '-' }}
-            </div>
+            <div class="text-xs text-gray-500 truncate prose prose-xs max-w-none" v-html="renderMarkdown(task.notes || '-')"></div>
           </td>
           <td class="px-2 py-2 text-right text-xs font-medium">
             <div class="flex justify-end space-x-2">
@@ -177,6 +175,13 @@
 import SortIndicator from '~/components/SortIndicator.vue'
 import type { Task } from '~/types/task'
 import { isTaskOverdue } from '~/utils/taskUtils'
+import { marked } from 'marked'
+
+// Configure marked options for proper markdown rendering
+marked.setOptions({
+  breaks: true, // Convert line breaks to <br>
+  gfm: true     // Enable GitHub Flavored Markdown
+})
 
 defineProps<{
   tasks: Task[];
@@ -195,4 +200,9 @@ defineEmits<{
   (e: 'start-pomodoro', task: Task): void;
   (e: 'extend-due-date', task: Task): void;
 }>()
+
+function renderMarkdown(content: string): string {
+  if (!content) return ''
+  return marked(content) as string
+}
 </script> 
