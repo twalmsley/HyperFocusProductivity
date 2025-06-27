@@ -287,6 +287,14 @@
         </div>
       </div>
     </ValueSelectionModal>
+
+    <!-- Delete Tracker Modal -->
+    <TrackerDeleteModal 
+      :show="showDeleteModal" 
+      :tracker="trackerToDelete" 
+      @cancel="cancelDeleteTracker" 
+      @confirm="confirmDeleteTracker" 
+    />
   </div>
 </template>
 
@@ -296,6 +304,7 @@ import { format, addDays, subDays } from 'date-fns'
 import BaseModal from '~/components/BaseModal.vue'
 import CreateEditTrackerModal from '~/components/trackers/CreateEditTrackerModal.vue'
 import ValueSelectionModal from '~/components/trackers/ValueSelectionModal.vue'
+import TrackerDeleteModal from '~/components/trackers/TrackerDeleteModal.vue'
 
 interface TrackerEntry {
   id: string
@@ -319,8 +328,10 @@ const trackers = ref<Tracker[]>([])
 const startDate = ref(subDays(new Date(), 29))
 const showCreateTrackerModal = ref(false)
 const showValueModal = ref(false)
+const showDeleteModal = ref(false)
 const editingTracker = ref<Tracker | null>(null)
 const selectedTracker = ref<Tracker | null>(null)
+const trackerToDelete = ref<Tracker | null>(null)
 const selectedDay = ref(0)
 const isLoading = ref(true)
 const groupNames = ref<string[]>([])
@@ -441,17 +452,30 @@ const editTracker = (tracker: Tracker) => {
   showCreateTrackerModal.value = true
 }
 
-const deleteTracker = async (tracker: Tracker) => {
-  if (!confirm('Are you sure you want to delete this tracker?')) return
+const deleteTracker = (tracker: Tracker) => {
+  trackerToDelete.value = tracker
+  showDeleteModal.value = true
+}
+
+const confirmDeleteTracker = async () => {
+  if (!trackerToDelete.value) return
   
   try {
-    await $fetch(`/api/trackers/${tracker.id}`, {
+    await $fetch(`/api/trackers/${trackerToDelete.value.id}`, {
       method: 'DELETE'
     })
     await fetchTrackers()
   } catch (error) {
     console.error('Failed to delete tracker:', error)
+  } finally {
+    showDeleteModal.value = false
+    trackerToDelete.value = null
   }
+}
+
+const cancelDeleteTracker = () => {
+  showDeleteModal.value = false
+  trackerToDelete.value = null
 }
 
 const openValueModal = (tracker: Tracker, day: number) => {
