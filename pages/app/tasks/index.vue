@@ -452,10 +452,9 @@ async function updateTaskStatus(task: Task) {
       tasks.value[index] = updatedTask
     }
 
-    // If this was a repeating task that was completed, refresh the task list to show the new repeat task
-    if (newStatus === 'DONE' && task.repeatType) {
-      await fetchTasks(filters.value)
-    }
+    // Always refresh the task list to ensure we have the latest data
+    // This is especially important for repeating tasks and any other server-side changes
+    await fetchTasks(filters.value)
   } catch (error) {
     console.error('Failed to update task:', error)
   }
@@ -485,7 +484,8 @@ async function confirmDeleteTask() {
       }
     })
 
-    tasks.value = tasks.value.filter(t => t.id !== taskToDelete.value?.id)
+    // Refresh the task list to ensure we have the latest data
+    await fetchTasks(filters.value)
 
     // Close the dialog
     showDeleteConfirm.value = false
@@ -591,10 +591,8 @@ async function saveTask(task: Partial<Task> & { repeatSchedule?: any }) {
 
     closeEditModal()
     
-    // Refresh tasks to get any newly created repeat tasks
-    if (task.repeatSchedule && updatedTask.status === 'DONE') {
-      await fetchTasks(filters.value)
-    }
+    // Always refresh tasks to get any server-side changes
+    await fetchTasks(filters.value)
   } catch (error) {
     console.error('Failed to update task:', error)
   }
@@ -645,6 +643,9 @@ async function updateCompletedPomodoros(value: number) {
       tasks.value[index] = updatedTask
     }
     selectedTask.value = updatedTask
+    
+    // Refresh the task list to ensure we have the latest data
+    await fetchTasks(filters.value)
   } catch (error) {
     console.error('Failed to update completed pomodoros:', error)
   }
@@ -674,6 +675,9 @@ async function extendDueDate(task: Task) {
       tasks.value[index] = updatedTask
     }
 
+    // Refresh the task list to ensure we have the latest data
+    await fetchTasks(filters.value)
+
     // Show success message
     successMessage.value = `Task "${task.title}" moved to ${newDueDate.toLocaleDateString()}`
     showSuccessDialog.value = true
@@ -700,6 +704,9 @@ async function updateTaskDueDate(task: Task, newDate: Date) {
     if (index !== -1) {
       tasks.value[index] = updatedTask
     }
+
+    // Refresh the task list to ensure we have the latest data
+    await fetchTasks(filters.value)
 
     // Show success message
     successMessage.value = `Task "${task.title}" moved to ${newDate.toLocaleDateString()}`
