@@ -105,7 +105,7 @@
           class="rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
         >
           <option value="">All Projects</option>
-          <option v-for="project in projects" :key="project.id" :value="project.id">
+          <option v-for="project in sortedProjects" :key="project.id" :value="project.id">
             {{ project.name }}
           </option>
         </select>
@@ -173,7 +173,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import type { Project } from '~/types/project'
 import type { TaskFilters } from '~/utils/taskFilters'
 
@@ -190,6 +190,13 @@ const filters = ref<TaskFilters>({
 })
 
 const projects = ref<Project[]>([])
+
+// Computed property to sort projects alphabetically by name
+const sortedProjects = computed(() => {
+  return [...projects.value].sort((a, b) => {
+    return a.name.localeCompare(b.name)
+  })
+})
 
 // Load filters from local storage on mount
 onMounted(async () => {
