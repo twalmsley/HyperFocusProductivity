@@ -246,6 +246,15 @@
       @close="journalModal.closeModal"
       @submit="handleJournalSubmit"
     />
+
+    <!-- Action Confirmation Modal -->
+    <ConfirmActionModal
+      :show="showActionConfirmModal"
+      :type="actionConfirmType"
+      :item-name="actionConfirmItemName"
+      @cancel="cancelActionConfirmation"
+      @confirm="confirmAction"
+    />
   </div>
 </template>
 
@@ -254,6 +263,7 @@ import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { Calendar } from 'v-calendar'
 import { marked } from 'marked'
 import JournalEntryModal from '~/components/journal/JournalEntryModal.vue'
+import ConfirmActionModal from '~/components/ConfirmActionModal.vue'
 import type { JournalEntry, PartialJournalEntry } from '~/types/journal'
 import 'v-calendar/style.css'
 
@@ -357,6 +367,10 @@ const showEditModal = ref(false)
 const viewingEntry = ref<Partial<JournalEntry>>({})
 const editingEntry = ref<Partial<JournalEntry>>({})
 const isSaving = ref(false)
+const showActionConfirmModal = ref(false)
+const actionConfirmType = ref<'delete-journal'>('delete-journal')
+const actionConfirmItemName = ref('')
+const pendingAction = ref<(() => void) | null>(null)
 
 // Use the journal entry modal composable
 const journalModal = useJournalEntryModal()
@@ -443,8 +457,10 @@ async function handleJournalSubmit(entry: Partial<JournalEntry>) {
 }
 
 // Delete a specific entry
-const confirmDelete = async (entry: PartialJournalEntry) => {
-  if (confirm('Are you sure you want to delete this journal entry? This action cannot be undone.')) {
+const confirmDelete = (entry: PartialJournalEntry) => {
+  actionConfirmType.value = 'delete-journal'
+  actionConfirmItemName.value = entry.title
+  pendingAction.value = async () => {
     try {
       await $fetch(`/api/journal/${entry.id}`, {
         method: 'DELETE'
@@ -455,6 +471,21 @@ const confirmDelete = async (entry: PartialJournalEntry) => {
       console.error('Error deleting journal entry:', error)
     }
   }
+  showActionConfirmModal.value = true
+}
+
+// Action Confirmation
+const confirmAction = () => {
+  if (pendingAction.value) {
+    pendingAction.value()
+  }
+  showActionConfirmModal.value = false
+  pendingAction.value = null
+}
+
+const cancelActionConfirmation = () => {
+  showActionConfirmModal.value = false
+  pendingAction.value = null
 }
 
 // Fetch partial journal entries for a specific month

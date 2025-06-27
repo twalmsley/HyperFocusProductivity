@@ -165,6 +165,15 @@
       </div>
     </div>
 
+    <!-- Action Confirmation Modal -->
+    <ConfirmActionModal
+      :show="showActionConfirmModal"
+      :type="actionConfirmType"
+      :item-name="actionConfirmItemName"
+      @cancel="cancelActionConfirmation"
+      @confirm="confirmAction"
+    />
+
     <!-- Task Form Modal -->
     <TaskFormModal
       :show="showCreateModal || showEditModal"
@@ -190,6 +199,7 @@
 import { format } from 'date-fns'
 import TaskFormModal from '~/components/cyclic-tasks/TaskFormModal.vue'
 import TaskViewModal from '~/components/cyclic-tasks/TaskViewModal.vue'
+import ConfirmActionModal from '~/components/ConfirmActionModal.vue'
 
 const {
   status,
@@ -231,6 +241,10 @@ const showEditModal = ref(false)
 const showViewModal = ref(false)
 const taskToComplete = ref(null)
 const selectedTask = ref(null)
+const showActionConfirmModal = ref(false)
+const actionConfirmType = ref<'delete-task' | 'complete-task'>('delete-task')
+const actionConfirmItemName = ref('')
+const pendingAction = ref<(() => void) | null>(null)
 
 // Add state for expanded groups with localStorage persistence
 const expandedGroups = ref(new Set<string>())
@@ -392,19 +406,22 @@ const confirmTaskCompletion = async () => {
 }
 
 // Delete task
-const deleteTask = async (task) => {
-  if (!confirm('Are you sure you want to delete this task?')) return
-  
-  try {
-    const response = await fetch(`/api/cyclic-tasks/${task.id}`, {
-      method: 'DELETE'
-    })
-    if (!response.ok) throw new Error('Failed to delete task')
-    await fetchTasks() // Refresh the list
-    showViewModal.value = false
-  } catch (error) {
-    console.error('Error deleting task:', error)
+const deleteTask = (task) => {
+  actionConfirmType.value = 'delete-task'
+  actionConfirmItemName.value = task.title
+  pendingAction.value = async () => {
+    try {
+      const response = await fetch(`/api/cyclic-tasks/${task.id}`, {
+        method: 'DELETE'
+      })
+      if (!response.ok) throw new Error('Failed to delete task')
+      await fetchTasks() // Refresh the list
+      showViewModal.value = false
+    } catch (error) {
+      console.error('Error deleting task:', error)
+    }
   }
+  showActionConfirmModal.value = true
 }
 
 // Toggle group expansion
@@ -427,4 +444,18 @@ onMounted(async () => {
   await fetchTasks()
   loadExpandedGroups()
 })
+
+// Action Confirmation
+const confirmAction = () => {
+  if (pendingAction.value) {
+    pendingAction.value()
+  }
+  showActionConfirmModal.value = false
+  pendingAction.value = null
+}
+
+const cancelActionConfirmation = () => {
+  showActionConfirmModal.value = false
+  pendingAction.value = null
+}
 </script> 
