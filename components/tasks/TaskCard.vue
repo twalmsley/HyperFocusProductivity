@@ -2,7 +2,7 @@
   <div 
     class="rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
     :class="{
-      'bg-white': !task.project?.color,
+      'bg-gray-200': !task.project?.color,
       'text-white': task.project?.color && isDarkColor(task.project.color),
       'text-gray-900': task.project?.color && !isDarkColor(task.project.color)
     }"
