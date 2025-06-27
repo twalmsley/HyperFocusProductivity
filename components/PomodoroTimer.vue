@@ -114,11 +114,20 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <PomodoroTimerConfirmModal
+      :show="showConfirmModal"
+      :type="confirmModalType"
+      @cancel="cancelConfirmation"
+      @confirm="confirmAction"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import PomodoroTimerConfirmModal from './PomodoroTimerConfirmModal.vue'
 
 const props = defineProps<{
   totalRounds: number
@@ -140,6 +149,11 @@ const currentRound = ref(1)
 const currentPhase = ref('Focus')
 const timerInterval = ref<number | null>(null)
 const bellSound = ref<HTMLAudioElement | null>(null)
+
+// Confirmation modal state
+const showConfirmModal = ref(false)
+const confirmModalType = ref<'close' | 'skip' | 'reset'>('close')
+const pendingAction = ref<(() => void) | null>(null)
 
 // Calculate remaining rounds based on total and already completed
 const totalRemainingRounds = computed(() => {
@@ -252,33 +266,63 @@ function handlePhaseComplete() {
   }
 }
 
-async function handleClose() {
+function handleClose() {
   if (isRunning.value) {
-    const confirmed = await window.confirm('Are you sure you want to close the timer? Your progress will be lost.')
-    if (!confirmed) return
+    confirmModalType.value = 'close'
+    pendingAction.value = () => {
+      pauseTimer()
+      document.title = 'HyperFocus Productivity'
+      emit('close')
+    }
+    showConfirmModal.value = true
+  } else {
+    pauseTimer()
+    document.title = 'HyperFocus Productivity'
+    emit('close')
   }
-  pauseTimer()
-  document.title = 'HyperFocus Productivity'
-  emit('close')
 }
 
-async function handleSkip() {
+function handleSkip() {
   if (isRunning.value) {
-    const confirmed = await window.confirm('Are you sure you want to skip this phase?')
-    if (!confirmed) return
+    confirmModalType.value = 'skip'
+    pendingAction.value = () => {
+      handlePhaseComplete()
+    }
+    showConfirmModal.value = true
+  } else {
+    handlePhaseComplete()
   }
-  handlePhaseComplete()
 }
 
-async function handleReset() {
+function handleReset() {
   if (isRunning.value) {
-    const confirmed = await window.confirm('Are you sure you want to reset the timer? Your progress will be lost.')
-    if (!confirmed) return
+    confirmModalType.value = 'reset'
+    pendingAction.value = () => {
+      pauseTimer()
+      currentRound.value = 1
+      currentPhase.value = 'Focus'
+      timeRemaining.value = props.focusDuration * 60
+    }
+    showConfirmModal.value = true
+  } else {
+    pauseTimer()
+    currentRound.value = 1
+    currentPhase.value = 'Focus'
+    timeRemaining.value = props.focusDuration * 60
   }
-  pauseTimer()
-  currentRound.value = 1
-  currentPhase.value = 'Focus'
-  timeRemaining.value = props.focusDuration * 60
+}
+
+function cancelConfirmation() {
+  showConfirmModal.value = false
+  pendingAction.value = null
+}
+
+function confirmAction() {
+  if (pendingAction.value) {
+    pendingAction.value()
+  }
+  showConfirmModal.value = false
+  pendingAction.value = null
 }
 
 onMounted(() => {
