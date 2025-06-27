@@ -31,3 +31,5 @@ logs
 
 docker-compose.yml
 docker-compose-live.yml
+
+/coverage/
