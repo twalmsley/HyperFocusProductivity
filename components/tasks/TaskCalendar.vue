@@ -86,13 +86,25 @@
               @click="viewTask(task)"
               :class="[
                 'p-2 rounded text-xs cursor-pointer transition-all duration-200 hover:shadow-md',
-                getTaskStatusClass(task.status),
-                getTaskPriorityClass(task.priority)
+                getTaskCardClasses(task)
               ]"
+              :style="task.project?.color ? { backgroundColor: task.project.color } : {}"
             >
-              <div class="font-medium truncate">{{ task.title }}</div>
+              <div 
+                class="font-medium truncate"
+                :class="{
+                  'text-white': task.project?.color && isDarkColor(task.project.color),
+                  'text-gray-900': !task.project?.color || (task.project?.color && !isDarkColor(task.project.color))
+                }"
+              >{{ task.title }}</div>
               <div class="flex items-center justify-between mt-1">
-                <span class="text-xs opacity-75">
+                <span 
+                  class="text-xs opacity-75"
+                  :class="{
+                    'text-white/80': task.project?.color && isDarkColor(task.project.color),
+                    'text-gray-600': !task.project?.color || (task.project?.color && !isDarkColor(task.project.color))
+                  }"
+                >
                   {{ task.estimatedPomodoros }}🍅
                 </span>
                 <div class="flex space-x-1">
@@ -100,13 +112,17 @@
                     @click.stop="updateTaskStatus(task)"
                     :class="[
                       'w-4 h-4 rounded-full border-2 transition-colors',
-                      getStatusButtonClass(task.status)
+                      getStatusButtonClass(task)
                     ]"
                     :title="getStatusTitle(task.status)"
                   />
                   <button
                     @click.stop="startPomodoro(task)"
                     class="text-xs opacity-75 hover:opacity-100"
+                    :class="{
+                      'text-white/80': task.project?.color && isDarkColor(task.project.color),
+                      'text-gray-600': !task.project?.color || (task.project?.color && !isDarkColor(task.project.color))
+                    }"
                     title="Start Pomodoro"
                   >
                     ▶️
@@ -166,6 +182,23 @@ const calendarDays = computed(() => {
   }))
 })
 
+// Function to determine if a color is dark (for text contrast)
+function isDarkColor(color: string): boolean {
+  // Remove # if present
+  const hex = color.replace('#', '')
+  
+  // Convert to RGB
+  const r = parseInt(hex.substr(0, 2), 16)
+  const g = parseInt(hex.substr(2, 2), 16)
+  const b = parseInt(hex.substr(4, 2), 16)
+  
+  // Calculate luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  
+  // Return true if color is dark (luminance < 0.5)
+  return luminance < 0.5
+}
+
 function previousMonth() {
   currentDate.value = subMonths(currentDate.value, 1)
 }
@@ -185,8 +218,14 @@ function getTasksForDate(date: Date): Task[] {
   })
 }
 
-function getTaskStatusClass(status: string): string {
-  switch (status) {
+function getTaskCardClasses(task: Task): string {
+  // If task has a project color, use minimal classes since we're setting background via style
+  if (task.project?.color) {
+    return 'border border-gray-200'
+  }
+  
+  // Fallback to status-based colors when no project color
+  switch (task.status) {
     case 'BACKLOG':
       return 'bg-yellow-100 text-yellow-800 border border-yellow-200'
     case 'IN_PROGRESS':
@@ -213,8 +252,18 @@ function getTaskPriorityClass(priority: string): string {
   }
 }
 
-function getStatusButtonClass(status: string): string {
-  switch (status) {
+function getStatusButtonClass(task: Task): string {
+  // If task has a project color, adapt button colors for contrast
+  if (task.project?.color) {
+    if (isDarkColor(task.project.color)) {
+      return 'border-white bg-white/20'
+    } else {
+      return 'border-gray-400 bg-gray-100'
+    }
+  }
+  
+  // Fallback to status-based colors
+  switch (task.status) {
     case 'BACKLOG':
       return 'border-yellow-400 bg-yellow-100'
     case 'IN_PROGRESS':

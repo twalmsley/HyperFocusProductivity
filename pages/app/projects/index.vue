@@ -420,7 +420,13 @@ async function saveProject(project: Partial<Project>) {
     // Update the project in the local state
     const index = projects.value.findIndex(p => p.id === updatedProject.id)
     if (index !== -1) {
-      projects.value[index] = updatedProject
+      // Preserve the existing _count data to maintain progress tracker
+      const existingProject = projects.value[index]
+      projects.value[index] = {
+        ...updatedProject,
+        _count: existingProject._count || updatedProject._count,
+        tasks: existingProject.tasks || updatedProject.tasks
+      }
     }
 
     closeEditModal()
