@@ -36,7 +36,7 @@
           class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm rounded-md"
         >
           <option value="">No Project</option>
-          <option v-for="project in projects" :key="project.id" :value="project.id">
+          <option v-for="project in sortedProjects" :key="project.id" :value="project.id">
             {{ project.name }}
           </option>
         </select>
@@ -182,6 +182,13 @@ const task = ref<NewTask>({
 })
 
 const projects = ref<Project[]>([])
+
+// Computed property to sort projects alphabetically by name
+const sortedProjects = computed(() => {
+  return [...projects.value].sort((a, b) => {
+    return a.name.localeCompare(b.name)
+  })
+})
 
 const repeatSchedule = ref<RepeatSchedule>({
   repeatType: null

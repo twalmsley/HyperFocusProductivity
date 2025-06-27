@@ -27,7 +27,7 @@
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
           >
             <option value="">No Project</option>
-            <option v-for="project in projects" :key="project.id" :value="project.id">
+            <option v-for="project in sortedProjects" :key="project.id" :value="project.id">
               {{ project.name }}
             </option>
           </select>
@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import RepeatScheduleSelector from './RepeatScheduleSelector.vue'
 import type { Task, RepeatSchedule } from '~/types/task'
 import type { Project } from '~/types/project'
@@ -139,6 +139,13 @@ const task = ref<Task>({
 })
 
 const projects = ref<Project[]>([])
+
+// Computed property to sort projects alphabetically by name
+const sortedProjects = computed(() => {
+  return [...projects.value].sort((a, b) => {
+    return a.name.localeCompare(b.name)
+  })
+})
 
 // Initialize repeat schedule from task data
 const repeatSchedule = ref<RepeatSchedule>({
