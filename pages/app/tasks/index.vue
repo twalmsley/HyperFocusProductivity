@@ -691,11 +691,15 @@ async function updateTaskDueDate(task: Task, newDate: Date) {
   if (!user) return
 
   try {
+    // Set the time to noon in the local timezone to avoid timezone issues
+    const dateWithNoon = new Date(newDate)
+    dateWithNoon.setHours(12, 0, 0, 0)
+
     const updatedTask = await $fetch('/api/tasks', {
       method: 'PATCH',
       body: {
         id: task.id,
-        dueDate: newDate.toISOString()
+        dueDate: dateWithNoon.toISOString()
       }
     }) as Task
 
@@ -707,10 +711,6 @@ async function updateTaskDueDate(task: Task, newDate: Date) {
 
     // Refresh the task list to ensure we have the latest data
     await fetchTasks(filters.value)
-
-    // Show success message
-    successMessage.value = `Task "${task.title}" moved to ${newDate.toLocaleDateString()}`
-    showSuccessDialog.value = true
   } catch (error) {
     console.error('Failed to update task due date:', error)
   }
