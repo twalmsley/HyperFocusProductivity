@@ -128,6 +128,7 @@ import JournalEntryModal from '~/components/journal/JournalEntryModal.vue'
 import JournalEntryViewModal from '~/components/journal/JournalEntryViewModal.vue'
 import type { Task } from '~/types/task'
 import type { JournalEntry } from '~/types/journal'
+import DOMPurify from 'dompurify'
 
 const {
   status,
@@ -416,7 +417,7 @@ const formatDate = (dateString: string) => {
 // Add renderMarkdown function
 const renderMarkdown = (content: string) => {
   if (!content) return ''
-  return marked(content)
+  return DOMPurify.sanitize(marked(content) as string)
 }
 
 // Update the openCreateModal function to use the composable

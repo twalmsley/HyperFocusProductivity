@@ -115,6 +115,7 @@
 import { ref, watch } from 'vue'
 import { marked } from 'marked'
 import type { JournalEntryForm } from '~/types/journal'
+import DOMPurify from 'dompurify'
 
 // Configure marked options for proper markdown rendering
 marked.setOptions({
@@ -212,6 +213,6 @@ function removeTag(tag: string) {
 }
 
 function renderMarkdown(content: string): string {
-  return marked(content) as string
+  return DOMPurify.sanitize(marked(content) as string)
 }
 </script> 

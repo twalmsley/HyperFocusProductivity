@@ -71,6 +71,7 @@
 <script setup lang="ts">
 import type { Task } from '~/types/task'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 // Configure marked options for proper markdown rendering
 marked.setOptions({
@@ -89,6 +90,6 @@ defineEmits<{
 
 function renderMarkdown(content: string): string {
   if (!content) return ''
-  return marked(content) as string
+  return DOMPurify.sanitize(marked(content) as string)
 }
 </script> 

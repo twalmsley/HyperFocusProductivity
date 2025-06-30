@@ -239,6 +239,7 @@ import type { Task } from '~/types/task'
 import ConfirmDialog from '~/components/ConfirmDialog.vue'
 import { isTaskOverdue } from '~/utils/taskUtils'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 // Configure marked options for proper markdown rendering
 marked.setOptions({
@@ -284,7 +285,7 @@ function isDarkColor(color: string): boolean {
 
 function renderMarkdown(content: string): string {
   if (!content) return ''
-  return marked(content) as string
+  return DOMPurify.sanitize(marked(content) as string)
 }
 
 function handleStatusUpdate(task: Task) {

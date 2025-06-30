@@ -109,6 +109,7 @@ import RepeatScheduleSelector from './RepeatScheduleSelector.vue'
 import type { Task, RepeatSchedule } from '~/types/task'
 import type { Project } from '~/types/project'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 // Configure marked options for proper markdown rendering
 marked.setOptions({
@@ -128,7 +129,7 @@ const emit = defineEmits<{
 
 function renderMarkdown(content: string): string {
   if (!content) return ''
-  return marked(content) as string
+  return DOMPurify.sanitize(marked(content) as string)
 }
 
 // Create a local copy of the task to avoid direct mutation

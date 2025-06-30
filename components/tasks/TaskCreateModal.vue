@@ -138,6 +138,7 @@ import RepeatScheduleSelector from '~/components/tasks/RepeatScheduleSelector.vu
 import type { RepeatSchedule } from '~/types/task'
 import type { Project } from '~/types/project'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 // Configure marked options for proper markdown rendering
 marked.setOptions({
@@ -158,7 +159,7 @@ const emit = defineEmits<{
 
 function renderMarkdown(content: string): string {
   if (!content) return ''
-  return marked(content) as string
+  return DOMPurify.sanitize(marked(content) as string)
 }
 
 interface NewTask {

@@ -266,6 +266,7 @@ import JournalEntryModal from '~/components/journal/JournalEntryModal.vue'
 import ConfirmActionModal from '~/components/ConfirmActionModal.vue'
 import type { JournalEntry, PartialJournalEntry } from '~/types/journal'
 import 'v-calendar/style.css'
+import DOMPurify from 'dompurify'
 
 const {
   status,
@@ -551,7 +552,7 @@ const onDayClick = (day: any) => {
 // Update the renderMarkdown function
 const renderMarkdown = (content: string) => {
   if (!content) return ''
-  return marked(content)
+  return DOMPurify.sanitize(marked(content) as string)
 }
 
 // Add new functions for date and page updates

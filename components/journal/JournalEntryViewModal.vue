@@ -33,6 +33,7 @@
 <script setup lang="ts">
 import { marked } from 'marked'
 import { computed } from 'vue'
+import DOMPurify from 'dompurify'
 
 const props = defineProps({
   show: Boolean,
@@ -68,6 +69,6 @@ function getMoodEmoji(mood: string | null) {
 
 function renderMarkdown(content: string) {
   if (!content) return ''
-  return marked(content)
+  return DOMPurify.sanitize(marked(content) as string)
 }
 </script> 
