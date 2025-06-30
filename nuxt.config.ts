@@ -63,7 +63,9 @@ export default defineNuxtConfig({
         cors: true,
         headers: {
           'Access-Control-Allow-Credentials': 'true',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
+            ? 'https://hyperfocusproductivity.com' 
+            : 'https://immune-glowing-flea.ngrok-free.app',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
           'Access-Control-Max-Age': '3600'
         }
