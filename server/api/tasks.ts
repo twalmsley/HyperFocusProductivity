@@ -31,11 +31,10 @@ export default defineEventHandler(async (event) => {
         status: queryStatus,
         priority: queryPriority,
         dueDate: queryDueDate,
-        userId: queryUserId
       } = query
       
       const whereClause: any = {
-        userId: queryUserId || user.id,
+        userId: user.id,
       }
       
       // Add project filter if projectId is provided
