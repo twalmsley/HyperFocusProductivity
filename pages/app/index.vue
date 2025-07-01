@@ -32,53 +32,45 @@
             <div v-else-if="recentJournalEntries.length === 0" class="text-center text-gray-500 py-4">
               No entries yet. Start your journaling journey today!
             </div>
-            <div v-else class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mood</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="entry in recentJournalEntries" :key="entry.id" 
-                      class="hover:bg-gray-50 cursor-pointer transition-colors"
-                      @click="viewJournalEntry(entry)">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900">{{ entry.title }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                        {{ entry.type }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span v-if="entry.mood" class="text-xl" :title="entry.mood">
-                        {{ getMoodEmoji(entry.mood) }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4">
-                      <div class="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none">
-                        {{ entry.content || 'No content available' }}
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ formatDate(entry.createdAt) }}
-                    </td>
-                    <td class="px-6 py-4">
-                      <div class="flex flex-wrap gap-1">
-                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                          Tags available in full view
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div v-else class="space-y-4">
+              <div 
+                v-for="entry in recentJournalEntries" 
+                :key="entry.id" 
+                class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                @click="viewJournalEntry(entry)"
+              >
+                <!-- Entry Header -->
+                <div class="flex items-start justify-between mb-3">
+                  <h3 class="text-lg font-medium text-gray-900 line-clamp-2">{{ entry.title }}</h3>
+                  <div class="flex items-center space-x-2 ml-2">
+                    <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                      {{ entry.type }}
+                    </span>
+                    <span v-if="entry.mood" class="text-xl" :title="entry.mood">
+                      {{ getMoodEmoji(entry.mood) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Entry Content -->
+                <div class="mb-3">
+                  <p class="text-sm text-gray-600 line-clamp-3">
+                    {{ entry.content || 'No content available' }}
+                  </p>
+                </div>
+
+                <!-- Entry Footer -->
+                <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+                  <div class="text-xs text-gray-500">
+                    {{ formatDate(entry.createdAt) }}
+                  </div>
+                  <div class="flex items-center space-x-1">
+                    <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                      Click to view full entry
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
