@@ -75,67 +75,77 @@
               leave-from-class="transform translate-y-0 opacity-100"
               leave-to-class="transform -translate-y-2 opacity-0"
             >
-              <div v-show="isGroupExpanded(group.name)" class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gray-50">
-                    <tr>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Completed</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-gray-200">
-                    <tr v-for="task in group.tasks" :key="task.id">
-                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ task.title }}</td>
-                      <td class="px-6 py-4 text-sm text-gray-500">{{ task.description || '-' }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <div v-show="isGroupExpanded(group.name)" class="p-4">
+                <div class="space-y-4">
+                  <div 
+                    v-for="task in group.tasks" 
+                    :key="task.id" 
+                    class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow"
+                  >
+                    <!-- Task Header -->
+                    <div class="flex items-start justify-between mb-3">
+                      <h3 class="text-lg font-medium text-gray-900 line-clamp-2">{{ task.title }}</h3>
+                      <div class="flex items-center space-x-2 ml-2">
+                        <button
+                          @click="viewTask(task)"
+                          class="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                          title="View details"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                          </svg>
+                        </button>
+                        <button
+                          @click="editTask(task)"
+                          class="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                          title="Edit task"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Task Description -->
+                    <div v-if="task.description" class="mb-3">
+                      <p class="text-sm text-gray-600 line-clamp-3">{{ task.description }}</p>
+                    </div>
+
+                    <!-- Last Completed Date -->
+                    <div class="mb-4">
+                      <p class="text-xs text-gray-500">
+                        <span class="font-medium">Last completed:</span>
                         {{ task.lastCompletedDate ? formatDate(task.lastCompletedDate) : 'Never' }}
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div class="flex items-center space-x-3">
-                          <button
-                            @click="viewTask(task)"
-                            class="text-gray-400 hover:text-gray-600 transition-colors"
-                            title="View details"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                              <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-                            </svg>
-                          </button>
-                          <button
-                            @click="editTask(task)"
-                            class="text-gray-400 hover:text-gray-600 transition-colors"
-                            title="Edit task"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                            </svg>
-                          </button>
-                          <button
-                            @click="markAsCompleted(task)"
-                            class="text-gray-400 hover:text-gray-600 transition-colors"
-                            title="Mark as completed"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                          </button>
-                          <button
-                            @click="deleteTask(task)"
-                            class="text-gray-400 hover:text-red-600 transition-colors"
-                            title="Delete task"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                      </p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+                      <button
+                        @click="deleteTask(task)"
+                        class="flex items-center space-x-1 text-sm text-red-600 hover:text-red-700 transition-colors"
+                        title="Delete task"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Delete</span>
+                      </button>
+                      <button
+                        @click="markAsCompleted(task)"
+                        class="flex items-center space-x-1 text-sm text-green-600 hover:text-green-700 transition-colors"
+                        title="Mark as completed"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Complete</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </transition>
           </div>
@@ -229,18 +239,32 @@ interface ExtendedUser {
   image?: string | null;
 }
 
+interface CyclicTask {
+  id: string;
+  groupName: string;
+  title: string;
+  description?: string;
+  lastCompletedDate?: string;
+  createdAt: string;
+}
+
+interface TaskGroup {
+  name: string;
+  tasks: CyclicTask[];
+}
+
 const userSession = await getSession() as ExtendedSession
 const user = userSession?.user as ExtendedUser | undefined
 const router = useRouter()
 
 const isLoading = ref(true)
-const cyclicTasks = ref([])
+const cyclicTasks = ref<CyclicTask[]>([])
 const showConfirmDialog = ref(false)
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showViewModal = ref(false)
-const taskToComplete = ref(null)
-const selectedTask = ref(null)
+const taskToComplete = ref<CyclicTask | null>(null)
+const selectedTask = ref<{ id?: string; groupName: string; title: string; description?: string } | undefined>(undefined)
 const showActionConfirmModal = ref(false)
 const actionConfirmType = ref<'delete-task' | 'complete-task'>('delete-task')
 const actionConfirmItemName = ref('')
@@ -286,8 +310,8 @@ const fetchTasks = async () => {
 }
 
 // Group tasks by groupName
-const groupedTasks = computed(() => {
-  const groups = {}
+const groupedTasks = computed((): TaskGroup[] => {
+  const groups: Record<string, TaskGroup> = {}
   cyclicTasks.value.forEach(task => {
     if (!groups[task.groupName]) {
       groups[task.groupName] = {
@@ -324,18 +348,18 @@ const formatDate = (date: string) => {
 
 // Open create modal with group name
 const openCreateModal = (groupName?: string) => {
-  selectedTask.value = groupName ? { groupName } : {}
+  selectedTask.value = groupName ? { groupName, title: '', description: '' } : { groupName: '', title: '', description: '' }
   showCreateModal.value = true
 }
 
 // View task details
-const viewTask = (task) => {
+const viewTask = (task: CyclicTask) => {
   selectedTask.value = task
   showViewModal.value = true
 }
 
 // Edit task
-const editTask = (task) => {
+const editTask = (task: CyclicTask) => {
   selectedTask.value = { ...task } // Create a copy of the task
   showViewModal.value = false
   showEditModal.value = true
@@ -345,17 +369,17 @@ const editTask = (task) => {
 const closeTaskForm = () => {
   showCreateModal.value = false
   showEditModal.value = false
-  selectedTask.value = null
+  selectedTask.value = undefined
 }
 
 // Close view modal
 const closeViewModal = () => {
   showViewModal.value = false
-  selectedTask.value = null
+  selectedTask.value = undefined
 }
 
 // Handle task form submit
-const handleTaskSubmit = async (task) => {
+const handleTaskSubmit = async (task: CyclicTask) => {
   try {
     if (showEditModal.value) {
       const response = await fetch(`/api/cyclic-tasks/${task.id}`, {
@@ -385,7 +409,7 @@ const handleTaskSubmit = async (task) => {
 }
 
 // Mark task as completed
-const markAsCompleted = (task) => {
+const markAsCompleted = (task: CyclicTask) => {
   taskToComplete.value = task
   showViewModal.value = false
   showConfirmDialog.value = true
@@ -395,6 +419,7 @@ const markAsCompleted = (task) => {
 const confirmTaskCompletion = async () => {
   showConfirmDialog.value = false
   try {
+    if (!taskToComplete.value) return
     const response = await fetch(`/api/cyclic-tasks/${taskToComplete.value.id}/complete`, {
       method: 'POST'
     })
@@ -406,7 +431,7 @@ const confirmTaskCompletion = async () => {
 }
 
 // Delete task
-const deleteTask = (task) => {
+const deleteTask = (task: CyclicTask) => {
   actionConfirmType.value = 'delete-task'
   actionConfirmItemName.value = task.title
   pendingAction.value = async () => {
