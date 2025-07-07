@@ -16,6 +16,8 @@
             @reset="resetSettings"
           />
           
+          <DataExportSection />
+          
           <SubscriptionSection />
         </div>
       </div>
@@ -32,6 +34,7 @@
 
 <script setup lang="ts">
 import PomodoroSettings from '~/components/settings/PomodoroSettings.vue'
+import DataExportSection from '~/components/settings/DataExportSection.vue'
 import SubscriptionSection from '~/components/settings/SubscriptionSection.vue'
 import ConfirmModal from '~/components/settings/ConfirmModal.vue'
 
