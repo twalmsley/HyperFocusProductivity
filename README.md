@@ -36,6 +36,48 @@ The app includes a comprehensive data export feature that allows users to downlo
 
 The export process includes a progress indicator and success/error feedback to ensure a smooth user experience.
 
+## Data Deletion Feature
+
+The app also provides a secure data deletion feature that allows users to permanently delete all their data and account.
+
+### Safety Measures
+
+The deletion process includes multiple safety confirmations:
+1. **Data Backup Confirmation**: Users must confirm they have downloaded their data
+2. **Permanent Deletion Warning**: Users must acknowledge that deletion is irreversible
+3. **Account Deletion Confirmation**: Users must explicitly confirm they want to delete their account
+4. **Final Confirmation**: A final checkbox to proceed with the deletion
+
+### What Gets Deleted
+
+When a user deletes their data, the following is permanently removed:
+- All user profile information
+- All settings and preferences
+- All projects and associated data
+- All tasks and their history
+- All focus sessions and timers
+- All journal entries
+- All cyclic tasks
+- All habit trackers and entries
+- All subscription data
+- The user account itself
+
+### How to Delete Data
+
+1. Navigate to the Settings page
+2. Scroll down to the "Delete All Data" section (Danger Zone)
+3. Click "Delete All Data"
+4. Complete all required confirmation checkboxes
+5. Click "Delete All Data" in the confirmation modal
+6. The user will be redirected to the home page after successful deletion
+
+### Important Notes
+
+- **This action is permanent and cannot be undone**
+- **No data recovery is possible after deletion**
+- **Users are strongly encouraged to export their data before deletion**
+- **The deletion process is immediate and affects all associated data**
+
 ## Setup
 
 Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
