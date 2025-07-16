@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-    <div class="bg-white/95 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+    <div class="bg-white/95 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
       <div class="flex justify-between items-start mb-4">
         <h3 class="text-xl font-medium text-gray-900">Edit Task</h3>
         <button @click="$emit('close')" class="text-gray-400 hover:text-gray-500">
@@ -61,10 +61,17 @@
           <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
           <div class="mt-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
-              <textarea id="notes" v-model="task.notes" rows="4" maxlength="2000"
-                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"></textarea>
+              <textarea 
+                ref="textareaRef"
+                id="notes" 
+                v-model="task.notes" 
+                rows="8" 
+                maxlength="2000"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)] resize-y"
+                @input="updateMarkdownHeight"
+              ></textarea>
             </div>
-            <div class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto max-h-32">
+            <div ref="markdownRef" class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-y-auto">
               <div v-html="renderMarkdown(task.notes || '')"></div>
             </div>
           </div>
@@ -104,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import RepeatScheduleSelector from './RepeatScheduleSelector.vue'
 import type { Task, RepeatSchedule } from '~/types/task'
 import type { Project } from '~/types/project'
@@ -169,9 +176,38 @@ function parseRepeatDays(repeatDays: string | null): number[] | undefined {
   }
 }
 
+// Refs for dynamic height matching
+const textareaRef = ref<HTMLTextAreaElement>()
+const markdownRef = ref<HTMLDivElement>()
+
+// Function to update markdown div height to match textarea
+function updateMarkdownHeight() {
+  if (textareaRef.value && markdownRef.value) {
+    const textareaHeight = textareaRef.value.offsetHeight
+    markdownRef.value.style.height = `${textareaHeight}px`
+  }
+}
+
 // Fetch projects when component mounts
 onMounted(async () => {
   await fetchProjects()
+  
+  // Set up resize observer for textarea when component mounts
+  if (props.show && textareaRef.value) {
+    nextTick(() => {
+      updateMarkdownHeight()
+      
+      const resizeObserver = new ResizeObserver(() => {
+        updateMarkdownHeight()
+      })
+      resizeObserver.observe(textareaRef.value!)
+      
+      // Clean up observer when component unmounts
+      onUnmounted(() => {
+        resizeObserver.disconnect()
+      })
+    })
+  }
 })
 
 async function fetchProjects() {
@@ -208,6 +244,30 @@ watch(() => props.task, (newTask) => {
     repeatDayOfWeek: newTask.repeatDayOfWeek || undefined
   }
 }, { deep: true })
+
+// Watch for modal show to set up resize observer
+watch(() => props.show, (show) => {
+  if (show) {
+    nextTick(() => {
+      updateMarkdownHeight()
+      
+      // Set up resize observer for textarea
+      if (textareaRef.value) {
+        const resizeObserver = new ResizeObserver(() => {
+          updateMarkdownHeight()
+        })
+        resizeObserver.observe(textareaRef.value)
+        
+        // Clean up observer when modal closes
+        watch(() => props.show, (newShow) => {
+          if (!newShow) {
+            resizeObserver.disconnect()
+          }
+        })
+      }
+    })
+  }
+})
 
 function handleSave() {
   const taskData = { 

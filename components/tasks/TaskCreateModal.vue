@@ -64,14 +64,16 @@
         <div class="mt-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
             <textarea
+              ref="textareaRef"
               id="notes"
               v-model="task.notes"
-              rows="3"
+              rows="8"
               maxlength="2000"
-              class="shadow-sm focus:ring-[var(--primary)] focus:border-[var(--primary)] block w-full sm:text-sm border-gray-300 rounded-md"
+              class="shadow-sm focus:ring-[var(--primary)] focus:border-[var(--primary)] block w-full sm:text-sm border-gray-300 rounded-md resize-y"
+              @input="updateMarkdownHeight"
             ></textarea>
           </div>
-          <div class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto max-h-32">
+          <div ref="markdownRef" class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-y-auto">
             <div v-html="renderMarkdown(task.notes || '')"></div>
           </div>
         </div>
@@ -213,6 +215,43 @@ const selectedProjectId = computed({
 const {
   getSession,
 } = useAuth()
+
+// Refs for dynamic height matching
+const textareaRef = ref<HTMLTextAreaElement>()
+const markdownRef = ref<HTMLDivElement>()
+
+// Function to update markdown div height to match textarea
+function updateMarkdownHeight() {
+  if (textareaRef.value && markdownRef.value) {
+    const textareaHeight = textareaRef.value.offsetHeight
+    markdownRef.value.style.height = `${textareaHeight}px`
+  }
+}
+
+// Watch for modal show to set initial height
+watch(() => props.show, (show) => {
+  if (show) {
+    // Use nextTick to ensure DOM is updated
+    nextTick(() => {
+      updateMarkdownHeight()
+      
+      // Set up resize observer for textarea
+      if (textareaRef.value) {
+        const resizeObserver = new ResizeObserver(() => {
+          updateMarkdownHeight()
+        })
+        resizeObserver.observe(textareaRef.value)
+        
+        // Clean up observer when modal closes
+        watch(() => props.show, (newShow) => {
+          if (!newShow) {
+            resizeObserver.disconnect()
+          }
+        })
+      }
+    })
+  }
+})
 
 // Fetch projects when modal opens
 watch(() => props.show, async (show) => {

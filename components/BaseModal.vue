@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-    <div class="bg-white/95 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+    <div class="bg-white/95 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
       <div class="flex justify-between items-start mb-4">
         <slot name="header"></slot>
         <button @click="$emit('close')" class="text-gray-400 hover:text-gray-500">
