@@ -192,15 +192,17 @@
             <div class="mt-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
                 <textarea
+                  ref="editTextareaRef"
                   id="edit-content"
                   v-model="editingEntry.content"
                   rows="12"
                   maxlength="10000"
                   required
-                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)] resize-y"
+                  @input="updateEditMarkdownHeight"
                 ></textarea>
               </div>
-              <div class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto max-h-96">
+              <div ref="editMarkdownRef" class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-y-auto">
                 <div v-html="renderMarkdown(editingEntry.content || '')"></div>
               </div>
             </div>
@@ -373,6 +375,18 @@ const actionConfirmType = ref<'delete-journal'>('delete-journal')
 const actionConfirmItemName = ref('')
 const pendingAction = ref<(() => void) | null>(null)
 
+// Refs for dynamic height matching in edit modal
+const editTextareaRef = ref<HTMLTextAreaElement>()
+const editMarkdownRef = ref<HTMLDivElement>()
+
+// Function to update edit markdown div height to match textarea
+function updateEditMarkdownHeight() {
+  if (editTextareaRef.value && editMarkdownRef.value) {
+    const textareaHeight = editTextareaRef.value.offsetHeight
+    editMarkdownRef.value.style.height = `${textareaHeight}px`
+  }
+}
+
 // Use the journal entry modal composable
 const journalModal = useJournalEntryModal()
 
@@ -399,6 +413,26 @@ const editEntry = async (entry: PartialJournalEntry) => {
     const fullEntry = await $fetch<JournalEntry>(`/api/journal/${entry.id}`)
     editingEntry.value = { ...fullEntry }
     showEditModal.value = true
+    
+    // Set up resize observer when edit modal opens
+    nextTick(() => {
+      updateEditMarkdownHeight()
+      
+      // Set up resize observer for textarea
+      if (editTextareaRef.value) {
+        const resizeObserver = new ResizeObserver(() => {
+          updateEditMarkdownHeight()
+        })
+        resizeObserver.observe(editTextareaRef.value)
+        
+        // Clean up observer when modal closes
+        watch(() => showEditModal.value, (modalShow) => {
+          if (!modalShow) {
+            resizeObserver.disconnect()
+          }
+        })
+      }
+    })
   } catch (error) {
     console.error('Error fetching full journal entry:', error)
   }
