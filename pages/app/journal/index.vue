@@ -135,109 +135,14 @@
     </div>
 
     <!-- Edit Modal -->
-    <div v-if="showEditModal" class="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 w-full max-w-5xl mx-4 max-h-[90vh] overflow-y-auto shadow-xl">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">Edit Journal Entry</h2>
-          <button @click="closeEditModal" class="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <form @submit.prevent="saveEdit" class="space-y-4">
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div>
-              <label for="edit-title" class="block text-sm font-medium text-gray-700">Title</label>
-              <input
-                id="edit-title"
-                v-model="editingEntry.title"
-                type="text"
-                maxlength="200"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              />
-            </div>
-            <div>
-              <label for="edit-type" class="block text-sm font-medium text-gray-700">Entry Type</label>
-              <select
-                id="edit-type"
-                v-model="editingEntry.type"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              >
-                <option value="DAILY">Daily Journal</option>
-                <option value="FREEFORM">Free-form Entry</option>
-                <option value="REVIEW">Review Entry</option>
-              </select>
-            </div>
-            <div>
-              <label for="edit-mood" class="block text-sm font-medium text-gray-700">Mood</label>
-              <select
-                id="edit-mood"
-                v-model="editingEntry.mood"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
-              >
-                <option value="">Select a mood...</option>
-                <option value="HAPPY">😊 Happy</option>
-                <option value="SAD">😢 Sad</option>
-                <option value="NEUTRAL">😐 Neutral</option>
-                <option value="ANGRY">😠 Angry</option>
-                <option value="EXCITED">🤩 Excited</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label for="edit-content" class="block text-sm font-medium text-gray-700">Content</label>
-            <div class="mt-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div>
-                <textarea
-                  ref="editTextareaRef"
-                  id="edit-content"
-                  v-model="editingEntry.content"
-                  rows="12"
-                  maxlength="10000"
-                  required
-                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)] resize-y"
-                  @input="updateEditMarkdownHeight"
-                ></textarea>
-              </div>
-              <div ref="editMarkdownRef" class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-y-auto">
-                <div v-html="renderMarkdown(editingEntry.content || '')"></div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <label for="edit-tags" class="block text-sm font-medium text-gray-700">Tags</label>
-            <div class="mt-1 flex flex-wrap gap-2">
-              <span v-for="tag in editingEntry.tags" :key="tag"
-                class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs flex items-center">
-                {{ tag }}
-                <button type="button" @click="removeTag(tag)" class="ml-1 text-gray-500 hover:text-gray-700">
-                  ×
-                </button>
-              </span>
-            </div>
-          </div>
-          <div class="flex justify-end space-x-3 mt-6">
-            <button
-              type="button"
-              @click="closeEditModal"
-              class="px-4 py-2 text-gray-700 hover:text-gray-900"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              class="bg-[var(--primary)] hover:bg-[var(--button-hover)] text-white px-4 py-2 rounded-lg transition-colors"
-              :disabled="isSaving"
-            >
-              {{ isSaving ? 'Saving...' : 'Save Changes' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <JournalEditModal
+      v-if="editingEntry"
+      :show="showEditModal"
+      :entry="editingEntry"
+      :is-saving="isSaving"
+      @close="closeEditModal"
+      @save="handleEditSave"
+    />
 
     <!-- Create Modal -->
     <JournalEntryModal
@@ -265,6 +170,7 @@ import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { Calendar } from 'v-calendar'
 import { marked } from 'marked'
 import JournalEntryModal from '~/components/journal/JournalEntryModal.vue'
+import JournalEditModal from '~/components/journal/JournalEditModal.vue'
 import ConfirmActionModal from '~/components/ConfirmActionModal.vue'
 import type { JournalEntry, PartialJournalEntry } from '~/types/journal'
 import 'v-calendar/style.css'
@@ -368,24 +274,14 @@ const formatDate = (dateString: string) => {
 const showViewModal = ref(false)
 const showEditModal = ref(false)
 const viewingEntry = ref<Partial<JournalEntry>>({})
-const editingEntry = ref<Partial<JournalEntry>>({})
+const editingEntry = ref<JournalEntry | null>(null)
 const isSaving = ref(false)
 const showActionConfirmModal = ref(false)
 const actionConfirmType = ref<'delete-journal'>('delete-journal')
 const actionConfirmItemName = ref('')
 const pendingAction = ref<(() => void) | null>(null)
 
-// Refs for dynamic height matching in edit modal
-const editTextareaRef = ref<HTMLTextAreaElement>()
-const editMarkdownRef = ref<HTMLDivElement>()
 
-// Function to update edit markdown div height to match textarea
-function updateEditMarkdownHeight() {
-  if (editTextareaRef.value && editMarkdownRef.value) {
-    const textareaHeight = editTextareaRef.value.offsetHeight
-    editMarkdownRef.value.style.height = `${textareaHeight}px`
-  }
-}
 
 // Use the journal entry modal composable
 const journalModal = useJournalEntryModal()
@@ -411,28 +307,8 @@ const closeViewModal = () => {
 const editEntry = async (entry: PartialJournalEntry) => {
   try {
     const fullEntry = await $fetch<JournalEntry>(`/api/journal/${entry.id}`)
-    editingEntry.value = { ...fullEntry }
+    editingEntry.value = fullEntry
     showEditModal.value = true
-    
-    // Set up resize observer when edit modal opens
-    nextTick(() => {
-      updateEditMarkdownHeight()
-      
-      // Set up resize observer for textarea
-      if (editTextareaRef.value) {
-        const resizeObserver = new ResizeObserver(() => {
-          updateEditMarkdownHeight()
-        })
-        resizeObserver.observe(editTextareaRef.value)
-        
-        // Clean up observer when modal closes
-        watch(() => showEditModal.value, (modalShow) => {
-          if (!modalShow) {
-            resizeObserver.disconnect()
-          }
-        })
-      }
-    })
   } catch (error) {
     console.error('Error fetching full journal entry:', error)
   }
@@ -441,34 +317,24 @@ const editEntry = async (entry: PartialJournalEntry) => {
 // Add closeEditModal function
 const closeEditModal = () => {
   showEditModal.value = false
-  editingEntry.value = {}
+  editingEntry.value = null
 }
 
-// Add removeTag function
-const removeTag = (tagToRemove: string) => {
-  editingEntry.value.tags = editingEntry.value.tags?.filter(tag => tag !== tagToRemove) || []
-}
-
-// Add create modal functions
-const openCreateModal = () => {
-  journalModal.openModal()
-}
-
-// Add back the saveEdit function
-const saveEdit = async () => {
+// Handle edit save
+const handleEditSave = async (entry: JournalEntry) => {
   try {
     isSaving.value = true
 
-    const response = await $fetch(`/api/journal/${editingEntry.value.id}`, {
+    const response = await $fetch(`/api/journal/${entry.id}`, {
       method: 'PATCH',
       body: {
-        title: editingEntry.value.title,
-        content: editingEntry.value.content,
-        type: editingEntry.value.type,
-        date: editingEntry.value.date,
-        mood: editingEntry.value.mood,
-        tags: editingEntry.value.tags,
-        templateUsed: editingEntry.value.templateUsed
+        title: entry.title,
+        content: entry.content,
+        type: entry.type,
+        date: entry.date,
+        mood: entry.mood,
+        tags: entry.tags,
+        templateUsed: entry.templateUsed
       }
     })
 
@@ -482,6 +348,13 @@ const saveEdit = async () => {
     isSaving.value = false
   }
 }
+
+// Add create modal functions
+const openCreateModal = () => {
+  journalModal.openModal()
+}
+
+
 
 // Add handleJournalSubmit function
 async function handleJournalSubmit(entry: Partial<JournalEntry>) {
