@@ -56,15 +56,17 @@
           <div class="mt-1" :class="showMarkdownPreview ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''">
             <div>
               <textarea
+                ref="textareaRef"
                 id="create-content"
                 v-model="localEntry.content"
                 rows="12"
                 :maxlength="maxContentLength"
                 required
-                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)] resize-y"
+                @input="updateMarkdownHeight"
               ></textarea>
             </div>
-            <div v-if="showMarkdownPreview" class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-auto max-h-96">
+            <div v-if="showMarkdownPreview" ref="markdownRef" class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-md overflow-y-auto">
               <div v-html="renderMarkdown(localEntry.content || '')"></div>
             </div>
           </div>
@@ -112,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick, onUnmounted } from 'vue'
 import { marked } from 'marked'
 import type { JournalEntryForm } from '~/types/journal'
 import DOMPurify from 'dompurify'
@@ -144,6 +146,18 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
+// Refs for dynamic height matching
+const textareaRef = ref<HTMLTextAreaElement>()
+const markdownRef = ref<HTMLDivElement>()
+
+// Function to update markdown div height to match textarea
+function updateMarkdownHeight() {
+  if (textareaRef.value && markdownRef.value && props.showMarkdownPreview) {
+    const textareaHeight = textareaRef.value.offsetHeight
+    markdownRef.value.style.height = `${textareaHeight}px`
+  }
+}
+
 // Local state
 const localEntry = ref<Partial<JournalEntryForm>>({
   title: '',
@@ -165,6 +179,52 @@ watch(() => props.show, (newShow) => {
       tags: [],
     }
     localTagInput.value = ''
+    
+    // Set up resize observer when modal opens
+    nextTick(() => {
+      if (props.showMarkdownPreview) {
+        updateMarkdownHeight()
+        
+        // Set up resize observer for textarea
+        if (textareaRef.value) {
+          const resizeObserver = new ResizeObserver(() => {
+            updateMarkdownHeight()
+          })
+          resizeObserver.observe(textareaRef.value)
+          
+          // Clean up observer when modal closes
+          watch(() => props.show, (modalShow) => {
+            if (!modalShow) {
+              resizeObserver.disconnect()
+            }
+          })
+        }
+      }
+    })
+  }
+})
+
+// Watch for markdown preview toggle
+watch(() => props.showMarkdownPreview, (showPreview) => {
+  if (showPreview && props.show) {
+    nextTick(() => {
+      updateMarkdownHeight()
+      
+      // Set up resize observer for textarea
+      if (textareaRef.value) {
+        const resizeObserver = new ResizeObserver(() => {
+          updateMarkdownHeight()
+        })
+        resizeObserver.observe(textareaRef.value)
+        
+        // Clean up observer when modal closes
+        watch(() => props.show, (modalShow) => {
+          if (!modalShow) {
+            resizeObserver.disconnect()
+          }
+        })
+      }
+    })
   }
 })
 
