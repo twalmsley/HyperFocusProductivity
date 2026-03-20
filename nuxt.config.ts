@@ -13,7 +13,7 @@ export default defineNuxtConfig({
       devSourcemap: true
     },
     server: {
-        allowedHosts: ['hyperfocusproductivity.com', 'immune-glowing-flea.ngrok-free.app', 'thin-socks-ring.loca.lt']
+        allowedHosts: ['hyperfocusproductivity.com', 'remona-submucronate-erminia.ngrok-free.dev', 'thin-socks-ring.loca.lt']
     }
   },
   modules: [
