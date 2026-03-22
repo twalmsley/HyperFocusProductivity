@@ -47,6 +47,13 @@
             Trackers
           </NuxtLink>
           <NuxtLink 
+            to="/app/reports" 
+            class="text-gray-900 hover:text-[var(--primary)] transition-colors"
+            :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/reports') }"
+          >
+            Reports
+          </NuxtLink>
+          <NuxtLink 
             to="/app/settings" 
             class="text-gray-900 hover:text-[var(--primary)] transition-colors"
             :class="{ 'text-[var(--primary)]': route.path.startsWith('/app/settings') }"
@@ -156,6 +163,14 @@
             @click="isMobileMenuOpen = false"
           >
             Trackers
+          </NuxtLink>
+          <NuxtLink 
+            to="/app/reports" 
+            class="block px-4 py-2 text-gray-900 hover:text-[var(--primary)] hover:bg-gray-50 transition-colors rounded-md"
+            :class="{ 'text-[var(--primary)] bg-gray-50': route.path.startsWith('/app/reports') }"
+            @click="isMobileMenuOpen = false"
+          >
+            Reports
           </NuxtLink>
           <NuxtLink 
             to="/app/settings" 

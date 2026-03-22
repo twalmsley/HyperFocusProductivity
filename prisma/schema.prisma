@@ -28,6 +28,7 @@ model User {
   journalEntries    JournalEntry[]  @relation("UserJournalEntries")
   cyclicTasks       CyclicTask[]    @relation("UserCyclicTasks")
   trackers          Tracker[]       @relation("UserTrackers")
+  reports           Report[]        @relation("UserReports")
 }
 
 model Project {
@@ -223,4 +224,17 @@ enum JournalMood {
   NEUTRAL
   ANGRY
   EXCITED
+}
+
+model Report {
+  id              String    @id @default(uuid())
+  userId          String
+  reportType      String
+  title           String
+  markdown        String
+  startDate       DateTime
+  endDate         DateTime
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation("UserReports", fields: [userId], references: [id], onDelete: Cascade)
 }
