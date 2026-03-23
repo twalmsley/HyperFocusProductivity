@@ -37,6 +37,22 @@ export interface ActivitySummaryReportInput {
   trackers: TrackerSummaryItem[]
 }
 
+export interface DetailedProjectTaskItem {
+  title: string
+  description: string
+  dueDate: Date | null
+  completedAt: Date | null
+  status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
+}
+
+export interface DetailedProjectReportInput {
+  projectName: string
+  generatedAt: Date
+  plannedTasks: DetailedProjectTaskItem[]
+  inProgressTasks: DetailedProjectTaskItem[]
+  completedTasks: DetailedProjectTaskItem[]
+}
+
 function formatDate(value: Date): string {
   return format(value, 'dd MMM yyyy')
 }
@@ -149,6 +165,72 @@ export function buildActivitySummaryReportMarkdown(input: ActivitySummaryReportI
       lines.push('')
     }
   }
+
+  return lines.join('\n').trimEnd()
+}
+
+function sortByDueDateAscending(items: DetailedProjectTaskItem[]): DetailedProjectTaskItem[] {
+  return items.slice().sort((a, b) => {
+    const aTime = a.dueDate ? a.dueDate.getTime() : Number.MAX_SAFE_INTEGER
+    const bTime = b.dueDate ? b.dueDate.getTime() : Number.MAX_SAFE_INTEGER
+    return aTime - bTime
+  })
+}
+
+function sortByCompletedDateAscending(items: DetailedProjectTaskItem[]): DetailedProjectTaskItem[] {
+  return items.slice().sort((a, b) => {
+    const aTime = a.completedAt ? a.completedAt.getTime() : Number.MAX_SAFE_INTEGER
+    const bTime = b.completedAt ? b.completedAt.getTime() : Number.MAX_SAFE_INTEGER
+    return aTime - bTime
+  })
+}
+
+function appendTaskList(
+  lines: string[],
+  heading: string,
+  tasks: DetailedProjectTaskItem[],
+  includeCompletedDate: boolean,
+) {
+  lines.push(`## ${heading}`)
+  lines.push('')
+
+  if (tasks.length === 0) {
+    lines.push('- No tasks in this state.')
+    lines.push('')
+    return
+  }
+
+  for (const task of tasks) {
+    const safeDescription = task.description?.trim() || 'No description provided.'
+    lines.push(`### ${task.title}`)
+    lines.push(`- Description: ${safeDescription}`)
+    if (includeCompletedDate) {
+      lines.push(`- Completed: ${task.completedAt ? formatDate(task.completedAt) : 'N/A'}`)
+    } else {
+      lines.push(`- Due Date: ${task.dueDate ? formatDate(task.dueDate) : 'No due date'}`)
+    }
+    lines.push('')
+  }
+}
+
+export function buildDetailedProjectReportMarkdown(input: DetailedProjectReportInput): string {
+  const lines: string[] = []
+
+  const plannedTasks = sortByDueDateAscending(input.plannedTasks)
+  const inProgressTasks = sortByDueDateAscending(input.inProgressTasks)
+  const completedTasks = sortByCompletedDateAscending(input.completedTasks)
+
+  lines.push(`# Detailed Project Report: ${input.projectName}`)
+  lines.push('')
+  lines.push(`- Generated: ${format(input.generatedAt, 'dd MMM yyyy HH:mm')}`)
+  lines.push(`- Planned tasks: ${plannedTasks.length}`)
+  lines.push(`- In-progress tasks: ${inProgressTasks.length}`)
+  lines.push(`- Completed tasks: ${completedTasks.length}`)
+  lines.push('')
+
+  appendTaskList(lines, 'Planned Tasks', plannedTasks, false)
+  appendTaskList(lines, 'In-progress Tasks', inProgressTasks, false)
+  appendTaskList(lines, 'Completed Tasks', completedTasks, true)
 
   return lines.join('\n').trimEnd()
 }

@@ -23,7 +23,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section class="bg-white rounded-lg shadow-sm p-6">
             <h2 class="text-xl font-semibold mb-3">Available Reports</h2>
-            <p class="text-sm text-gray-600 mb-4">Select a report and choose a date range to generate it.</p>
+            <p class="text-sm text-gray-600 mb-4">Select a report and complete any required parameters to generate it.</p>
 
             <div class="space-y-3">
               <button
@@ -67,6 +67,9 @@
               >
                 <p class="font-medium text-gray-900">{{ report.title }}</p>
                 <p class="text-xs text-gray-600">
+                  Type: {{ report.reportType === 'DETAILED_PROJECT' ? 'Detailed Project' : 'Activity Summary' }}
+                </p>
+                <p class="text-xs text-gray-600">
                   Period: {{ formatDate(report.startDate) }} to {{ formatDate(report.endDate) }}
                 </p>
                 <p class="text-xs text-gray-600">
@@ -85,7 +88,21 @@
       </template>
 
       <div class="space-y-4">
-        <div>
+        <div v-if="requiresProjectSelection">
+          <label for="report-project" class="block text-sm font-medium text-gray-700">Project</label>
+          <select
+            id="report-project"
+            v-model="runForm.projectId"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--primary)] focus:ring-[var(--primary)]"
+          >
+            <option value="" disabled>Select a project</option>
+            <option v-for="project in projects" :key="project.id" :value="project.id">
+              {{ project.name }}
+            </option>
+          </select>
+        </div>
+
+        <div v-if="requiresDateRange">
           <label for="report-start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
           <input
             id="report-start-date"
@@ -96,7 +113,7 @@
           >
         </div>
 
-        <div>
+        <div v-if="requiresDateRange">
           <label for="report-end-date" class="block text-sm font-medium text-gray-700">End Date</label>
           <input
             id="report-end-date"
@@ -141,11 +158,41 @@
       </div>
       <div v-else-if="activeReport" class="space-y-3">
         <p class="text-sm text-gray-600">
+          Type: {{ activeReport.reportType === 'DETAILED_PROJECT' ? 'Detailed Project' : 'Activity Summary' }}
+        </p>
+        <p class="text-sm text-gray-600">
           Period: {{ formatDate(activeReport.startDate) }} to {{ formatDate(activeReport.endDate) }}
         </p>
         <p class="text-sm text-gray-600">
           Created: {{ formatDateTime(activeReport.createdAt) }}
         </p>
+
+        <div
+          v-if="detailedProjectPieData"
+          class="border rounded-md p-4 bg-gray-50"
+        >
+          <h4 class="font-medium text-gray-900 mb-3">Task State Distribution</h4>
+          <div class="flex items-center gap-6">
+            <div
+              class="h-28 w-28 rounded-full border border-gray-200"
+              :style="detailedProjectPieStyle"
+            />
+            <div class="space-y-2 text-sm">
+              <p class="flex items-center gap-2">
+                <span class="inline-block h-3 w-3 rounded-sm bg-slate-400" />
+                Planned: {{ detailedProjectPieData.planned }}
+              </p>
+              <p class="flex items-center gap-2">
+                <span class="inline-block h-3 w-3 rounded-sm bg-blue-500" />
+                In-progress: {{ detailedProjectPieData.inProgress }}
+              </p>
+              <p class="flex items-center gap-2">
+                <span class="inline-block h-3 w-3 rounded-sm bg-emerald-500" />
+                Completed: {{ detailedProjectPieData.completed }}
+              </p>
+            </div>
+          </div>
+        </div>
 
         <div class="border rounded-md overflow-auto max-h-[68vh] max-w-[90vw]">
           <div
@@ -175,6 +222,7 @@ import { subDays } from 'date-fns'
 import DOMPurify from 'dompurify'
 import BaseModal from '~/components/BaseModal.vue'
 import type { ReportDetail, ReportSummary, ReportType } from '~/types/report'
+import type { Project } from '~/types/project'
 
 interface ExtendedSession {
   user?: {
@@ -201,6 +249,11 @@ const reportDefinitions: ReportDefinition[] = [
     name: 'Activity Summary Report',
     description: 'Projects, tasks, cyclic tasks, journal activity, and tracker completion summary.',
   },
+  {
+    id: 'DETAILED_PROJECT',
+    name: 'Detailed Project Report',
+    description: 'Detailed list of all tasks for one selected project, grouped by state.',
+  },
 ]
 
 const showRunModal = ref(false)
@@ -212,6 +265,7 @@ const isLoadingReportDetail = ref(false)
 const reports = ref<ReportSummary[]>([])
 const activeReport = ref<ReportDetail | null>(null)
 const selectedReportType = ref<ReportType | null>(null)
+const projects = ref<Project[]>([])
 
 const today = new Date()
 const defaultStartDate = subDays(today, 6)
@@ -220,6 +274,7 @@ const todayDateString = formatDateInput(today)
 const runForm = ref({
   startDate: formatDateInput(defaultStartDate),
   endDate: formatDateInput(today),
+  projectId: '',
 })
 
 marked.setOptions({
@@ -234,9 +289,20 @@ const selectedDefinition = computed(() => {
 const parsedStartDate = computed(() => toLocalDate(runForm.value.startDate))
 const parsedEndDate = computed(() => toLocalDate(runForm.value.endDate))
 
+const requiresProjectSelection = computed(() => selectedReportType.value === 'DETAILED_PROJECT')
+const requiresDateRange = computed(() => selectedReportType.value !== 'DETAILED_PROJECT')
+
 const validationMessage = computed(() => {
+  if (requiresProjectSelection.value && !runForm.value.projectId) {
+    return 'Project selection is required for detailed project report.'
+  }
+
+  if (!requiresDateRange.value) {
+    return ''
+  }
+
   if (!parsedStartDate.value || !parsedEndDate.value) {
-    return 'Start date and end date are required.'
+    return 'Start date and end date are required for this report.'
   }
 
   const startDate = parsedStartDate.value
@@ -267,6 +333,43 @@ const canRunReport = computed(() => {
 const renderedReportHtml = computed(() => {
   if (!activeReport.value?.markdownContent) return ''
   return DOMPurify.sanitize(marked(activeReport.value.markdownContent) as string)
+})
+
+const detailedProjectPieData = computed(() => {
+  if (activeReport.value?.reportType !== 'DETAILED_PROJECT' || !activeReport.value.markdownContent) {
+    return null
+  }
+
+  const planned = Number(activeReport.value.markdownContent.match(/- Planned tasks: (\d+)/)?.[1] || 0)
+  const inProgress = Number(activeReport.value.markdownContent.match(/- In-progress tasks: (\d+)/)?.[1] || 0)
+  const completed = Number(activeReport.value.markdownContent.match(/- Completed tasks: (\d+)/)?.[1] || 0)
+  const total = planned + inProgress + completed
+
+  if (total === 0) {
+    return null
+  }
+
+  return {
+    planned,
+    inProgress,
+    completed,
+    total,
+  }
+})
+
+const detailedProjectPieStyle = computed(() => {
+  const data = detailedProjectPieData.value
+  if (!data) {
+    return {}
+  }
+
+  const plannedPct = (data.planned / data.total) * 100
+  const inProgressPct = (data.inProgress / data.total) * 100
+  const completedPct = (data.completed / data.total) * 100
+
+  return {
+    background: `conic-gradient(#94a3b8 0% ${plannedPct}%, #3b82f6 ${plannedPct}% ${plannedPct + inProgressPct}%, #10b981 ${plannedPct + inProgressPct}% ${plannedPct + inProgressPct + completedPct}%)`,
+  }
 })
 
 function toLocalDate(dateInput: string): Date | null {
@@ -306,6 +409,7 @@ function formatDateTime(dateValue: string): string {
 
 function openRunModal(reportType: ReportType) {
   selectedReportType.value = reportType
+  runForm.value.projectId = ''
   showRunModal.value = true
 }
 
@@ -329,6 +433,14 @@ async function fetchReports() {
   }
 }
 
+async function fetchProjects() {
+  try {
+    projects.value = await $fetch<Project[]>('/api/projects')
+  } catch (error) {
+    console.error('Failed to fetch projects for reports:', error)
+  }
+}
+
 async function runReport() {
   if (!canRunReport.value || !selectedReportType.value) {
     return
@@ -340,8 +452,17 @@ async function runReport() {
       method: 'POST',
       body: {
         reportType: selectedReportType.value,
-        startDate: runForm.value.startDate,
-        endDate: runForm.value.endDate,
+        ...(requiresDateRange.value
+          ? {
+            startDate: runForm.value.startDate,
+            endDate: runForm.value.endDate,
+          }
+          : {}),
+        ...(requiresProjectSelection.value
+          ? {
+            projectId: runForm.value.projectId,
+          }
+          : {}),
       },
     })
 
@@ -370,6 +491,6 @@ async function openReport(reportId: string) {
 }
 
 onMounted(async () => {
-  await fetchReports()
+  await Promise.all([fetchReports(), fetchProjects()])
 })
 </script>

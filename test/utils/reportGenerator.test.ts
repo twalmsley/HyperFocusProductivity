@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildActivitySummaryReportMarkdown } from '~/server/utils/reportGenerator'
+import { buildActivitySummaryReportMarkdown, buildDetailedProjectReportMarkdown } from '~/server/utils/reportGenerator'
 
 describe('buildActivitySummaryReportMarkdown', () => {
   it('builds markdown with sorted sections and tracker summary', () => {
@@ -58,5 +58,73 @@ describe('buildActivitySummaryReportMarkdown', () => {
     expect(markdown).toContain('No cyclic task completions found')
     expect(markdown).toContain('No journal entries found')
     expect(markdown).toContain('No completed trackers found')
+  })
+})
+
+describe('buildDetailedProjectReportMarkdown', () => {
+  it('orders planned, in-progress, and completed tasks correctly', () => {
+    const markdown = buildDetailedProjectReportMarkdown({
+      projectName: 'Acme Product Launch',
+      generatedAt: new Date('2026-04-01T10:00:00.000Z'),
+      plannedTasks: [
+        {
+          title: 'Later planned',
+          description: 'Later due',
+          status: 'BACKLOG',
+          dueDate: new Date('2026-04-10T12:00:00.000Z'),
+          completedAt: null,
+        },
+        {
+          title: 'Earlier planned',
+          description: 'Earlier due',
+          status: 'BACKLOG',
+          dueDate: new Date('2026-04-03T12:00:00.000Z'),
+          completedAt: null,
+        },
+      ],
+      inProgressTasks: [
+        {
+          title: 'Later in-progress',
+          description: 'In progress later',
+          status: 'IN_PROGRESS',
+          dueDate: new Date('2026-04-08T12:00:00.000Z'),
+          completedAt: null,
+        },
+        {
+          title: 'Earlier in-progress',
+          description: 'In progress earlier',
+          status: 'IN_PROGRESS',
+          dueDate: new Date('2026-04-02T12:00:00.000Z'),
+          completedAt: null,
+        },
+      ],
+      completedTasks: [
+        {
+          title: 'Later completed',
+          description: 'Done later',
+          status: 'DONE',
+          dueDate: new Date('2026-03-20T12:00:00.000Z'),
+          completedAt: new Date('2026-03-25T12:00:00.000Z'),
+        },
+        {
+          title: 'Earlier completed',
+          description: 'Done earlier',
+          status: 'DONE',
+          dueDate: new Date('2026-03-12T12:00:00.000Z'),
+          completedAt: new Date('2026-03-14T12:00:00.000Z'),
+        },
+      ],
+    })
+
+    expect(markdown).toContain('# Detailed Project Report: Acme Product Launch')
+    expect(markdown).toContain('- Planned tasks: 2')
+    expect(markdown).toContain('- In-progress tasks: 2')
+    expect(markdown).toContain('- Completed tasks: 2')
+
+    expect(markdown.indexOf('## Planned Tasks')).toBeLessThan(markdown.indexOf('## In-progress Tasks'))
+    expect(markdown.indexOf('## In-progress Tasks')).toBeLessThan(markdown.indexOf('## Completed Tasks'))
+    expect(markdown.indexOf('Earlier planned')).toBeLessThan(markdown.indexOf('Later planned'))
+    expect(markdown.indexOf('Earlier in-progress')).toBeLessThan(markdown.indexOf('Later in-progress'))
+    expect(markdown.indexOf('Earlier completed')).toBeLessThan(markdown.indexOf('Later completed'))
   })
 })

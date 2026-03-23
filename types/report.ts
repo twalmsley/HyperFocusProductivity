@@ -1,4 +1,4 @@
-export type ReportType = 'ACTIVITY_SUMMARY'
+export type ReportType = 'ACTIVITY_SUMMARY' | 'DETAILED_PROJECT'
 
 export interface ReportSummary {
   id: string
