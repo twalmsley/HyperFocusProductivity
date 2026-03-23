@@ -204,37 +204,78 @@ async function main() {
   }
   console.log(`Seeded ${journalEntries.length} journal entries`)
 
-  // --- Trackers with entries in March 2026 ---
+  // --- Trackers with 90 days of entries (Jan 1 - Mar 31, 2026) ---
+  const trackerPeriodStart = new Date('2026-01-01')
+  const totalTrackerDays = 90
+
+  function makeDate(dayIndex: number): Date {
+    const d = new Date(trackerPeriodStart)
+    d.setDate(d.getDate() + dayIndex)
+    return d
+  }
+
+  interface SeedEntry { id: string; date: Date; value: number }
+
+  function generateEntries(
+    prefix: string,
+    include: (day: number, dow: number) => boolean,
+    value: (day: number) => number
+  ): SeedEntry[] {
+    const entries: SeedEntry[] = []
+    for (let i = 0; i < totalTrackerDays; i++) {
+      const d = makeDate(i)
+      const dow = d.getDay()
+      if (include(i, dow)) {
+        entries.push({ id: `${prefix}-${i}`, date: d, value: value(i) })
+      }
+    }
+    return entries
+  }
+
   const trackersData = [
     {
       id: 'seed-tracker-1',
       name: 'Exercise',
       groupName: 'Health',
-      entries: [
-        { id: 'seed-te-1', date: new Date('2026-03-01'), value: 100 },
-        { id: 'seed-te-2', date: new Date('2026-03-03'), value: 80 },
-        { id: 'seed-te-3', date: new Date('2026-03-05'), value: 100 },
-        { id: 'seed-te-4', date: new Date('2026-03-08'), value: 60 },
-        { id: 'seed-te-5', date: new Date('2026-03-10'), value: 100 },
-        { id: 'seed-te-6', date: new Date('2026-03-12'), value: 90 },
-        { id: 'seed-te-7', date: new Date('2026-03-15'), value: 100 },
-        { id: 'seed-te-8', date: new Date('2026-03-18'), value: 70 },
-        { id: 'seed-te-9', date: new Date('2026-03-20'), value: 100 },
-        { id: 'seed-te-10', date: new Date('2026-03-25'), value: 85 },
-        { id: 'seed-te-11', date: new Date('2026-03-28'), value: 100 },
-      ]
+      // ~49%: Mon/Wed/Fri/Sat with occasional misses
+      entries: generateEntries(
+        'seed-te-1',
+        (i, dow) => [1, 3, 5, 6].includes(dow) && (i * 7 + 3) % 13 !== 0,
+        (i) => [100, 80, 90, 70, 100, 60, 85][i % 7]
+      )
     },
     {
       id: 'seed-tracker-2',
       name: 'Reading',
       groupName: 'Learning',
-      entries: [
-        { id: 'seed-te-20', date: new Date('2026-03-02'), value: 100 },
-        { id: 'seed-te-21', date: new Date('2026-03-09'), value: 100 },
-        { id: 'seed-te-22', date: new Date('2026-03-16'), value: 100 },
-        { id: 'seed-te-23', date: new Date('2026-03-23'), value: 100 },
-        { id: 'seed-te-24', date: new Date('2026-03-30'), value: 100 },
-      ]
+      // ~34%: weekends + occasional Wednesday
+      entries: generateEntries(
+        'seed-te-2',
+        (i, dow) => dow === 0 || dow === 6 || (dow === 3 && i % 5 < 2),
+        () => 100
+      )
+    },
+    {
+      id: 'seed-tracker-3',
+      name: 'Meditation',
+      groupName: 'Health',
+      // ~86%: almost daily with scattered misses
+      entries: generateEntries(
+        'seed-te-3',
+        (i) => (i * 11 + 5) % 7 !== 0,
+        (i) => [100, 80, 90, 100, 70, 100, 95][i % 7]
+      )
+    },
+    {
+      id: 'seed-tracker-4',
+      name: 'Water Intake',
+      groupName: 'Health',
+      // ~12%: very sporadic
+      entries: generateEntries(
+        'seed-te-4',
+        (i) => i % 8 === 3 || i % 13 === 7,
+        (i) => [40, 60, 30, 50, 70, 45, 55][i % 7]
+      )
     }
   ]
 
@@ -250,11 +291,12 @@ async function main() {
       }
     })
 
+    // Clear old entries and insert fresh data
+    await prisma.trackerEntry.deleteMany({ where: { trackerId: tracker.id } })
+
     for (const entry of tracker.entries) {
-      await prisma.trackerEntry.upsert({
-        where: { id: entry.id },
-        update: {},
-        create: {
+      await prisma.trackerEntry.create({
+        data: {
           id: entry.id,
           trackerId: tracker.id,
           date: entry.date,
@@ -263,12 +305,15 @@ async function main() {
       })
     }
   }
-  console.log(`Seeded ${trackersData.length} trackers with entries`)
+
+  const totalEntries = trackersData.reduce((sum, t) => sum + t.entries.length, 0)
+  console.log(`Seeded ${trackersData.length} trackers with ${totalEntries} entries across 90 days (Jan 1 - Mar 31, 2026)`)
 
   console.log('\nReport seed data complete!')
   console.log('- Activity Report: use March 1-31, 2026 to see all sections populated.')
   console.log('- Detailed Project Report: select Alpha Project or Beta Project to see all task states.')
   console.log('- Detailed All Tasks Report: use March 1-31, 2026 to see tasks across all projects with both pie charts.')
+  console.log('- Trackers Report: use Jan 1 - Mar 31, 2026 (90 days) to see full heatmaps and progress bars for all trackers.')
 }
 
 main()

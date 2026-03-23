@@ -50,7 +50,7 @@ const renderedHtml = computed(() => {
     ADD_ATTR: [
       'viewBox', 'xmlns', 'width', 'height', 'fill', 'stroke', 'stroke-width',
       'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray', 'stroke-dashoffset',
-      'd', 'cx', 'cy', 'r', 'x', 'y', 'dx', 'dy', 'transform',
+      'd', 'cx', 'cy', 'r', 'rx', 'ry', 'x', 'y', 'dx', 'dy', 'transform',
       'text-anchor', 'dominant-baseline', 'font-size', 'font-weight'
     ]
   })

@@ -51,6 +51,20 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>
+        <button
+          @click="openTrackersDatePicker"
+          class="w-full text-left px-4 py-3 border border-gray-200 rounded-md hover:bg-gray-50 hover:border-[var(--primary)] transition-colors flex items-center justify-between"
+        >
+          <div>
+            <span class="font-medium">Trackers Report</span>
+            <p class="text-sm text-gray-500 mt-1">
+              GitHub-style activity charts and progress scores for each tracker over a selected period.
+            </p>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 flex-shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -100,6 +114,15 @@
       title="Run Detailed All Tasks Report"
       @cancel="showAllTasksDatePicker = false"
       @run="handleRunAllTasksReport"
+    />
+
+    <!-- Trackers Report Date Picker Modal -->
+    <ReportDatePickerModal
+      :show="showTrackersDatePicker"
+      title="Run Trackers Report"
+      :max-days="90"
+      @cancel="showTrackersDatePicker = false"
+      @run="handleRunTrackersReport"
     />
 
     <!-- Project Select Modal -->
@@ -158,6 +181,7 @@ const isLoading = ref(true)
 const isGenerating = ref(false)
 const showDatePicker = ref(false)
 const showAllTasksDatePicker = ref(false)
+const showTrackersDatePicker = ref(false)
 const showProjectSelect = ref(false)
 const showViewer = ref(false)
 const viewerTitle = ref('')
@@ -220,6 +244,10 @@ function openAllTasksDatePicker() {
   showAllTasksDatePicker.value = true
 }
 
+function openTrackersDatePicker() {
+  showTrackersDatePicker.value = true
+}
+
 async function handleRunAllTasksReport(payload: { startDate: string; endDate: string }) {
   showAllTasksDatePicker.value = false
   isGenerating.value = true
@@ -229,6 +257,28 @@ async function handleRunAllTasksReport(payload: { startDate: string; endDate: st
       method: 'POST',
       body: {
         reportType: 'detailed-all-tasks',
+        startDate: payload.startDate,
+        endDate: payload.endDate
+      }
+    })
+    showGeneratedReport(report)
+  } catch (error: any) {
+    console.error('Failed to generate report:', error)
+    alert(error.data?.message || 'Failed to generate report. Please try again.')
+  } finally {
+    isGenerating.value = false
+  }
+}
+
+async function handleRunTrackersReport(payload: { startDate: string; endDate: string }) {
+  showTrackersDatePicker.value = false
+  isGenerating.value = true
+
+  try {
+    const report = await $fetch<ReportFull>('/api/reports/generate', {
+      method: 'POST',
+      body: {
+        reportType: 'trackers',
         startDate: payload.startDate,
         endDate: payload.endDate
       }

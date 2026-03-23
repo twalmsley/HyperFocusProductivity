@@ -1,8 +1,8 @@
 import { getServerSession } from '#auth'
 import { prisma } from '~/server/utils/db'
 import { startOfDay, endOfDay, differenceInDays, format } from 'date-fns'
-import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport } from '~/server/utils/reportGenerator'
-import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask, AllTasksDetailedTask } from '~/server/utils/reportGenerator'
+import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport, generateTrackersReport } from '~/server/utils/reportGenerator'
+import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask, AllTasksDetailedTask, TrackerReportItem } from '~/server/utils/reportGenerator'
 
 interface ReportRequestBody {
   reportType: string
@@ -154,7 +154,7 @@ async function handleDetailedProjectReport(userId: string, body: ReportRequestBo
   })
 }
 
-function validateDateRange(body: ReportRequestBody) {
+function validateDateRange(body: ReportRequestBody, maxDays = 31) {
   const { startDate: startDateStr, endDate: endDateStr } = body
 
   if (!startDateStr || !endDateStr) {
@@ -176,8 +176,8 @@ function validateDateRange(body: ReportRequestBody) {
     throw createError({ statusCode: 400, message: 'End date cannot be in the future' })
   }
 
-  if (differenceInDays(endDate, startDate) > 31) {
-    throw createError({ statusCode: 400, message: 'Report period cannot exceed 31 days' })
+  if (differenceInDays(endDate, startDate) > maxDays) {
+    throw createError({ statusCode: 400, message: `Report period cannot exceed ${maxDays} days` })
   }
 
   return { startDate, endDate }
@@ -231,6 +231,48 @@ async function handleDetailedAllTasksReport(userId: string, body: ReportRequestB
   })
 }
 
+async function handleTrackersReport(userId: string, body: ReportRequestBody) {
+  const { startDate, endDate } = validateDateRange(body, 90)
+
+  const trackers = await prisma.tracker.findMany({
+    where: { userId },
+    include: {
+      entries: {
+        where: { date: { gte: startDate, lte: endDate } },
+        orderBy: { date: 'asc' }
+      }
+    },
+    orderBy: { name: 'asc' }
+  })
+
+  const trackerData: TrackerReportItem[] = trackers.map((t) => ({
+    name: t.name,
+    entries: t.entries.map((e) => ({
+      date: e.date,
+      value: e.value
+    }))
+  }))
+
+  const markdown = generateTrackersReport({
+    startDate,
+    endDate,
+    trackers: trackerData
+  })
+
+  const title = `Trackers Report: ${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`
+
+  return prisma.report.create({
+    data: {
+      userId,
+      reportType: 'trackers',
+      title,
+      markdown,
+      startDate,
+      endDate
+    }
+  })
+}
+
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
   if (!session) {
@@ -256,6 +298,8 @@ export default defineEventHandler(async (event) => {
       return handleDetailedProjectReport(user.id, body)
     case 'detailed-all-tasks':
       return handleDetailedAllTasksReport(user.id, body)
+    case 'trackers':
+      return handleTrackersReport(user.id, body)
     default:
       throw createError({ statusCode: 400, message: 'Invalid report type' })
   }

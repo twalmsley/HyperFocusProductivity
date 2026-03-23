@@ -66,8 +66,10 @@ import { format, differenceInDays, startOfDay } from 'date-fns'
 const props = withDefaults(defineProps<{
   show: boolean
   title?: string
+  maxDays?: number
 }>(), {
-  title: 'Run Report'
+  title: 'Run Report',
+  maxDays: 31
 })
 
 const emit = defineEmits<{
@@ -97,8 +99,8 @@ const validationMessage = computed(() => {
   }
 
   const days = differenceInDays(end, start)
-  if (days > 30) {
-    return 'Report period cannot exceed 31 days.'
+  if (days >= props.maxDays) {
+    return `Report period cannot exceed ${props.maxDays} days.`
   }
 
   return ''
@@ -112,7 +114,7 @@ const isValid = computed(() => {
 
   if (end < start) return false
   if (end > today) return false
-  if (differenceInDays(end, start) > 30) return false
+  if (differenceInDays(end, start) >= props.maxDays) return false
 
   return true
 })

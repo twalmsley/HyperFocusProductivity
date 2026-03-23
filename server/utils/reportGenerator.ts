@@ -1,4 +1,4 @@
-import { format } from 'date-fns'
+import { format, addDays, getDay, differenceInDays } from 'date-fns'
 
 export interface ReportTask {
   title: string
@@ -53,6 +53,22 @@ export interface DetailedAllTasksReportData {
   startDate: Date
   endDate: Date
   tasks: AllTasksDetailedTask[]
+}
+
+export interface TrackerReportEntry {
+  date: Date | string
+  value: number
+}
+
+export interface TrackerReportItem {
+  name: string
+  entries: TrackerReportEntry[]
+}
+
+export interface TrackersReportData {
+  startDate: Date
+  endDate: Date
+  trackers: TrackerReportItem[]
 }
 
 function formatDate(date: Date | string): string {
@@ -428,6 +444,188 @@ export function generateDetailedAllTasksReport(data: DetailedAllTasksReportData)
   renderPlannedTasks(planned, lines, getProjectLabel)
   renderInProgressTasks(inProgress, lines, getProjectLabel)
   renderCompletedTasks(completed, lines, getProjectLabel)
+
+  return lines.join('\n')
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s
+  const hPrime = h / 60
+  const x = c * (1 - Math.abs(hPrime % 2 - 1))
+  const m = l - c / 2
+
+  let r1 = 0, g1 = 0, b1 = 0
+  if (hPrime >= 0 && hPrime < 1) { r1 = c; g1 = x }
+  else if (hPrime >= 1 && hPrime <= 2) { r1 = x; g1 = c }
+
+  const toHex = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0')
+  return `#${toHex(r1)}${toHex(g1)}${toHex(b1)}`
+}
+
+export const RAINBOW_COLORS: string[] = Array.from({ length: 20 }, (_, i) =>
+  hslToHex((i / 19) * 120, 0.8, 0.45)
+)
+
+function getHeatmapColor(value: number): string {
+  if (value === 0) return '#ebedf0'
+  if (value <= 25) return '#9be9a8'
+  if (value <= 50) return '#40c463'
+  if (value <= 75) return '#30a14e'
+  return '#216e39'
+}
+
+export function generateActivityHeatmapSvg(
+  startDate: Date,
+  endDate: Date,
+  entries: TrackerReportEntry[]
+): string {
+  const cellSize = 13
+  const gap = 3
+  const stride = cellSize + gap
+  const leftMargin = 36
+  const topMargin = 20
+
+  const valueMap = new Map<string, number>()
+  for (const entry of entries) {
+    valueMap.set(format(new Date(entry.date), 'yyyy-MM-dd'), entry.value)
+  }
+
+  const startNorm = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+  const endNorm = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+
+  const mondayOffset = (getDay(startNorm) + 6) % 7
+  const gridStart = addDays(startNorm, -mondayOffset)
+
+  const mondayBasedEndDay = (getDay(endNorm) + 6) % 7
+  const gridEnd = addDays(endNorm, 6 - mondayBasedEndDay)
+
+  const numWeeks = Math.round((differenceInDays(gridEnd, gridStart) + 1) / 7)
+
+  const legendWidth = 130
+  const svgWidth = leftMargin + numWeeks * stride + 10 + legendWidth
+  const svgHeight = topMargin + 7 * stride
+
+  const parts: string[] = []
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgWidth} ${svgHeight}" width="${svgWidth}" height="${svgHeight}">`)
+
+  const dayLabels = ['Mon', '', 'Wed', '', 'Fri', '', '']
+  for (let i = 0; i < 7; i++) {
+    if (dayLabels[i]) {
+      parts.push(`<text x="${leftMargin - 6}" y="${topMargin + i * stride + cellSize - 2}" font-size="10" fill="#57606a" text-anchor="end">${dayLabels[i]}</text>`)
+    }
+  }
+
+  let currentDate = new Date(gridStart)
+  const startKey = format(startNorm, 'yyyy-MM-dd')
+  const endKey = format(endNorm, 'yyyy-MM-dd')
+  const labeledMonths = new Set<number>()
+  const labeledWeeks = new Set<number>()
+
+  for (let week = 0; week < numWeeks; week++) {
+    for (let day = 0; day < 7; day++) {
+      const dateKey = format(currentDate, 'yyyy-MM-dd')
+      const inRange = dateKey >= startKey && dateKey <= endKey
+
+      if (inRange) {
+        const month = currentDate.getMonth()
+        if (!labeledMonths.has(month) && !labeledWeeks.has(week)) {
+          parts.push(`<text x="${leftMargin + week * stride}" y="${topMargin - 6}" font-size="10" fill="#57606a">${format(currentDate, 'MMM')}</text>`)
+          labeledMonths.add(month)
+          labeledWeeks.add(week)
+        }
+
+        const value = valueMap.get(dateKey) || 0
+        const color = getHeatmapColor(value)
+        const x = leftMargin + week * stride
+        const y = topMargin + day * stride
+        parts.push(`<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" rx="2" fill="${color}" />`)
+      }
+
+      currentDate = addDays(currentDate, 1)
+    }
+  }
+
+  const legendX = leftMargin + numWeeks * stride + 10
+  const legendY = topMargin + 3 * stride
+  const legendColors = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39']
+  parts.push(`<text x="${legendX}" y="${legendY + cellSize - 2}" font-size="10" fill="#57606a">Less</text>`)
+  let lx = legendX + 28
+  for (const color of legendColors) {
+    parts.push(`<rect x="${lx}" y="${legendY}" width="${cellSize}" height="${cellSize}" rx="2" fill="${color}" />`)
+    lx += cellSize + 2
+  }
+  parts.push(`<text x="${lx + 2}" y="${legendY + cellSize - 2}" font-size="10" fill="#57606a">More</text>`)
+
+  parts.push('</svg>')
+  return parts.join('\n')
+}
+
+export function generateProgressBarSvg(percentage: number): string {
+  const bandWidth = 18
+  const bandHeight = 22
+  const bandGap = 2
+  const totalBands = 20
+  const barWidth = totalBands * (bandWidth + bandGap) - bandGap
+
+  const leftPad = 22
+  const rightPad = 36
+  const svgWidth = leftPad + barWidth + rightPad
+  const svgHeight = bandHeight
+
+  const filledBands = Math.min(20, Math.max(0, Math.round(percentage / 5)))
+
+  const parts: string[] = []
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgWidth} ${svgHeight}" width="${svgWidth}" height="${svgHeight}">`)
+
+  parts.push(`<text x="0" y="${svgHeight / 2 + 4}" font-size="10" fill="#57606a">0%</text>`)
+
+  for (let i = 0; i < totalBands; i++) {
+    const x = leftPad + i * (bandWidth + bandGap)
+    const isFilled = i < filledBands
+    const color = isFilled ? RAINBOW_COLORS[i] : '#e5e7eb'
+    parts.push(`<rect x="${x}" y="0" width="${bandWidth}" height="${bandHeight}" rx="2" fill="${color}" />`)
+  }
+
+  parts.push(`<text x="${leftPad + barWidth + 4}" y="${svgHeight / 2 + 4}" font-size="10" fill="#57606a">100%</text>`)
+
+  parts.push('</svg>')
+  return parts.join('\n')
+}
+
+export function generateTrackersReport(data: TrackersReportData): string {
+  const startStr = format(data.startDate, 'MMMM d, yyyy')
+  const endStr = format(data.endDate, 'MMMM d, yyyy')
+  const totalDays = differenceInDays(data.endDate, data.startDate) + 1
+
+  const lines: string[] = []
+
+  lines.push(`# Trackers Report`)
+  lines.push(``)
+  lines.push(`**Period:** ${startStr} to ${endStr}`)
+  lines.push(``)
+
+  if (data.trackers.length === 0) {
+    lines.push(`No trackers found.`)
+    return lines.join('\n')
+  }
+
+  for (const tracker of data.trackers) {
+    const completedDays = tracker.entries.filter((e) => e.value > 0).length
+    const percentage = totalDays > 0 ? (completedDays / totalDays) * 100 : 0
+
+    lines.push(`## ${tracker.name}`)
+    lines.push(``)
+    lines.push(`**${completedDays} completed out of ${totalDays} days (${percentage.toFixed(1)}%)**`)
+    lines.push(``)
+    lines.push(generateActivityHeatmapSvg(data.startDate, data.endDate, tracker.entries))
+    lines.push(``)
+    lines.push(`**Score:**`)
+    lines.push(``)
+    lines.push(generateProgressBarSvg(percentage))
+    lines.push(``)
+    lines.push(`---`)
+    lines.push(``)
+  }
 
   return lines.join('\n')
 }

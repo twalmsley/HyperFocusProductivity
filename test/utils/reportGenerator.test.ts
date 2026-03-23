@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport, generatePieChartSvg } from '~/server/utils/reportGenerator'
-import type { ReportData, DetailedProjectReportData, DetailedProjectTask, DetailedAllTasksReportData, AllTasksDetailedTask, PieSlice } from '~/server/utils/reportGenerator'
+import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport, generatePieChartSvg, generateActivityHeatmapSvg, generateProgressBarSvg, generateTrackersReport, RAINBOW_COLORS } from '~/server/utils/reportGenerator'
+import type { ReportData, DetailedProjectReportData, DetailedProjectTask, DetailedAllTasksReportData, AllTasksDetailedTask, PieSlice, TrackerReportEntry, TrackerReportItem, TrackersReportData } from '~/server/utils/reportGenerator'
 
 function createEmptyReportData(overrides: Partial<ReportData> = {}): ReportData {
   return {
@@ -751,5 +751,312 @@ describe('generateDetailedAllTasksReport', () => {
       expect(result).toContain('Beta: 1')
       expect(result).toContain('No Project: 1')
     })
+  })
+})
+
+describe('generateActivityHeatmapSvg', () => {
+  it('generates valid SVG output', () => {
+    const result = generateActivityHeatmapSvg(
+      new Date(2026, 2, 2),
+      new Date(2026, 2, 8),
+      []
+    )
+    expect(result).toContain('<svg')
+    expect(result).toContain('</svg>')
+  })
+
+  it('renders cells for each day in range', () => {
+    const result = generateActivityHeatmapSvg(
+      new Date(2026, 2, 2),
+      new Date(2026, 2, 8),
+      []
+    )
+    const rectCount = (result.match(/<rect /g) || []).length
+    const legendRects = 5
+    expect(rectCount).toBe(7 + legendRects)
+  })
+
+  it('colors cells based on entry values', () => {
+    const entries: TrackerReportEntry[] = [
+      { date: new Date(2026, 2, 3), value: 10 },
+      { date: new Date(2026, 2, 5), value: 100 }
+    ]
+    const result = generateActivityHeatmapSvg(
+      new Date(2026, 2, 2),
+      new Date(2026, 2, 8),
+      entries
+    )
+    expect(result).toContain('#9be9a8')
+    expect(result).toContain('#216e39')
+    expect(result).toContain('#ebedf0')
+  })
+
+  it('shows day labels Mon, Wed, Fri', () => {
+    const result = generateActivityHeatmapSvg(
+      new Date(2026, 2, 2),
+      new Date(2026, 2, 8),
+      []
+    )
+    expect(result).toContain('>Mon</text>')
+    expect(result).toContain('>Wed</text>')
+    expect(result).toContain('>Fri</text>')
+  })
+
+  it('shows month label', () => {
+    const result = generateActivityHeatmapSvg(
+      new Date(2026, 2, 2),
+      new Date(2026, 2, 8),
+      []
+    )
+    expect(result).toContain('>Mar</text>')
+  })
+
+  it('shows Less and More legend text', () => {
+    const result = generateActivityHeatmapSvg(
+      new Date(2026, 2, 2),
+      new Date(2026, 2, 8),
+      []
+    )
+    expect(result).toContain('>Less</text>')
+    expect(result).toContain('>More</text>')
+  })
+
+  it('handles period spanning two months', () => {
+    const result = generateActivityHeatmapSvg(
+      new Date(2026, 2, 25),
+      new Date(2026, 3, 5),
+      []
+    )
+    expect(result).toContain('>Mar</text>')
+    expect(result).toContain('>Apr</text>')
+  })
+
+  it('handles single-day period', () => {
+    const result = generateActivityHeatmapSvg(
+      new Date(2026, 2, 15),
+      new Date(2026, 2, 15),
+      [{ date: new Date(2026, 2, 15), value: 80 }]
+    )
+    expect(result).toContain('<svg')
+    expect(result).toContain('#30a14e')
+  })
+
+  it('handles a 90-day period spanning multiple months', () => {
+    const start = new Date(2026, 0, 1)
+    const end = new Date(2026, 2, 31)
+    const entries: TrackerReportEntry[] = [
+      { date: new Date(2026, 0, 5), value: 100 },
+      { date: new Date(2026, 1, 15), value: 50 },
+      { date: new Date(2026, 2, 28), value: 75 }
+    ]
+    const result = generateActivityHeatmapSvg(start, end, entries)
+
+    expect(result).toContain('<svg')
+    expect(result).toContain('>Jan</text>')
+    expect(result).toContain('>Feb</text>')
+    expect(result).toContain('>Mar</text>')
+    expect(result).toContain('#216e39')
+    expect(result).toContain('#40c463')
+    expect(result).toContain('#30a14e')
+
+    const cellRects = (result.match(/<rect [^>]*fill="#[0-9a-f]{6}"[^>]*\/>/g) || [])
+    expect(cellRects.length).toBeGreaterThan(90)
+  })
+})
+
+describe('generateProgressBarSvg', () => {
+  it('generates valid SVG output', () => {
+    const result = generateProgressBarSvg(50)
+    expect(result).toContain('<svg')
+    expect(result).toContain('</svg>')
+  })
+
+  it('shows 0% and 100% labels', () => {
+    const result = generateProgressBarSvg(50)
+    expect(result).toContain('>0%</text>')
+    expect(result).toContain('>100%</text>')
+  })
+
+  it('renders 20 band rectangles', () => {
+    const result = generateProgressBarSvg(50)
+    const rectMatches = result.match(/<rect /g) || []
+    expect(rectMatches.length).toBe(20)
+  })
+
+  it('fills no bands at 0%', () => {
+    const result = generateProgressBarSvg(0)
+    for (const color of RAINBOW_COLORS) {
+      expect(result).not.toContain(`fill="${color}"`)
+    }
+    const greyCount = (result.match(/#e5e7eb/g) || []).length
+    expect(greyCount).toBe(20)
+  })
+
+  it('fills all bands at 100%', () => {
+    const result = generateProgressBarSvg(100)
+    expect(result).not.toContain('fill="#e5e7eb"')
+  })
+
+  it('fills approximately half the bands at 50%', () => {
+    const result = generateProgressBarSvg(50)
+    const greyCount = (result.match(/#e5e7eb/g) || []).length
+    expect(greyCount).toBe(10)
+  })
+
+  it('clamps at 0 bands for negative percentage', () => {
+    const result = generateProgressBarSvg(-10)
+    const greyCount = (result.match(/#e5e7eb/g) || []).length
+    expect(greyCount).toBe(20)
+  })
+
+  it('clamps at 20 bands for percentage over 100', () => {
+    const result = generateProgressBarSvg(120)
+    expect(result).not.toContain('fill="#e5e7eb"')
+  })
+})
+
+describe('generateTrackersReport', () => {
+  function createTrackersData(overrides: Partial<TrackersReportData> = {}): TrackersReportData {
+    return {
+      startDate: new Date(2026, 2, 1),
+      endDate: new Date(2026, 2, 31),
+      trackers: [],
+      ...overrides
+    }
+  }
+
+  it('includes the title and date period', () => {
+    const data = createTrackersData()
+    const result = generateTrackersReport(data)
+    expect(result).toContain('# Trackers Report')
+    expect(result).toContain('March 1, 2026')
+    expect(result).toContain('March 31, 2026')
+  })
+
+  it('shows empty message when no trackers exist', () => {
+    const data = createTrackersData()
+    const result = generateTrackersReport(data)
+    expect(result).toContain('No trackers found.')
+  })
+
+  it('displays tracker name as section heading', () => {
+    const data = createTrackersData({
+      trackers: [{ name: 'Exercise', entries: [] }]
+    })
+    const result = generateTrackersReport(data)
+    expect(result).toContain('## Exercise')
+  })
+
+  it('shows completion statistics with percentage', () => {
+    const data = createTrackersData({
+      trackers: [{
+        name: 'Exercise',
+        entries: [
+          { date: new Date(2026, 2, 1), value: 100 },
+          { date: new Date(2026, 2, 2), value: 80 },
+          { date: new Date(2026, 2, 3), value: 50 }
+        ]
+      }]
+    })
+    const result = generateTrackersReport(data)
+    expect(result).toContain('**3 completed out of 31 days (9.7%)**')
+  })
+
+  it('includes an activity heatmap SVG for each tracker', () => {
+    const data = createTrackersData({
+      trackers: [{ name: 'Reading', entries: [{ date: new Date(2026, 2, 5), value: 100 }] }]
+    })
+    const result = generateTrackersReport(data)
+    const svgCount = (result.match(/<svg/g) || []).length
+    expect(svgCount).toBeGreaterThanOrEqual(2)
+  })
+
+  it('includes a progress bar SVG for each tracker', () => {
+    const data = createTrackersData({
+      trackers: [{ name: 'Meditation', entries: [] }]
+    })
+    const result = generateTrackersReport(data)
+    expect(result).toContain('**Score:**')
+    expect(result).toContain('>0%</text>')
+    expect(result).toContain('>100%</text>')
+  })
+
+  it('handles multiple trackers with different completion rates', () => {
+    const highEntries: TrackerReportEntry[] = Array.from({ length: 28 }, (_, i) => ({
+      date: new Date(2026, 2, i + 1),
+      value: 100
+    }))
+
+    const data = createTrackersData({
+      trackers: [
+        { name: 'High Tracker', entries: highEntries },
+        { name: 'Low Tracker', entries: [{ date: new Date(2026, 2, 10), value: 50 }] }
+      ]
+    })
+    const result = generateTrackersReport(data)
+
+    expect(result).toContain('## High Tracker')
+    expect(result).toContain('**28 completed out of 31 days (90.3%)**')
+    expect(result).toContain('## Low Tracker')
+    expect(result).toContain('**1 completed out of 31 days (3.2%)**')
+  })
+
+  it('treats entries with value 0 as not completed', () => {
+    const data = createTrackersData({
+      trackers: [{
+        name: 'Test',
+        entries: [
+          { date: new Date(2026, 2, 1), value: 100 },
+          { date: new Date(2026, 2, 2), value: 0 },
+          { date: new Date(2026, 2, 3), value: 50 }
+        ]
+      }]
+    })
+    const result = generateTrackersReport(data)
+    expect(result).toContain('**2 completed out of 31 days')
+  })
+
+  it('separates trackers with horizontal rules', () => {
+    const data = createTrackersData({
+      trackers: [
+        { name: 'A', entries: [] },
+        { name: 'B', entries: [] }
+      ]
+    })
+    const result = generateTrackersReport(data)
+    expect(result).toContain('---')
+  })
+
+  it('handles a single-day period', () => {
+    const data: TrackersReportData = {
+      startDate: new Date(2026, 2, 15),
+      endDate: new Date(2026, 2, 15),
+      trackers: [{ name: 'Daily', entries: [{ date: new Date(2026, 2, 15), value: 100 }] }]
+    }
+    const result = generateTrackersReport(data)
+    expect(result).toContain('**1 completed out of 1 days (100.0%)**')
+  })
+
+  it('handles a 90-day period with correct statistics', () => {
+    const entries: TrackerReportEntry[] = Array.from({ length: 45 }, (_, i) => ({
+      date: new Date(2026, 0, (i * 2) + 1),
+      value: 100
+    }))
+
+    const data: TrackersReportData = {
+      startDate: new Date(2026, 0, 1),
+      endDate: new Date(2026, 2, 31),
+      trackers: [{ name: 'Every Other Day', entries }]
+    }
+    const result = generateTrackersReport(data)
+
+    expect(result).toContain('# Trackers Report')
+    expect(result).toContain('January 1, 2026')
+    expect(result).toContain('March 31, 2026')
+    expect(result).toContain('## Every Other Day')
+    expect(result).toContain('**45 completed out of 90 days (50.0%)**')
+    expect(result).toContain('>Jan</text>')
+    expect(result).toContain('>Mar</text>')
+    expect(result).toContain('**Score:**')
   })
 })
