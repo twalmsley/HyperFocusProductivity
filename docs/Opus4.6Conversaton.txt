@@ -1,77 +1,13 @@
-## Requirement
+This is a large, multi-faceted task that involves:
 
+Adding a Reports page with navigation
+Creating a report generation system with date pickers
+Database storage for reports
+Multiple report sections (tasks, cyclic tasks, journals, trackers)
+Unit tests
+Seed data
+Let me first explore the codebase to understand the structure, then plan the implementation.
 
-
-1. Add a 'Reports' link to the Nav Bar for logged-in users. Clicking the name should display the 'Reports' page of the application.
-
-2. Initially there will be only 1 selectable report. More will be added later.
-
-3. The page will also show a list of previous reports that can be selected and viewed.
-
-4. When the user selects the report a modal dialog box is to be shown showing date pickers for the start and end dates of the report. The start time is midnight on the start of the selected start day, and the end time is 11:59 at the end of the selected end day.
-
-5. The dialog will also have 'Cancel' and 'Run Report' buttons.
-
-6. The end date must be greater than or equal to the start day otherwise the 'Run Report' button should be disabled. If the dates are the same then this represents a 24-hour period from midnight to midnight on that date.
-
-7. The end date can be the current date but no later.
-
-8. The report period should be no more than 31 days, for example from the 1st of March 2026 to the 31st of March 2026. Disable the 'Run Report' button if the report period is too long.
-
-9. When the user clicks the 'Cancel' button the dialog should be closed and no report is produced.
-
-10. When the user clicks the 'Run Report' button, the dialog is closed and the report is produced in markdown format and stored in the database with it's creation date and time for later retrieval.
-
-11. The new report is added to the list of reports shown in the UI, and also displayed in a new modal dialog and rendered as HTML. The report should be scrollable left/right and up/down so that the dialog does not go beyond the edges of the screen. The dialog will have a 'Dismiss' button to close the dialog. Selecting any report from the list of reports will retrieve the report from the database and render it in the dialog.
-
-12. Follow the same style as the rest of the application.
-
-13. This particular report should include the following sections:
-
-	1. Project Tasks summary - a list of task summaries grouped per project, projects should be sorted alphabetically. Tasks within the project should be listed by completion date and should display the title and completion date only.
-
-	2. Non-project Tasks summary - a list of tasks not associated with projects. Show the title and completion date and sort the list by completion dat.
-
-	3. Cyclic Tasks Summary - a list of Cyclic Tasks with their name and completion date, sorted by completion date.
-
-	4. Journal Summary - a list of Journal entries showing the title and the date of the entry, sorted by entry date.
-
-	5. Trackers Summary - a list of completed trackers for the selected time period, showing the name of the tracker and a listed of dates that the tracker was completed, along with a summary per tracker showing 'N completed out of M days'.
-
-
-
-## Testing
-
-
-
-1. Write unit tests for the report generation, storage, and retrieval.
-
-2. Make sure the new and existing unit tests all complete successfully.
-
-3. Generate a file of seed database entries for testing that all sections of the report are produced.
-
-
-
-## Success Criteria
-
-
-
-1. All new and existing unit tests pass.
-
-2. The application starts in dev mode with no console errors.
-
-3. The report can be produced and viewed.
-
-4. The report can be selected and viewed from the list of previously created reports.
-
-Add Report model to Prisma schema + migration
-Create report generation utility (pure function, markdown)
-Create API endpoints (GET list, GET by id, POST generate)
-Add Reports link to AppNavHeader (desktop + mobile)
-Create Reports page with date picker modal + report viewer modal
-Write unit tests for report generation
-Create seed data for testing
-Run all tests + verify dev mode starts clean
 Starting with the database schema. I'll add a Report model to Prisma.
 
 schema.prisma
@@ -210,3 +146,511 @@ Verification
 All 201 tests pass
 Dev server starts with no console errors
 No linter errors on any new or modified files
+Can I have a link for this conversation?
+
+Here's the link to this conversation: Add Reports Feature
+
+Add another report type for a Detailed Project. This report will give more detail for a selected projects. You will need to add more seed data for this report to create multiple tasks that are complete, in-progress, and planned. The report should detail all of the tasks for the project with title and descriptions - list the planned tasks first, then the in-progress tasks, then the completed tasks. Planned and in-progress tasks should be in order of due date, and completed tasks should be in order of completion date. Also add a pie chart at the top of the report showing the number of tasks of each state.
+
+I'll also need to check the existing projects API to know how to fetch the project list for the selector.
+
+Good - the projects API returns project lists via GET /api/projects. Now let me implement everything.
+
+First, the report generator - adding the SVG pie chart function and the detailed project report generator:
+
+reportGenerator.ts
++73
+export interface DetailedProjectTask {  title: string  description: string | null  status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
+Now add the generateDetailedProjectReport function at the end of the file:
+
+reportGenerator.ts
++98
+export function generateDetailedProjectReport(data: DetailedProjectReportData): string {  const lines: string[] = []  lines.push(`# Detailed Project Report: ${data.projectName}`)
+Now update the API endpoint to handle the new report type:
+
+generate.post.ts
++94
+-54
+import { startOfDay, endOfDay, differenceInDays, format } from 'date-fns'import { generateActivityReport } from '~/server/utils/reportGenerator'import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData } from '~/server/utils/reportGenerator'
+import { generateActivityReport } from '~/server/utils/reportGenerator'import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData } from '~/server/utils/reportGenerator'import { startOfDay, endOfDay, differenceInDays, format } from 'date-fns'import { generateActivityReport, generateDetailedProjectReport } from '~/server/utils/reportGenerator'import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask } from '~/server/utils/reportGenerator'
+Now create the project selection modal:
+
+ProjectSelectModal.vue
++101
+<template>  <div v-if="show" class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">    <div class="bg-white/95 rounded-lg p-6 max-w-md w-full shadow-xl mx-4">      <div class="flex justify-between items-start mb-4">        <h3 class="text-lg font-medium">Select Project</h3>
+Now update the Reports page to include the new report type:
+
+index.vue
++14
+        </button>
+        </button>        <button          @click="showProjectSelect = true"          class="w-full text-left px-4 py-3 border border-gray-200 rounded-md hover:bg-gray-50 hover:border-[var(--primary)] transition-colors flex items-center justify-between"        >
+Now add the modal and the handler in the template and script:
+
+index.vue
++8
+-1
+      @cancel="showDatePicker = false"      @run="handleRunReport"
+      @run="handleRunReport"      @cancel="showDatePicker = false"      @run="handleRunActivityReport"    />
+Now update the script section:
+
+index.vue
++1
+import ReportDatePickerModal from '~/components/reports/ReportDatePickerModal.vue'import ReportViewerModal from '~/components/reports/ReportViewerModal.vue'
+import ReportDatePickerModal from '~/components/reports/ReportDatePickerModal.vue'import ProjectSelectModal from '~/components/reports/ProjectSelectModal.vue'import ReportViewerModal from '~/components/reports/ReportViewerModal.vue'
+index.vue
++1
+const showDatePicker = ref(false)const showViewer = ref(false)
+const showDatePicker = ref(false)const showProjectSelect = ref(false)const showViewer = ref(false)
+Now replace the handleRunReport function and add the project report handler:
+
+index.vue
++35
+-12
+async function handleRunReport(payload: { startDate: string; endDate: string }) {
+async function handleRunReport(payload: { startDate: string; endDate: string }) {function showGeneratedReport(report: ReportFull) {  reports.value.unshift({    id: report.id,
+Now update the ReportViewerModal to allow SVG elements through DOMPurify:
+
+ReportViewerModal.vue
++9
+-1
+  const raw = marked(props.markdown) as string  return DOMPurify.sanitize(raw)
+  return DOMPurify.sanitize(raw)  const raw = marked(props.markdown) as string  return DOMPurify.sanitize(raw, {    ADD_TAGS: ['svg', 'circle', 'path', 'rect', 'text', 'g', 'line', 'defs', 'clipPath', 'use'],    ADD_ATTR: [
+Now add seed data with tasks in all three states for each project:
+
+seed-reports.ts
++77
+-20
+  // --- Project Tasks (completed in March 2026) ---  const projectTasks = [    { id: 'seed-task-p1', title: 'Set up CI/CD pipeline', projectId: projectAlpha.id, completedAt: new Date('2026-03-03T10:00:00Z') },    { id: 'seed-task-p2', title: 'Write API documentation', projectId: projectAlpha.id, completedAt: new Date('2026-03-08T14:00:00Z') },
+  // --- Project Tasks (completed in March 2026) ---  const projectTasks = [    { id: 'seed-task-p1', title: 'Set up CI/CD pipeline', projectId: projectAlpha.id, completedAt: new Date('2026-03-03T10:00:00Z') },    { id: 'seed-task-p2', title: 'Write API documentation', projectId: projectAlpha.id, completedAt: new Date('2026-03-08T14:00:00Z') },    { id: 'seed-task-p3', title: 'Implement authentication', projectId: projectAlpha.id, completedAt: new Date('2026-03-15T09:00:00Z') },    { id: 'seed-task-p4', title: 'Design landing page', projectId: projectBeta.id, completedAt: new Date('2026-03-05T11:00:00Z') },    { id: 'seed-task-p5', title: 'Build contact form', projectId: projectBeta.id, completedAt: new Date('2026-03-12T16:00:00Z') },    { id: 'seed-task-p6', title: 'Optimise images', projectId: projectBeta.id, completedAt: new Date('2026-03-20T12:00:00Z') },
+Now update the closing message in the seed file:
+
+seed-reports.ts
++2
+-1
+  console.log('\nReport seed data complete!')  console.log('Generate a report for March 1-31, 2026 to see all sections populated.')}
+  console.log('Generate a report for March 1-31, 2026 to see all sections populated.')  console.log('\nReport seed data complete!')  console.log('- Activity Report: use March 1-31, 2026 to see all sections populated.')  console.log('- Detailed Project Report: select Alpha Project or Beta Project to see all task states.')}
+Now add unit tests for the new report generator and pie chart functions:
+
+reportGenerator.test.ts
++2
+-2
+import { describe, it, expect } from 'vitest'import { generateActivityReport } from '~/server/utils/reportGenerator'import type { ReportData } from '~/server/utils/reportGenerator'
+import { generateActivityReport } from '~/server/utils/reportGenerator'import type { ReportData } from '~/server/utils/reportGenerator'import { describe, it, expect } from 'vitest'import { generateActivityReport, generateDetailedProjectReport, generatePieChartSvg } from '~/server/utils/reportGenerator'import type { ReportData, DetailedProjectReportData, DetailedProjectTask, PieSlice } from '~/server/utils/reportGenerator'
+Now append the new test suites at the end of the file:
+
+reportGenerator.test.ts
++258
+describe('generatePieChartSvg', () => {  it('returns a message when total is 0', () => {    const slices: PieSlice[] = [      { label: 'A', count: 0, color: '#000' },
+All 218 tests pass (183 original + 18 activity report + 17 new detailed project report tests). Now let me verify the dev server starts cleanly.
+
+Dev server starts cleanly with no errors. Let me stop it and check for linter issues on all changed files.
+
+generate.post.ts
++8
+-1
+async function handleActivityReport(userId: string, body: any) {
+async function handleActivityReport(userId: string, body: any) {interface ReportRequestBody {  reportType: string  startDate?: string
+generate.post.ts
++1
+-1
+async function handleDetailedProjectReport(userId: string, body: any) {  const { projectId } = body
+async function handleDetailedProjectReport(userId: string, body: any) {async function handleDetailedProjectReport(userId: string, body: ReportRequestBody) {  const { projectId } = body
+All done. Here's a summary of what was added:
+
+Detailed Project Report - What was built
+Report Generator (server/utils/reportGenerator.ts)
+generatePieChartSvg() - Generates an inline SVG pie chart with legend, supporting any number of slices with labels, counts, and colors. Handles edge cases (all-zero, single-slice-100%).
+generateDetailedProjectReport() - Produces markdown for a selected project including:
+Task Overview - Total/Planned/In Progress/Completed counts with the SVG pie chart (grey for Planned, amber for In Progress, green for Completed)
+Planned Tasks - BACKLOG tasks sorted by due date (no due date sorted last), showing title, due date, and description
+In Progress Tasks - IN_PROGRESS tasks sorted by due date
+Completed Tasks - DONE tasks sorted by completion date
+API (server/api/reports/generate.post.ts)
+Refactored into handleActivityReport() and handleDetailedProjectReport() with a typed ReportRequestBody interface
+detailed-project report type accepts a projectId, validates project ownership, fetches all tasks for the project, generates the report and stores it
+UI Components
+ProjectSelectModal - Fetches user's projects via /api/projects, presents a dropdown selector with Cancel and Run Report buttons
+Reports page - Added "Detailed Project Report" to the Available Reports list with its own selection flow
+ReportViewerModal - Updated DOMPurify configuration to allow SVG elements (svg, circle, path, rect, text, g) and their attributes so the pie chart renders correctly
+Seed Data (prisma/seed-reports.ts)
+Expanded from 6 to 16 project tasks across both Alpha and Beta projects:
+Alpha Project: 3 completed, 2 in-progress, 3 planned (with descriptions)
+Beta Project: 3 completed, 1 in-progress, 2 planned (with descriptions)
+All tasks include realistic descriptions for the report detail view
+Tests
+17 new tests for generateDetailedProjectReport and generatePieChartSvg:
+Pie chart: empty data, single-slice, multiple slices, legend entries
+Report: project name in title, task counts, SVG inclusion, empty states, sorting by due date/completion date, tasks without due dates, section ordering, full report
+218 total tests pass (all existing + new)
+Verification
+All 218 tests pass
+Dev server starts with no console errors
+No linter errors
+Add another detailed report for all tasks across all projects. Tasks should be from a selected date period not exceeding 31 days and should be listed in the same order as the detailed project report. Also include two pie charts. One should tasks by state, as in the detailed project report, and one showing the number of tasks per project.
+
+First, I'll add the new interface and generator function. This report extends DetailedProjectTask with a project name, and uses two pie charts.
+
+reportGenerator.ts
++10
+export interface AllTasksDetailedTask extends DetailedProjectTask {  projectName: string | null}
+Now I need to extract the shared sorting/rendering logic from generateDetailedProjectReport and reuse it. Let me add helper functions and the new report generator at the end of the file.
+
+reportGenerator.ts
++133
+-54
+export function generateDetailedProjectReport(data: DetailedProjectReportData): string {  const lines: string[] = []
+export function generateDetailedProjectReport(data: DetailedProjectReportData): string {  const lines: string[] = []function sortByDueDate<T extends { dueDate: Date | string | null }>(tasks: T[]): T[] {  return [...tasks].sort((a, b) => {
+Now update the API endpoint to handle the new report type:
+
+generate.post.ts
++2
+-2
+import { startOfDay, endOfDay, differenceInDays, format } from 'date-fns'import { generateActivityReport, generateDetailedProjectReport } from '~/server/utils/reportGenerator'import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask } from '~/server/utils/reportGenerator'
+import { generateActivityReport, generateDetailedProjectReport } from '~/server/utils/reportGenerator'import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask } from '~/server/utils/reportGenerator'import { startOfDay, endOfDay, differenceInDays, format } from 'date-fns'import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport } from '~/server/utils/reportGenerator'import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask, AllTasksDetailedTask } from '~/server/utils/reportGenerator'
+Now add the handler function and the route case. I'll add it after the handleDetailedProjectReport function:
+
+generate.post.ts
++77
+function validateDateRange(body: ReportRequestBody) {  const { startDate: startDateStr, endDate: endDateStr } = body  if (!startDateStr || !endDateStr) {
+Now add the case to the switch statement:
+
+generate.post.ts
++2
+      return handleDetailedProjectReport(user.id, body)    default:
+      return handleDetailedProjectReport(user.id, body)    case 'detailed-all-tasks':      return handleDetailedAllTasksReport(user.id, body)    default:
+Now I should also refactor handleActivityReport to use the shared validateDateRange function:
+
+generate.post.ts
++1
+-33
+async function handleActivityReport(userId: string, body: ReportRequestBody) {  const { startDate: startDateStr, endDate: endDateStr } = body  if (!startDateStr || !endDateStr) {    throw createError({
+  const { startDate: startDateStr, endDate: endDateStr } = body  if (!startDateStr || !endDateStr) {    throw createError({      statusCode: 400,      message: 'startDate and endDate are required for activity reports'    })  }  const startDate = startOfDay(new Date(startDateStr))  const endDate = endOfDay(new Date(endDateStr))  if (endDate < startDate) {    throw createError({      statusCode: 400,      message: 'End date must be on or after start date'    })  }  const today = endOfDay(new Date())  if (endDate > today) {    throw createError({      statusCode: 400,      message: 'End date cannot be in the future'    })  }async function handleActivityReport(userId: string, body: ReportRequestBody) {
+Now update the Reports page. I need to make the date picker reusable for both activity and all-tasks reports. I'll track which report type triggered the date picker.
+
+I'll update the date picker modal to accept a title prop so it can be reused for different report types:
+
+ReportDatePickerModal.vue
++1
+-1
+      <div class="flex justify-between items-start mb-4">        <h3 class="text-lg font-medium">Run Activity Report</h3>        <button @click="$emit('cancel')" class="text-gray-400 hover:text-gray-500">
+        <h3 class="text-lg font-medium">Run Activity Report</h3>      <div class="flex justify-between items-start mb-4">        <h3 class="text-lg font-medium">{{ title }}</h3>        <button @click="$emit('cancel')" class="text-gray-400 hover:text-gray-500">
+ReportDatePickerModal.vue
++5
+-2
+const props = defineProps<{  show: boolean}>()
+const props = defineProps<{}>()const props = withDefaults(defineProps<{  show: boolean
+Now update the Reports page to add the new report type and handle the date picker flow for both report types:
+
+index.vue
++14
+        </button>
+        </button>        <button          @click="openAllTasksDatePicker"          class="w-full text-left px-4 py-3 border border-gray-200 rounded-md hover:bg-gray-50 hover:border-[var(--primary)] transition-colors flex items-center justify-between"        >
+Now update the date picker modals in the template. I need the activity report date picker and a separate one for the all-tasks report, or I can reuse one with the title prop. Let me use two instances for clean separation:
+
+index.vue
++10
+-1
+    <!-- Date Picker Modal -->    <ReportDatePickerModal      :show="showDatePicker"
+    <!-- Date Picker Modal -->    <!-- Activity Report Date Picker Modal -->    <ReportDatePickerModal      :show="showDatePicker"
+Now add the state and handler to the script:
+
+index.vue
++1
+const showDatePicker = ref(false)const showProjectSelect = ref(false)
+const showDatePicker = ref(false)const showAllTasksDatePicker = ref(false)const showProjectSelect = ref(false)
+Now add the openAllTasksDatePicker function and the handleRunAllTasksReport handler:
+
+index.vue
++26
+function openAllTasksDatePicker() {  showAllTasksDatePicker.value = true}
+Now add unit tests for generateDetailedAllTasksReport:
+
+reportGenerator.test.ts
++2
+-2
+import { describe, it, expect } from 'vitest'import { generateActivityReport, generateDetailedProjectReport, generatePieChartSvg } from '~/server/utils/reportGenerator'import type { ReportData, DetailedProjectReportData, DetailedProjectTask, PieSlice } from '~/server/utils/reportGenerator'
+import { generateActivityReport, generateDetailedProjectReport, generatePieChartSvg } from '~/server/utils/reportGenerator'import type { ReportData, DetailedProjectReportData, DetailedProjectTask, PieSlice } from '~/server/utils/reportGenerator'import { describe, it, expect } from 'vitest'import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport, generatePieChartSvg } from '~/server/utils/reportGenerator'import type { ReportData, DetailedProjectReportData, DetailedProjectTask, DetailedAllTasksReportData, AllTasksDetailedTask, PieSlice } from '~/server/utils/reportGenerator'
+Now append the test suite at the end of the file:
+
+reportGenerator.test.ts
++197
+function createAllTask(overrides: Partial<AllTasksDetailedTask> = {}): AllTasksDetailedTask {  return {    title: 'Test Task',    description: 'A test task',
+seed-reports.ts
++1
+  console.log('- Detailed Project Report: select Alpha Project or Beta Project to see all task states.')}
+  console.log('- Detailed Project Report: select Alpha Project or Beta Project to see all task states.')  console.log('- Detailed All Tasks Report: use March 1-31, 2026 to see tasks across all projects with both pie charts.')}
+All 230 tests pass. Now verify the dev server and check for lint errors.
+
+All done. Here's a summary of what was added:
+
+Detailed All Tasks Report - What was built
+Report Generator (server/utils/reportGenerator.ts)
+Refactored the existing code to extract shared helper functions, reducing duplication across report types:
+
+sortByDueDate() / sortByCompletedAt() - reusable sorting
+renderPlannedTasks() / renderInProgressTasks() / renderCompletedTasks() - shared section rendering with optional project label
+buildStatusPieSlices() - shared status pie chart data builder
+generateDetailedProjectReport() now uses the shared helpers (same output, less code)
+New generateDetailedAllTasksReport():
+
+Title with date period
+Task overview counts (Total, Planned, In Progress, Completed)
+Pie chart 1: Tasks by Status - same grey/amber/green scheme as the project report
+Pie chart 2: Tasks by Project - one slice per project (sorted alphabetically), using 10 rotating colours. Tasks without a project show as "No Project"
+Three task sections in order: Planned (sorted by due date), In Progress (sorted by due date), Completed (sorted by completion date)
+Each task shows Project, Due/Completed date, and description
+API (server/api/reports/generate.post.ts)
+Extracted validateDateRange() helper to eliminate duplicated date validation code
+Added handleDetailedAllTasksReport() which fetches tasks relevant to the period:
+Completed tasks with completedAt in range
+In-progress/planned tasks with dueDate in range or createdAt in range
+Includes project names via join
+New detailed-all-tasks case in the route switch
+UI
+Reports page - Added "Detailed All Tasks Report" button in the Available Reports section
+ReportDatePickerModal - Added a title prop (defaults to "Run Report") so it can be reused with different headings for different report types
+Activity report uses title "Run Activity Report"; all-tasks report uses "Run Detailed All Tasks Report"
+Seed Data
+Updated the closing notes to mention the new report type can be tested with March 1-31, 2026
+Tests
+12 new tests for generateDetailedAllTasksReport:
+Title and date period, overview counts, empty states
+Tasks by Status pie chart, Tasks by Project pie chart (alphabetical sorting, "No Project" label)
+Section ordering, sorting by due date / completion date
+Project labels on tasks, descriptions
+Full report with all sections and charts
+230 total tests pass (all existing + new), no lint errors, dev server starts cleanly
+Add a Trackers Report showing statistics for each tracker. Present the data in the style of a GitHub Activity chart - see attachment. Show the percentage of days completed for each tracker, as well as the number of days. Score the progress for each tracker in rainbow bands from red to green using 5% width bands.
+
+Add heatmap SVG, progress bar SVG, and generateTrackersReport() to reportGenerator.ts
+Add handleTrackersReport() to API endpoint
+Update Reports page with Trackers Report button + date picker
+Update ReportViewerModal SVG allowlist for new elements
+Add unit tests for trackers report generation
+Run all tests and verify dev mode starts clean
+Now I have full context. Let me implement the Trackers Report step by step.
+
+First, let me add the core report generation logic to reportGenerator.ts.
+
+reportGenerator.ts
++1
+-1
+import { format } from 'date-fns'
+import { format } from 'date-fns'import { format, addDays, getDay, differenceInDays } from 'date-fns'
+reportGenerator.ts
++16
+export interface TrackerReportEntry {  date: Date | string  value: number}
+Now add the heatmap, progress bar, and report generation functions at the end of the file.
+
+reportGenerator.ts
++182
+function hslToHex(h: number, s: number, l: number): string {  const c = (1 - Math.abs(2 * l - 1)) * s  const hPrime = h / 60  const x = c * (1 - Math.abs(hPrime % 2 - 1))
+Now update the API endpoint to handle the trackers report type.
+
+generate.post.ts
++2
+-2
+import { startOfDay, endOfDay, differenceInDays, format } from 'date-fns'import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport } from '~/server/utils/reportGenerator'import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask, AllTasksDetailedTask } from '~/server/utils/reportGenerator'
+import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport } from '~/server/utils/reportGenerator'import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask, AllTasksDetailedTask } from '~/server/utils/reportGenerator'import { startOfDay, endOfDay, differenceInDays, format } from 'date-fns'import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport, generateTrackersReport } from '~/server/utils/reportGenerator'import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask, AllTasksDetailedTask, TrackerReportItem } from '~/server/utils/reportGenerator'
+generate.post.ts
++42
+async function handleTrackersReport(userId: string, body: ReportRequestBody) {  const { startDate, endDate } = validateDateRange(body)  const trackers = await prisma.tracker.findMany({
+generate.post.ts
++2
+      return handleDetailedAllTasksReport(user.id, body)    default:
+      return handleDetailedAllTasksReport(user.id, body)    case 'trackers':      return handleTrackersReport(user.id, body)    default:
+Now update the Reports page to add the Trackers Report button and handler, and update the viewer modal's SVG allowlist.
+
+index.vue
++14
+        </button>
+        </button>        <button          @click="openTrackersDatePicker"          class="w-full text-left px-4 py-3 border border-gray-200 rounded-md hover:bg-gray-50 hover:border-[var(--primary)] transition-colors flex items-center justify-between"        >
+Now add the date picker modal for the Trackers Report.
+
+index.vue
++8
+    <!-- Trackers Report Date Picker Modal -->    <ReportDatePickerModal      :show="showTrackersDatePicker"      title="Run Trackers Report"
+Now add the script-side state and handler function.
+
+index.vue
++1
+const showAllTasksDatePicker = ref(false)const showProjectSelect = ref(false)
+const showAllTasksDatePicker = ref(false)const showTrackersDatePicker = ref(false)const showProjectSelect = ref(false)
+index.vue
++4
+function openTrackersDatePicker() {  showTrackersDatePicker.value = true}
+index.vue
++22
+async function handleRunTrackersReport(payload: { startDate: string; endDate: string }) {  showTrackersDatePicker.value = false  isGenerating.value = true
+Now update the ReportViewerModal to allow rx and ry SVG attributes.
+
+ReportViewerModal.vue
++1
+-1
+      'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray', 'stroke-dashoffset',      'd', 'cx', 'cy', 'r', 'x', 'y', 'dx', 'dy', 'transform',      'text-anchor', 'dominant-baseline', 'font-size', 'font-weight'
+      'd', 'cx', 'cy', 'r', 'x', 'y', 'dx', 'dy', 'transform',      'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray', 'stroke-dashoffset',      'd', 'cx', 'cy', 'r', 'rx', 'ry', 'x', 'y', 'dx', 'dy', 'transform',      'text-anchor', 'dominant-baseline', 'font-size', 'font-weight'
+Now let me add the unit tests for the new functions.
+
+reportGenerator.test.ts
++2
+-2
+import { describe, it, expect } from 'vitest'import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport, generatePieChartSvg } from '~/server/utils/reportGenerator'import type { ReportData, DetailedProjectReportData, DetailedProjectTask, DetailedAllTasksReportData, AllTasksDetailedTask, PieSlice } from '~/server/utils/reportGenerator'
+import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport, generatePieChartSvg } from '~/server/utils/reportGenerator'import type { ReportData, DetailedProjectReportData, DetailedProjectTask, DetailedAllTasksReportData, AllTasksDetailedTask, PieSlice } from '~/server/utils/reportGenerator'import { describe, it, expect } from 'vitest'import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport, generatePieChartSvg, generateActivityHeatmapSvg, generateProgressBarSvg, generateTrackersReport, RAINBOW_COLORS } from '~/server/utils/reportGenerator'import type { ReportData, DetailedProjectReportData, DetailedProjectTask, DetailedAllTasksReportData, AllTasksDetailedTask, PieSlice, TrackerReportEntry, TrackerReportItem, TrackersReportData } from '~/server/utils/reportGenerator'
+Now add the test suites at the end of the file.
+
+reportGenerator.test.ts
++262
+describe('generateActivityHeatmapSvg', () => {  it('generates valid SVG output', () => {    const result = generateActivityHeatmapSvg(      new Date(2026, 2, 2),
+Now let me also update the seed data with more diverse tracker entries to test the visual range.
+
+seed-reports.ts
++19
+      ]
+      ]    },    {      id: 'seed-tracker-3',      name: 'Meditation',
+seed-reports.ts
++1
+  console.log('- Detailed All Tasks Report: use March 1-31, 2026 to see tasks across all projects with both pie charts.')}
+  console.log('- Detailed All Tasks Report: use March 1-31, 2026 to see tasks across all projects with both pie charts.')  console.log('- Trackers Report: use March 1-31, 2026 to see heatmaps and progress bars for all trackers.')}
+Now let me run the tests and check for lint errors.
+
+All 256 tests pass, including the 73 report generator tests (up from the previous 43 in the generateDetailedAllTasksReport suite). Let me also check for lint errors on the files I changed.
+
+The dev server starts cleanly with no errors. Let me stop it now.
+
+Everything is complete. Here's a summary of what was implemented:
+
+New Report Type: Trackers Report
+
+This report shows statistics for each tracker over a selected date period (max 31 days), featuring:
+
+GitHub-style Activity Heatmap - An SVG grid where each cell represents a day, colored in 5 levels of green intensity based on the tracker entry value (0-100). The grid is week-aligned (Mon-Sun rows, week columns) with day labels (Mon/Wed/Fri) on the left, month labels on top, and a "Less...More" legend.
+
+Completion Statistics - Shows "X completed out of Y days (Z.Z%)" for each tracker.
+
+Rainbow Progress Bar - A 20-band SVG bar from red (0%) to green (100%) in 5% increments. Bands are filled up to the tracker's completion percentage, giving an immediate visual score where low completion appears red/orange and high completion reaches green.
+
+Files changed:
+
+server/utils/reportGenerator.ts - Added generateActivityHeatmapSvg(), generateProgressBarSvg(), generateTrackersReport(), plus supporting types and helpers (hslToHex, RAINBOW_COLORS, getHeatmapColor)
+server/api/reports/generate.post.ts - Added handleTrackersReport() and the 'trackers' case in the switch
+pages/app/reports/index.vue - Added "Trackers Report" button, date picker modal, and handler
+components/reports/ReportViewerModal.vue - Added rx, ry to DOMPurify's SVG attribute allowlist for rounded rectangles
+test/utils/reportGenerator.test.ts - Added 26 new tests (256 total, all passing)
+prisma/seed-reports.ts - Added Meditation (90% completion) and Water Intake (6% completion) seed trackers for visual testing
+Allow the Trackers Report to show data for up to 90 days and make sure the report can display that amount of data correctly.
+
+I need to update the date validation (both client and server), the date picker modal's max days prop, and verify the heatmap renders well at 90 days. Let me read the relevant files to plan the changes.
+
+I need to make three changes: add a configurable maxDays prop to the date picker modal, make the server-side validation accept a custom max, and pass 90 days for the trackers report instances.
+
+ReportDatePickerModal.vue
++3
+-1
+  title?: string}>(), {  title: 'Run Report'
+  title: 'Run Report'  title?: string  maxDays?: number}>(), {  title: 'Run Report',
+ReportDatePickerModal.vue
++2
+-2
+  const days = differenceInDays(end, start)  if (days > 30) {    return 'Report period cannot exceed 31 days.'
+  if (days > 30) {    return 'Report period cannot exceed 31 days.'  const days = differenceInDays(end, start)  if (days >= props.maxDays) {    return `Report period cannot exceed ${props.maxDays} days.`
+ReportDatePickerModal.vue
++1
+-1
+  if (end > today) return false  if (differenceInDays(end, start) > 30) return false
+  if (differenceInDays(end, start) > 30) return false  if (end > today) return false  if (differenceInDays(end, start) >= props.maxDays) return false
+Now update the server-side validation to accept an optional maxDays parameter.
+
+generate.post.ts
++3
+-3
+function validateDateRange(body: ReportRequestBody) {  const { startDate: startDateStr, endDate: endDateStr } = body
+function validateDateRange(body: ReportRequestBody) {function validateDateRange(body: ReportRequestBody, maxDays = 31) {  const { startDate: startDateStr, endDate: endDateStr } = body
+Now update the trackers report handler to pass 90 as the max.
+
+generate.post.ts
++1
+-1
+async function handleTrackersReport(userId: string, body: ReportRequestBody) {  const { startDate, endDate } = validateDateRange(body)
+  const { startDate, endDate } = validateDateRange(body)async function handleTrackersReport(userId: string, body: ReportRequestBody) {  const { startDate, endDate } = validateDateRange(body, 90)
+Now pass :max-days="90" to the trackers date picker on the reports page.
+
+index.vue
++1
+      title="Run Trackers Report"      @cancel="showTrackersDatePicker = false"
+      title="Run Trackers Report"      :max-days="90"      @cancel="showTrackersDatePicker = false"
+Now let me verify the heatmap SVG handles 90 days correctly. Let me check the dimensions for a 90-day period.
+
+The heatmap SVG is already dynamic -- it calculates numWeeks from the actual date range, so it naturally scales to wider periods. For 90 days (about 13-14 week columns), the SVG width will be around 400px, well within the 900px viewer.
+
+Let me add a test for the 90-day scenario and run all tests to verify.
+
+reportGenerator.test.ts
++22
+  })
+  })  it('handles a 90-day period spanning multiple months', () => {    const start = new Date(2026, 0, 1)    const end = new Date(2026, 2, 31)
+Also add a 90-day test for the full trackers report.
+
+reportGenerator.test.ts
++23
+  })
+  })  it('handles a 90-day period with correct statistics', () => {    const entries: TrackerReportEntry[] = Array.from({ length: 45 }, (_, i) => ({      date: new Date(2026, 0, (i * 2) + 1),
+Now run all tests.
+
+All 258 tests pass. Let me also check for lint errors on the changed files.
+
+All clean. Here's a summary of the changes:
+
+ReportDatePickerModal.vue -- Added a maxDays prop (defaults to 31) that controls both the validation message and the isValid check. Other reports still enforce 31 days; the trackers report can use a higher limit.
+
+server/api/reports/generate.post.ts -- validateDateRange() now accepts an optional maxDays parameter (defaults to 31). The handleTrackersReport() call passes 90 as the max.
+
+pages/app/reports/index.vue -- The Trackers Report date picker now passes :max-days="90".
+
+Tests -- Added a 90-day heatmap test (verifying it renders Jan/Feb/Mar labels and 90+ cell rects) and a 90-day trackers report test (verifying correct 90-day statistics). All 258 tests pass.
+
+The heatmap SVG was already dynamic -- it computes numWeeks from the actual date range, so a 90-day period (~14 week columns at 16px stride = ~400px total width) renders correctly within the 900px report viewer.
+
+Add trackers seed data for the last 90 days so I can test the report properly.
+
+I'll replace the tracker seed data with 90 days of entries (Jan 1 to Mar 31, 2026) with realistic patterns at different completion rates so the heatmaps and progress bars show meaningful variety.
+
+seed-reports.ts
++60
+-35
+  // --- Trackers with entries in March 2026 ---
+  // --- Trackers with entries in March 2026 ---  // --- Trackers with 90 days of entries (Jan 1 - Mar 31, 2026) ---  const trackerPeriodStart = new Date('2026-01-01')  const totalTrackerDays = 90
+Now update the instructions at the bottom to reflect the new date range.
+
+seed-reports.ts
++1
+-1
+  console.log('- Detailed All Tasks Report: use March 1-31, 2026 to see tasks across all projects with both pie charts.')  console.log('- Trackers Report: use March 1-31, 2026 to see heatmaps and progress bars for all trackers.')}
+  console.log('- Trackers Report: use March 1-31, 2026 to see heatmaps and progress bars for all trackers.')  console.log('- Detailed All Tasks Report: use March 1-31, 2026 to see tasks across all projects with both pie charts.')  console.log('- Trackers Report: use Jan 1 - Mar 31, 2026 (90 days) to see full heatmaps and progress bars for all trackers.')}
+Let me verify the seed file compiles correctly by checking for any syntax issues.
+
+The tsc errors are pre-existing Prisma type issues, not related to my changes. The file actually began executing correctly via tsx. Let me make sure all tests still pass.
+
+All 258 tests pass. The seed data now covers 90 days (Jan 1 - Mar 31, 2026) with four trackers at different completion levels:
+
+Tracker	Pattern	~Completion
+Exercise	Mon/Wed/Fri/Sat with occasional misses, varying intensity 60-100	~49%
+Reading	Weekends + occasional Wednesdays, always 100	~34%
+Meditation	Nearly daily with scattered gaps, intensity 70-100	~86%
+Water Intake	Very sporadic, low intensity 30-70	~12%
+Run npm run prisma:seed-reports to load the data, then generate a Trackers Report with the date range January 1 - March 31, 2026 to see the full 90-day heatmaps and progress bars.
+
+Opus4.6Conversaton.txt
+ update this file with the entire conversation content.
+
+Opus4.6Conversaton.txt
++173
+No linter errors on any new or modified files
+No linter errors on any new or modified files---## Conversation 2: Detailed Project Report
+The file has been updated with the full conversation history, covering all six conversations:
+
+Activity Report -- original reports feature
+Detailed Project Report -- per-project task breakdown with pie chart
+Detailed All Tasks Report -- cross-project task report with two pie charts
+Trackers Report -- GitHub-style heatmaps and rainbow progress bars
+Extend to 90 Days -- configurable max days for trackers report
+90-Day Seed Data -- realistic tracker data spanning Jan 1 - Mar 31, 2026
