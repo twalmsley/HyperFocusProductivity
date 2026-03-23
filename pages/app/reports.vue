@@ -67,7 +67,7 @@
               >
                 <p class="font-medium text-gray-900">{{ report.title }}</p>
                 <p class="text-xs text-gray-600">
-                  Type: {{ report.reportType === 'DETAILED_PROJECT' ? 'Detailed Project' : 'Activity Summary' }}
+                  Type: {{ getReportTypeLabel(report.reportType) }}
                 </p>
                 <p class="text-xs text-gray-600">
                   Period: {{ formatDate(report.startDate) }} to {{ formatDate(report.endDate) }}
@@ -158,7 +158,7 @@
       </div>
       <div v-else-if="activeReport" class="space-y-3">
         <p class="text-sm text-gray-600">
-          Type: {{ activeReport.reportType === 'DETAILED_PROJECT' ? 'Detailed Project' : 'Activity Summary' }}
+          Type: {{ getReportTypeLabel(activeReport.reportType) }}
         </p>
         <p class="text-sm text-gray-600">
           Period: {{ formatDate(activeReport.startDate) }} to {{ formatDate(activeReport.endDate) }}
@@ -167,29 +167,54 @@
           Created: {{ formatDateTime(activeReport.createdAt) }}
         </p>
 
-        <div
-          v-if="detailedProjectPieData"
-          class="border rounded-md p-4 bg-gray-50"
-        >
-          <h4 class="font-medium text-gray-900 mb-3">Task State Distribution</h4>
-          <div class="flex items-center gap-6">
-            <div
-              class="h-28 w-28 rounded-full border border-gray-200"
-              :style="detailedProjectPieStyle"
-            />
-            <div class="space-y-2 text-sm">
-              <p class="flex items-center gap-2">
-                <span class="inline-block h-3 w-3 rounded-sm bg-slate-400" />
-                Planned: {{ detailedProjectPieData.planned }}
-              </p>
-              <p class="flex items-center gap-2">
-                <span class="inline-block h-3 w-3 rounded-sm bg-blue-500" />
-                In-progress: {{ detailedProjectPieData.inProgress }}
-              </p>
-              <p class="flex items-center gap-2">
-                <span class="inline-block h-3 w-3 rounded-sm bg-emerald-500" />
-                Completed: {{ detailedProjectPieData.completed }}
-              </p>
+        <div v-if="statePieData || projectPieData" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            v-if="statePieData"
+            class="border rounded-md p-4 bg-gray-50"
+          >
+            <h4 class="font-medium text-gray-900 mb-3">Task State Distribution</h4>
+            <div class="flex items-center gap-6">
+              <div
+                class="h-28 w-28 rounded-full border border-gray-200"
+                :style="statePieStyle"
+              />
+              <div class="space-y-2 text-sm">
+                <p class="flex items-center gap-2">
+                  <span class="inline-block h-3 w-3 rounded-sm bg-slate-400" />
+                  Planned: {{ statePieData.planned }}
+                </p>
+                <p class="flex items-center gap-2">
+                  <span class="inline-block h-3 w-3 rounded-sm bg-blue-500" />
+                  In-progress: {{ statePieData.inProgress }}
+                </p>
+                <p class="flex items-center gap-2">
+                  <span class="inline-block h-3 w-3 rounded-sm bg-emerald-500" />
+                  Completed: {{ statePieData.completed }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="projectPieData"
+            class="border rounded-md p-4 bg-gray-50"
+          >
+            <h4 class="font-medium text-gray-900 mb-3">Tasks per Project</h4>
+            <div class="flex items-start gap-6">
+              <div
+                class="h-28 w-28 rounded-full border border-gray-200 shrink-0"
+                :style="projectPieStyle"
+              />
+              <div class="space-y-2 text-sm max-h-32 overflow-y-auto pr-1">
+                <p
+                  v-for="item in projectPieData.items"
+                  :key="item.projectName"
+                  class="flex items-center gap-2"
+                >
+                  <span class="inline-block h-3 w-3 rounded-sm" :style="{ backgroundColor: item.color }" />
+                  {{ item.projectName }}: {{ item.count }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -253,6 +278,11 @@ const reportDefinitions: ReportDefinition[] = [
     id: 'DETAILED_PROJECT',
     name: 'Detailed Project Report',
     description: 'Detailed list of all tasks for one selected project, grouped by state.',
+  },
+  {
+    id: 'DETAILED_ALL_PROJECTS',
+    name: 'Detailed All Projects Tasks Report',
+    description: 'Detailed project task breakdown across all projects for a selected date range.',
   },
 ]
 
@@ -335,8 +365,11 @@ const renderedReportHtml = computed(() => {
   return DOMPurify.sanitize(marked(activeReport.value.markdownContent) as string)
 })
 
-const detailedProjectPieData = computed(() => {
-  if (activeReport.value?.reportType !== 'DETAILED_PROJECT' || !activeReport.value.markdownContent) {
+const statePieData = computed(() => {
+  if (!activeReport.value || !['DETAILED_PROJECT', 'DETAILED_ALL_PROJECTS'].includes(activeReport.value.reportType)) {
+    return null
+  }
+  if (!activeReport.value.markdownContent) {
     return null
   }
 
@@ -358,7 +391,7 @@ const detailedProjectPieData = computed(() => {
 })
 
 const detailedProjectPieStyle = computed(() => {
-  const data = detailedProjectPieData.value
+  const data = statePieData.value
   if (!data) {
     return {}
   }
@@ -371,6 +404,58 @@ const detailedProjectPieStyle = computed(() => {
     background: `conic-gradient(#94a3b8 0% ${plannedPct}%, #3b82f6 ${plannedPct}% ${plannedPct + inProgressPct}%, #10b981 ${plannedPct + inProgressPct}% ${plannedPct + inProgressPct + completedPct}%)`,
   }
 })
+
+const projectPiePalette = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#f97316']
+
+const projectPieData = computed(() => {
+  if (activeReport.value?.reportType !== 'DETAILED_ALL_PROJECTS' || !activeReport.value.markdownContent) {
+    return null
+  }
+
+  const projectCounts: Array<{ projectName: string; count: number }> = []
+  const regex = /- Project tasks: (.+) = (\d+)/g
+  let match: RegExpExecArray | null = regex.exec(activeReport.value.markdownContent)
+  while (match) {
+    projectCounts.push({
+      projectName: match[1],
+      count: Number(match[2]),
+    })
+    match = regex.exec(activeReport.value.markdownContent)
+  }
+
+  const total = projectCounts.reduce((sum, item) => sum + item.count, 0)
+  if (total === 0) {
+    return null
+  }
+
+  return {
+    items: projectCounts.map((item, index) => ({
+      ...item,
+      color: projectPiePalette[index % projectPiePalette.length],
+    })),
+    total,
+  }
+})
+
+const projectPieStyle = computed(() => {
+  const data = projectPieData.value
+  if (!data) {
+    return {}
+  }
+
+  let current = 0
+  const segments = data.items.map((item) => {
+    const start = current
+    current += (item.count / data.total) * 100
+    return `${item.color} ${start}% ${current}%`
+  })
+
+  return {
+    background: `conic-gradient(${segments.join(', ')})`,
+  }
+})
+
+const statePieStyle = detailedProjectPieStyle
 
 function toLocalDate(dateInput: string): Date | null {
   if (!dateInput) return null
@@ -405,6 +490,12 @@ function formatDateTime(dateValue: string): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function getReportTypeLabel(reportType: ReportType): string {
+  if (reportType === 'DETAILED_PROJECT') return 'Detailed Project'
+  if (reportType === 'DETAILED_ALL_PROJECTS') return 'Detailed All Projects'
+  return 'Activity Summary'
 }
 
 function openRunModal(reportType: ReportType) {

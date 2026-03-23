@@ -1,11 +1,16 @@
 import { getServerSession } from '#auth'
 import { endOfDay, isAfter, isBefore, startOfDay, differenceInCalendarDays } from 'date-fns'
 import { prisma } from '~/server/utils/db'
-import { buildActivitySummaryReportMarkdown, buildDetailedProjectReportMarkdown } from '~/server/utils/reportGenerator'
+import {
+  buildActivitySummaryReportMarkdown,
+  buildDetailedAllProjectsReportMarkdown,
+  buildDetailedProjectReportMarkdown,
+} from '~/server/utils/reportGenerator'
 import { createReport, listReports } from '~/server/utils/reportRepository'
 
 const ACTIVITY_SUMMARY_REPORT = 'ACTIVITY_SUMMARY'
 const DETAILED_PROJECT_REPORT = 'DETAILED_PROJECT'
+const DETAILED_ALL_PROJECTS_REPORT = 'DETAILED_ALL_PROJECTS'
 const MAX_REPORT_DAYS = 31
 
 function getSessionUserId(session: unknown): string {
@@ -47,7 +52,7 @@ export default defineEventHandler(async (event) => {
   const endDateInput = body?.endDate as string | undefined
   const projectId = body?.projectId as string | undefined
 
-  if (!reportType || ![ACTIVITY_SUMMARY_REPORT, DETAILED_PROJECT_REPORT].includes(reportType)) {
+  if (!reportType || ![ACTIVITY_SUMMARY_REPORT, DETAILED_PROJECT_REPORT, DETAILED_ALL_PROJECTS_REPORT].includes(reportType)) {
     throw createError({
       statusCode: 400,
       message: 'Invalid report type',
@@ -55,7 +60,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const now = new Date()
-  if (reportType === ACTIVITY_SUMMARY_REPORT) {
+  function parseAndValidateDateRange() {
     if (!startDateInput || !endDateInput) {
       throw createError({
         statusCode: 400,
@@ -95,6 +100,12 @@ export default defineEventHandler(async (event) => {
         message: `Report period cannot exceed ${MAX_REPORT_DAYS} days`,
       })
     }
+
+    return { startDate, endDate }
+  }
+
+  if (reportType === ACTIVITY_SUMMARY_REPORT) {
+    const { startDate, endDate } = parseAndValidateDateRange()
 
     const [projectTasksRaw, nonProjectTasksRaw, cyclicTasksRaw, journalEntriesRaw, trackersRaw] = await Promise.all([
       prisma.task.findMany({
@@ -217,6 +228,87 @@ export default defineEventHandler(async (event) => {
       userId,
       reportType,
       title: 'Activity Summary Report',
+      startDate,
+      endDate,
+      markdownContent,
+    })
+  }
+
+  if (reportType === DETAILED_ALL_PROJECTS_REPORT) {
+    const { startDate, endDate } = parseAndValidateDateRange()
+
+    const projectTasks = await prisma.task.findMany({
+      where: {
+        userId,
+        projectId: { not: null },
+        OR: [
+          {
+            status: 'DONE',
+            completedAt: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          {
+            status: {
+              in: ['BACKLOG', 'IN_PROGRESS'],
+            },
+            dueDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+        ],
+      },
+      include: {
+        project: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    })
+
+    const markdownContent = buildDetailedAllProjectsReportMarkdown({
+      startDate,
+      endDate,
+      generatedAt: now,
+      plannedTasks: projectTasks
+        .filter((task) => task.status === 'BACKLOG')
+        .map((task) => ({
+          title: task.title,
+          description: task.notes || '',
+          dueDate: task.dueDate,
+          completedAt: task.completedAt,
+          status: 'BACKLOG',
+          projectName: task.project?.name || 'Unknown Project',
+        })),
+      inProgressTasks: projectTasks
+        .filter((task) => task.status === 'IN_PROGRESS')
+        .map((task) => ({
+          title: task.title,
+          description: task.notes || '',
+          dueDate: task.dueDate,
+          completedAt: task.completedAt,
+          status: 'IN_PROGRESS',
+          projectName: task.project?.name || 'Unknown Project',
+        })),
+      completedTasks: projectTasks
+        .filter((task) => task.status === 'DONE')
+        .map((task) => ({
+          title: task.title,
+          description: task.notes || '',
+          dueDate: task.dueDate,
+          completedAt: task.completedAt,
+          status: 'DONE',
+          projectName: task.project?.name || 'Unknown Project',
+        })),
+    })
+
+    return createReport(prisma, {
+      userId,
+      reportType,
+      title: 'Detailed All Projects Tasks Report',
       startDate,
       endDate,
       markdownContent,

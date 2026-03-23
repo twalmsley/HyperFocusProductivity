@@ -173,6 +173,62 @@ async function seedDetailedProjectTasks(userId: string, projectId: string) {
   }
 }
 
+async function seedAdditionalProjectDetailedTasks(userId: string, projectId: string) {
+  const taskRows = [
+    {
+      title: 'Finalize onboarding checklist',
+      notes: 'Collect rollout prerequisites for customer success.',
+      status: 'BACKLOG' as const,
+      dueDate: new Date('2026-04-07T12:00:00.000Z'),
+      completedAt: null,
+      completedPomodoros: 0,
+    },
+    {
+      title: 'Create migration scripts',
+      notes: 'Prepare tested migration scripts for production deployment.',
+      status: 'IN_PROGRESS' as const,
+      dueDate: new Date('2026-04-06T12:00:00.000Z'),
+      completedAt: null,
+      completedPomodoros: 2,
+    },
+    {
+      title: 'Draft support runbook',
+      notes: 'Write support escalation flow and common issue diagnostics.',
+      status: 'DONE' as const,
+      dueDate: new Date('2026-03-08T12:00:00.000Z'),
+      completedAt: new Date('2026-03-07T15:00:00.000Z'),
+      completedPomodoros: 1,
+    },
+  ]
+
+  for (const row of taskRows) {
+    const exists = await prisma.task.findFirst({
+      where: {
+        userId,
+        projectId,
+        title: row.title,
+      },
+    })
+
+    if (!exists) {
+      await prisma.task.create({
+        data: {
+          userId,
+          projectId,
+          title: row.title,
+          notes: row.notes,
+          estimatedPomodoros: 2,
+          completedPomodoros: row.completedPomodoros,
+          status: row.status,
+          priority: row.status === 'DONE' ? 'MEDIUM' : 'HIGH',
+          dueDate: row.dueDate,
+          completedAt: row.completedAt,
+        },
+      })
+    }
+  }
+}
+
 async function seedCyclicTasks(userId: string) {
   const rows = [
     { title: 'Weekly inbox cleanup', lastCompletedDate: new Date('2026-03-05T08:00:00.000Z') },
@@ -280,10 +336,12 @@ async function seedTrackerEntries(userId: string) {
 
 async function main() {
   const user = await getOrCreateUser()
-  const project = await getOrCreateProject(user.id, 'Acme Product Launch', '#3b82f6')
+  const primaryProject = await getOrCreateProject(user.id, 'Acme Product Launch', '#3b82f6')
+  const secondaryProject = await getOrCreateProject(user.id, 'Mobile App Refresh', '#8b5cf6')
 
-  await seedProjectAndNonProjectTasks(user.id, project.id)
-  await seedDetailedProjectTasks(user.id, project.id)
+  await seedProjectAndNonProjectTasks(user.id, primaryProject.id)
+  await seedDetailedProjectTasks(user.id, primaryProject.id)
+  await seedAdditionalProjectDetailedTasks(user.id, secondaryProject.id)
   await seedCyclicTasks(user.id)
   await seedJournalEntries(user.id)
   await seedTrackerEntries(user.id)

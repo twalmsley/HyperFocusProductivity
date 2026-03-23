@@ -43,10 +43,20 @@ export interface DetailedProjectTaskItem {
   dueDate: Date | null
   completedAt: Date | null
   status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
+  projectName?: string
 }
 
 export interface DetailedProjectReportInput {
   projectName: string
+  generatedAt: Date
+  plannedTasks: DetailedProjectTaskItem[]
+  inProgressTasks: DetailedProjectTaskItem[]
+  completedTasks: DetailedProjectTaskItem[]
+}
+
+export interface DetailedAllProjectsReportInput {
+  startDate: Date
+  endDate: Date
   generatedAt: Date
   plannedTasks: DetailedProjectTaskItem[]
   inProgressTasks: DetailedProjectTaskItem[]
@@ -190,6 +200,7 @@ function appendTaskList(
   heading: string,
   tasks: DetailedProjectTaskItem[],
   includeCompletedDate: boolean,
+  includeProjectName: boolean,
 ) {
   lines.push(`## ${heading}`)
   lines.push('')
@@ -203,6 +214,9 @@ function appendTaskList(
   for (const task of tasks) {
     const safeDescription = task.description?.trim() || 'No description provided.'
     lines.push(`### ${task.title}`)
+    if (includeProjectName) {
+      lines.push(`- Project: ${task.projectName || 'Unknown Project'}`)
+    }
     lines.push(`- Description: ${safeDescription}`)
     if (includeCompletedDate) {
       lines.push(`- Completed: ${task.completedAt ? formatDate(task.completedAt) : 'N/A'}`)
@@ -228,9 +242,50 @@ export function buildDetailedProjectReportMarkdown(input: DetailedProjectReportI
   lines.push(`- Completed tasks: ${completedTasks.length}`)
   lines.push('')
 
-  appendTaskList(lines, 'Planned Tasks', plannedTasks, false)
-  appendTaskList(lines, 'In-progress Tasks', inProgressTasks, false)
-  appendTaskList(lines, 'Completed Tasks', completedTasks, true)
+  appendTaskList(lines, 'Planned Tasks', plannedTasks, false, false)
+  appendTaskList(lines, 'In-progress Tasks', inProgressTasks, false, false)
+  appendTaskList(lines, 'Completed Tasks', completedTasks, true, false)
+
+  return lines.join('\n').trimEnd()
+}
+
+export function buildDetailedAllProjectsReportMarkdown(input: DetailedAllProjectsReportInput): string {
+  const lines: string[] = []
+
+  const plannedTasks = sortByDueDateAscending(input.plannedTasks)
+  const inProgressTasks = sortByDueDateAscending(input.inProgressTasks)
+  const completedTasks = sortByCompletedDateAscending(input.completedTasks)
+  const allTasks = [...plannedTasks, ...inProgressTasks, ...completedTasks]
+  const tasksPerProject = allTasks.reduce<Record<string, number>>((acc, task) => {
+    const key = task.projectName || 'Unknown Project'
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {})
+
+  lines.push('# Detailed All Projects Tasks Report')
+  lines.push('')
+  lines.push(`- Period: ${formatDate(input.startDate)} to ${formatDate(input.endDate)}`)
+  lines.push(`- Generated: ${format(input.generatedAt, 'dd MMM yyyy HH:mm')}`)
+  lines.push(`- Planned tasks: ${plannedTasks.length}`)
+  lines.push(`- In-progress tasks: ${inProgressTasks.length}`)
+  lines.push(`- Completed tasks: ${completedTasks.length}`)
+  lines.push('')
+
+  lines.push('## Tasks per Project')
+  lines.push('')
+  const sortedProjects = Object.keys(tasksPerProject).sort((a, b) => a.localeCompare(b))
+  if (sortedProjects.length === 0) {
+    lines.push('- No project tasks found for the selected period.')
+  } else {
+    for (const projectName of sortedProjects) {
+      lines.push(`- Project tasks: ${projectName} = ${tasksPerProject[projectName]}`)
+    }
+  }
+  lines.push('')
+
+  appendTaskList(lines, 'Planned Tasks', plannedTasks, false, true)
+  appendTaskList(lines, 'In-progress Tasks', inProgressTasks, false, true)
+  appendTaskList(lines, 'Completed Tasks', completedTasks, true, true)
 
   return lines.join('\n').trimEnd()
 }
