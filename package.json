@@ -10,6 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:db-push": "prisma db push",
     "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:seed:reports": "ts-node prisma/seed-reports.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
