@@ -268,6 +268,7 @@ async function main() {
   console.log('\nReport seed data complete!')
   console.log('- Activity Report: use March 1-31, 2026 to see all sections populated.')
   console.log('- Detailed Project Report: select Alpha Project or Beta Project to see all task states.')
+  console.log('- Detailed All Tasks Report: use March 1-31, 2026 to see tasks across all projects with both pie charts.')
 }
 
 main()

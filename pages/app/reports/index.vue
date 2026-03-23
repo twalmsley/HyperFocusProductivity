@@ -37,6 +37,20 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>
+        <button
+          @click="openAllTasksDatePicker"
+          class="w-full text-left px-4 py-3 border border-gray-200 rounded-md hover:bg-gray-50 hover:border-[var(--primary)] transition-colors flex items-center justify-between"
+        >
+          <div>
+            <span class="font-medium">Detailed All Tasks Report</span>
+            <p class="text-sm text-gray-500 mt-1">
+              Detailed breakdown of all tasks across all projects for a selected period, with status and project charts.
+            </p>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 flex-shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -72,11 +86,20 @@
       </div>
     </div>
 
-    <!-- Date Picker Modal -->
+    <!-- Activity Report Date Picker Modal -->
     <ReportDatePickerModal
       :show="showDatePicker"
+      title="Run Activity Report"
       @cancel="showDatePicker = false"
       @run="handleRunActivityReport"
+    />
+
+    <!-- All Tasks Report Date Picker Modal -->
+    <ReportDatePickerModal
+      :show="showAllTasksDatePicker"
+      title="Run Detailed All Tasks Report"
+      @cancel="showAllTasksDatePicker = false"
+      @run="handleRunAllTasksReport"
     />
 
     <!-- Project Select Modal -->
@@ -134,6 +157,7 @@ const reports = ref<ReportSummary[]>([])
 const isLoading = ref(true)
 const isGenerating = ref(false)
 const showDatePicker = ref(false)
+const showAllTasksDatePicker = ref(false)
 const showProjectSelect = ref(false)
 const showViewer = ref(false)
 const viewerTitle = ref('')
@@ -179,6 +203,32 @@ async function handleRunActivityReport(payload: { startDate: string; endDate: st
       method: 'POST',
       body: {
         reportType: 'activity',
+        startDate: payload.startDate,
+        endDate: payload.endDate
+      }
+    })
+    showGeneratedReport(report)
+  } catch (error: any) {
+    console.error('Failed to generate report:', error)
+    alert(error.data?.message || 'Failed to generate report. Please try again.')
+  } finally {
+    isGenerating.value = false
+  }
+}
+
+function openAllTasksDatePicker() {
+  showAllTasksDatePicker.value = true
+}
+
+async function handleRunAllTasksReport(payload: { startDate: string; endDate: string }) {
+  showAllTasksDatePicker.value = false
+  isGenerating.value = true
+
+  try {
+    const report = await $fetch<ReportFull>('/api/reports/generate', {
+      method: 'POST',
+      body: {
+        reportType: 'detailed-all-tasks',
         startDate: payload.startDate,
         endDate: payload.endDate
       }

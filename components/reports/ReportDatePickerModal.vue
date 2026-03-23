@@ -2,7 +2,7 @@
   <div v-if="show" class="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
     <div class="bg-white/95 rounded-lg p-6 max-w-md w-full shadow-xl mx-4">
       <div class="flex justify-between items-start mb-4">
-        <h3 class="text-lg font-medium">Run Activity Report</h3>
+        <h3 class="text-lg font-medium">{{ title }}</h3>
         <button @click="$emit('cancel')" class="text-gray-400 hover:text-gray-500">
           <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -63,9 +63,12 @@
 import { ref, computed, watch } from 'vue'
 import { format, differenceInDays, startOfDay } from 'date-fns'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   show: boolean
-}>()
+  title?: string
+}>(), {
+  title: 'Run Report'
+})
 
 const emit = defineEmits<{
   (e: 'cancel'): void

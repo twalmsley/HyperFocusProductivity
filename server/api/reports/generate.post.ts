@@ -1,8 +1,8 @@
 import { getServerSession } from '#auth'
 import { prisma } from '~/server/utils/db'
 import { startOfDay, endOfDay, differenceInDays, format } from 'date-fns'
-import { generateActivityReport, generateDetailedProjectReport } from '~/server/utils/reportGenerator'
-import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask } from '~/server/utils/reportGenerator'
+import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport } from '~/server/utils/reportGenerator'
+import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask, AllTasksDetailedTask } from '~/server/utils/reportGenerator'
 
 interface ReportRequestBody {
   reportType: string
@@ -12,40 +12,8 @@ interface ReportRequestBody {
 }
 
 async function handleActivityReport(userId: string, body: ReportRequestBody) {
-  const { startDate: startDateStr, endDate: endDateStr } = body
-
-  if (!startDateStr || !endDateStr) {
-    throw createError({
-      statusCode: 400,
-      message: 'startDate and endDate are required for activity reports'
-    })
-  }
-
-  const startDate = startOfDay(new Date(startDateStr))
-  const endDate = endOfDay(new Date(endDateStr))
-
-  if (endDate < startDate) {
-    throw createError({
-      statusCode: 400,
-      message: 'End date must be on or after start date'
-    })
-  }
-
-  const today = endOfDay(new Date())
-  if (endDate > today) {
-    throw createError({
-      statusCode: 400,
-      message: 'End date cannot be in the future'
-    })
-  }
-
+  const { startDate, endDate } = validateDateRange(body)
   const daysDiff = differenceInDays(endDate, startDate)
-  if (daysDiff > 31) {
-    throw createError({
-      statusCode: 400,
-      message: 'Report period cannot exceed 31 days'
-    })
-  }
 
   const tasks = await prisma.task.findMany({
     where: {
@@ -186,6 +154,83 @@ async function handleDetailedProjectReport(userId: string, body: ReportRequestBo
   })
 }
 
+function validateDateRange(body: ReportRequestBody) {
+  const { startDate: startDateStr, endDate: endDateStr } = body
+
+  if (!startDateStr || !endDateStr) {
+    throw createError({
+      statusCode: 400,
+      message: 'startDate and endDate are required'
+    })
+  }
+
+  const startDate = startOfDay(new Date(startDateStr))
+  const endDate = endOfDay(new Date(endDateStr))
+
+  if (endDate < startDate) {
+    throw createError({ statusCode: 400, message: 'End date must be on or after start date' })
+  }
+
+  const today = endOfDay(new Date())
+  if (endDate > today) {
+    throw createError({ statusCode: 400, message: 'End date cannot be in the future' })
+  }
+
+  if (differenceInDays(endDate, startDate) > 31) {
+    throw createError({ statusCode: 400, message: 'Report period cannot exceed 31 days' })
+  }
+
+  return { startDate, endDate }
+}
+
+async function handleDetailedAllTasksReport(userId: string, body: ReportRequestBody) {
+  const { startDate, endDate } = validateDateRange(body)
+
+  // Fetch tasks relevant to this period:
+  // - Completed tasks with completedAt in range
+  // - In-progress/planned tasks with dueDate in range or createdAt in range
+  const tasks = await prisma.task.findMany({
+    where: {
+      userId,
+      OR: [
+        { status: 'DONE', completedAt: { gte: startDate, lte: endDate } },
+        { status: { in: ['BACKLOG', 'IN_PROGRESS'] }, dueDate: { gte: startDate, lte: endDate } },
+        { status: { in: ['BACKLOG', 'IN_PROGRESS'] }, createdAt: { gte: startDate, lte: endDate } }
+      ]
+    },
+    include: { project: { select: { name: true } } },
+    orderBy: { createdAt: 'asc' }
+  })
+
+  const taskData: AllTasksDetailedTask[] = tasks.map((t) => ({
+    title: t.title,
+    description: t.notes,
+    status: t.status as 'BACKLOG' | 'IN_PROGRESS' | 'DONE',
+    dueDate: t.dueDate,
+    completedAt: t.completedAt,
+    projectName: t.project?.name || null
+  }))
+
+  const markdown = generateDetailedAllTasksReport({
+    startDate,
+    endDate,
+    tasks: taskData
+  })
+
+  const title = `All Tasks Report: ${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`
+
+  return prisma.report.create({
+    data: {
+      userId,
+      reportType: 'detailed-all-tasks',
+      title,
+      markdown,
+      startDate,
+      endDate
+    }
+  })
+}
+
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
   if (!session) {
@@ -209,6 +254,8 @@ export default defineEventHandler(async (event) => {
       return handleActivityReport(user.id, body)
     case 'detailed-project':
       return handleDetailedProjectReport(user.id, body)
+    case 'detailed-all-tasks':
+      return handleDetailedAllTasksReport(user.id, body)
     default:
       throw createError({ statusCode: 400, message: 'Invalid report type' })
   }

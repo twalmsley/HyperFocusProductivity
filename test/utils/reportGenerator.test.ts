@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { generateActivityReport, generateDetailedProjectReport, generatePieChartSvg } from '~/server/utils/reportGenerator'
-import type { ReportData, DetailedProjectReportData, DetailedProjectTask, PieSlice } from '~/server/utils/reportGenerator'
+import { generateActivityReport, generateDetailedProjectReport, generateDetailedAllTasksReport, generatePieChartSvg } from '~/server/utils/reportGenerator'
+import type { ReportData, DetailedProjectReportData, DetailedProjectTask, DetailedAllTasksReportData, AllTasksDetailedTask, PieSlice } from '~/server/utils/reportGenerator'
 
 function createEmptyReportData(overrides: Partial<ReportData> = {}): ReportData {
   return {
@@ -553,6 +553,203 @@ describe('generateDetailedProjectReport', () => {
       expect(result).toContain('### WIP 1')
       expect(result).toContain('### Complete 1')
       expect(result).toContain('### Complete 2')
+    })
+  })
+})
+
+function createAllTask(overrides: Partial<AllTasksDetailedTask> = {}): AllTasksDetailedTask {
+  return {
+    title: 'Test Task',
+    description: 'A test task',
+    status: 'BACKLOG',
+    dueDate: '2026-04-01',
+    completedAt: null,
+    projectName: null,
+    ...overrides
+  }
+}
+
+function createEmptyAllTasksData(overrides: Partial<DetailedAllTasksReportData> = {}): DetailedAllTasksReportData {
+  return {
+    startDate: new Date(2026, 2, 1),
+    endDate: new Date(2026, 2, 31),
+    tasks: [],
+    ...overrides
+  }
+}
+
+describe('generateDetailedAllTasksReport', () => {
+  it('includes the title and date period', () => {
+    const data = createEmptyAllTasksData()
+    const result = generateDetailedAllTasksReport(data)
+    expect(result).toContain('# Detailed All Tasks Report')
+    expect(result).toContain('March 1, 2026')
+    expect(result).toContain('March 31, 2026')
+  })
+
+  it('shows task overview counts', () => {
+    const data = createEmptyAllTasksData({
+      tasks: [
+        createAllTask({ status: 'BACKLOG' }),
+        createAllTask({ status: 'IN_PROGRESS' }),
+        createAllTask({ status: 'DONE', completedAt: '2026-03-10' }),
+        createAllTask({ status: 'DONE', completedAt: '2026-03-12' })
+      ]
+    })
+    const result = generateDetailedAllTasksReport(data)
+    expect(result).toContain('**Total:** 4')
+    expect(result).toContain('**Planned:** 1')
+    expect(result).toContain('**In Progress:** 1')
+    expect(result).toContain('**Completed:** 2')
+  })
+
+  it('shows empty messages when no tasks exist', () => {
+    const data = createEmptyAllTasksData()
+    const result = generateDetailedAllTasksReport(data)
+    expect(result).toContain('No planned tasks.')
+    expect(result).toContain('No tasks in progress.')
+    expect(result).toContain('No completed tasks.')
+  })
+
+  describe('Pie charts', () => {
+    it('includes a Tasks by Status pie chart', () => {
+      const data = createEmptyAllTasksData({
+        tasks: [
+          createAllTask({ status: 'BACKLOG' }),
+          createAllTask({ status: 'DONE', completedAt: '2026-03-10' })
+        ]
+      })
+      const result = generateDetailedAllTasksReport(data)
+      expect(result).toContain('### Tasks by Status')
+      expect(result).toContain('Planned: 1')
+      expect(result).toContain('Completed: 1')
+    })
+
+    it('includes a Tasks by Project pie chart', () => {
+      const data = createEmptyAllTasksData({
+        tasks: [
+          createAllTask({ projectName: 'Alpha', status: 'BACKLOG' }),
+          createAllTask({ projectName: 'Alpha', status: 'DONE', completedAt: '2026-03-05' }),
+          createAllTask({ projectName: 'Beta', status: 'IN_PROGRESS' }),
+          createAllTask({ projectName: null, status: 'BACKLOG' })
+        ]
+      })
+      const result = generateDetailedAllTasksReport(data)
+      expect(result).toContain('### Tasks by Project')
+      expect(result).toContain('Alpha: 2')
+      expect(result).toContain('Beta: 1')
+      expect(result).toContain('No Project: 1')
+    })
+
+    it('sorts project pie chart alphabetically', () => {
+      const data = createEmptyAllTasksData({
+        tasks: [
+          createAllTask({ projectName: 'Zebra', status: 'BACKLOG' }),
+          createAllTask({ projectName: 'Alpha', status: 'BACKLOG' })
+        ]
+      })
+      const result = generateDetailedAllTasksReport(data)
+      const alphaIdx = result.indexOf('Alpha: 1')
+      const zebraIdx = result.indexOf('Zebra: 1')
+      expect(alphaIdx).toBeLessThan(zebraIdx)
+    })
+  })
+
+  describe('Task sections', () => {
+    it('lists sections in order: Planned, In Progress, Completed', () => {
+      const data = createEmptyAllTasksData({
+        tasks: [
+          createAllTask({ status: 'DONE', completedAt: '2026-03-10' }),
+          createAllTask({ status: 'BACKLOG' }),
+          createAllTask({ status: 'IN_PROGRESS' })
+        ]
+      })
+      const result = generateDetailedAllTasksReport(data)
+      const plannedIdx = result.indexOf('## Planned Tasks')
+      const inProgressIdx = result.indexOf('## In Progress Tasks')
+      const completedIdx = result.indexOf('## Completed Tasks')
+      expect(plannedIdx).toBeLessThan(inProgressIdx)
+      expect(inProgressIdx).toBeLessThan(completedIdx)
+    })
+
+    it('sorts planned tasks by due date', () => {
+      const data = createEmptyAllTasksData({
+        tasks: [
+          createAllTask({ title: 'Late', status: 'BACKLOG', dueDate: '2026-05-01' }),
+          createAllTask({ title: 'Early', status: 'BACKLOG', dueDate: '2026-03-10' })
+        ]
+      })
+      const result = generateDetailedAllTasksReport(data)
+      const earlyIdx = result.indexOf('### Early')
+      const lateIdx = result.indexOf('### Late')
+      expect(earlyIdx).toBeLessThan(lateIdx)
+    })
+
+    it('sorts completed tasks by completion date', () => {
+      const data = createEmptyAllTasksData({
+        tasks: [
+          createAllTask({ title: 'Done Last', status: 'DONE', completedAt: '2026-03-20' }),
+          createAllTask({ title: 'Done First', status: 'DONE', completedAt: '2026-03-05' })
+        ]
+      })
+      const result = generateDetailedAllTasksReport(data)
+      const firstIdx = result.indexOf('### Done First')
+      const lastIdx = result.indexOf('### Done Last')
+      expect(firstIdx).toBeLessThan(lastIdx)
+    })
+
+    it('includes project name on each task', () => {
+      const data = createEmptyAllTasksData({
+        tasks: [
+          createAllTask({ title: 'Alpha Task', status: 'BACKLOG', projectName: 'Alpha Project' }),
+          createAllTask({ title: 'Orphan Task', status: 'BACKLOG', projectName: null })
+        ]
+      })
+      const result = generateDetailedAllTasksReport(data)
+      expect(result).toContain('**Project:** Alpha Project')
+      expect(result).toContain('**Project:** No Project')
+    })
+
+    it('includes description for each task', () => {
+      const data = createEmptyAllTasksData({
+        tasks: [
+          createAllTask({ title: 'Described', status: 'BACKLOG', description: 'Has a description' }),
+          createAllTask({ title: 'Bare', status: 'BACKLOG', description: null })
+        ]
+      })
+      const result = generateDetailedAllTasksReport(data)
+      expect(result).toContain('Has a description')
+      expect(result).toContain('*No description*')
+    })
+  })
+
+  describe('Full report', () => {
+    it('generates a complete report with all sections and charts', () => {
+      const data: DetailedAllTasksReportData = {
+        startDate: new Date(2026, 2, 1),
+        endDate: new Date(2026, 2, 31),
+        tasks: [
+          createAllTask({ title: 'Plan A', status: 'BACKLOG', projectName: 'Alpha', dueDate: '2026-04-01', description: 'Planning' }),
+          createAllTask({ title: 'WIP B', status: 'IN_PROGRESS', projectName: 'Beta', dueDate: '2026-03-25', description: 'Working' }),
+          createAllTask({ title: 'Done A', status: 'DONE', projectName: 'Alpha', completedAt: '2026-03-10', description: 'Finished' }),
+          createAllTask({ title: 'Done None', status: 'DONE', projectName: null, completedAt: '2026-03-15', description: 'Solo work' })
+        ]
+      }
+      const result = generateDetailedAllTasksReport(data)
+
+      expect(result).toContain('# Detailed All Tasks Report')
+      expect(result).toContain('### Tasks by Status')
+      expect(result).toContain('### Tasks by Project')
+      expect(result).toContain('## Planned Tasks')
+      expect(result).toContain('### Plan A')
+      expect(result).toContain('## In Progress Tasks')
+      expect(result).toContain('### WIP B')
+      expect(result).toContain('## Completed Tasks')
+      expect(result).toContain('### Done A')
+      expect(result).toContain('### Done None')
+      expect(result).toContain('Alpha: 2')
+      expect(result).toContain('Beta: 1')
+      expect(result).toContain('No Project: 1')
     })
   })
 })

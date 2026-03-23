@@ -45,6 +45,16 @@ export interface DetailedProjectReportData {
   tasks: DetailedProjectTask[]
 }
 
+export interface AllTasksDetailedTask extends DetailedProjectTask {
+  projectName: string | null
+}
+
+export interface DetailedAllTasksReportData {
+  startDate: Date
+  endDate: Date
+  tasks: AllTasksDetailedTask[]
+}
+
 function formatDate(date: Date | string): string {
   return format(new Date(date), 'yyyy-MM-dd')
 }
@@ -245,6 +255,92 @@ export function generateActivityReport(data: ReportData): string {
   return lines.join('\n')
 }
 
+function sortByDueDate<T extends { dueDate: Date | string | null }>(tasks: T[]): T[] {
+  return [...tasks].sort((a, b) => {
+    if (!a.dueDate && !b.dueDate) return 0
+    if (!a.dueDate) return 1
+    if (!b.dueDate) return -1
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+  })
+}
+
+function sortByCompletedAt<T extends { completedAt: Date | string | null }>(tasks: T[]): T[] {
+  return [...tasks].sort((a, b) => {
+    if (!a.completedAt && !b.completedAt) return 0
+    if (!a.completedAt) return 1
+    if (!b.completedAt) return -1
+    return new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime()
+  })
+}
+
+function renderPlannedTasks(tasks: DetailedProjectTask[], lines: string[], projectLabel?: (t: DetailedProjectTask) => string | null) {
+  lines.push(`## Planned Tasks`)
+  lines.push(``)
+  if (tasks.length === 0) {
+    lines.push(`No planned tasks.`)
+  } else {
+    for (const task of sortByDueDate(tasks)) {
+      const label = projectLabel?.(task)
+      lines.push(`### ${task.title}`)
+      lines.push(``)
+      if (label) lines.push(`**Project:** ${label}`)
+      lines.push(`**Due:** ${formatDateOrNone(task.dueDate)}`)
+      lines.push(``)
+      lines.push(task.description || '*No description*')
+      lines.push(``)
+    }
+  }
+}
+
+function renderInProgressTasks(tasks: DetailedProjectTask[], lines: string[], projectLabel?: (t: DetailedProjectTask) => string | null) {
+  lines.push(`## In Progress Tasks`)
+  lines.push(``)
+  if (tasks.length === 0) {
+    lines.push(`No tasks in progress.`)
+  } else {
+    for (const task of sortByDueDate(tasks)) {
+      const label = projectLabel?.(task)
+      lines.push(`### ${task.title}`)
+      lines.push(``)
+      if (label) lines.push(`**Project:** ${label}`)
+      lines.push(`**Due:** ${formatDateOrNone(task.dueDate)}`)
+      lines.push(``)
+      lines.push(task.description || '*No description*')
+      lines.push(``)
+    }
+  }
+}
+
+function renderCompletedTasks(tasks: DetailedProjectTask[], lines: string[], projectLabel?: (t: DetailedProjectTask) => string | null) {
+  lines.push(`## Completed Tasks`)
+  lines.push(``)
+  if (tasks.length === 0) {
+    lines.push(`No completed tasks.`)
+  } else {
+    for (const task of sortByCompletedAt(tasks)) {
+      const label = projectLabel?.(task)
+      lines.push(`### ${task.title}`)
+      lines.push(``)
+      if (label) lines.push(`**Project:** ${label}`)
+      lines.push(`**Completed:** ${formatDateOrNone(task.completedAt)}`)
+      lines.push(``)
+      lines.push(task.description || '*No description*')
+      lines.push(``)
+    }
+  }
+}
+
+function buildStatusPieSlices(tasks: DetailedProjectTask[]): PieSlice[] {
+  const planned = tasks.filter((t) => t.status === 'BACKLOG').length
+  const inProgress = tasks.filter((t) => t.status === 'IN_PROGRESS').length
+  const completed = tasks.filter((t) => t.status === 'DONE').length
+  return [
+    { label: 'Planned', count: planned, color: '#6B7280' },
+    { label: 'In Progress', count: inProgress, color: '#F59E0B' },
+    { label: 'Completed', count: completed, color: '#10B981' }
+  ]
+}
+
 export function generateDetailedProjectReport(data: DetailedProjectReportData): string {
   const lines: string[] = []
 
@@ -257,11 +353,41 @@ export function generateDetailedProjectReport(data: DetailedProjectReportData): 
   const inProgress = data.tasks.filter((t) => t.status === 'IN_PROGRESS')
   const completed = data.tasks.filter((t) => t.status === 'DONE')
 
-  const pieSlices: PieSlice[] = [
-    { label: 'Planned', count: planned.length, color: '#6B7280' },
-    { label: 'In Progress', count: inProgress.length, color: '#F59E0B' },
-    { label: 'Completed', count: completed.length, color: '#10B981' }
-  ]
+  lines.push(`## Task Overview`)
+  lines.push(``)
+  lines.push(
+    `**Total:** ${data.tasks.length} | **Planned:** ${planned.length} | **In Progress:** ${inProgress.length} | **Completed:** ${completed.length}`
+  )
+  lines.push(``)
+  lines.push(generatePieChartSvg(buildStatusPieSlices(data.tasks)))
+  lines.push(``)
+
+  renderPlannedTasks(planned, lines)
+  renderInProgressTasks(inProgress, lines)
+  renderCompletedTasks(completed, lines)
+
+  return lines.join('\n')
+}
+
+const PROJECT_COLORS = [
+  '#3B82F6', '#EF4444', '#8B5CF6', '#F97316', '#06B6D4',
+  '#EC4899', '#14B8A6', '#F59E0B', '#6366F1', '#84CC16'
+]
+
+export function generateDetailedAllTasksReport(data: DetailedAllTasksReportData): string {
+  const lines: string[] = []
+
+  const startStr = format(data.startDate, 'MMMM d, yyyy')
+  const endStr = format(data.endDate, 'MMMM d, yyyy')
+
+  lines.push(`# Detailed All Tasks Report`)
+  lines.push(``)
+  lines.push(`**Period:** ${startStr} to ${endStr}`)
+  lines.push(``)
+
+  const planned = data.tasks.filter((t) => t.status === 'BACKLOG')
+  const inProgress = data.tasks.filter((t) => t.status === 'IN_PROGRESS')
+  const completed = data.tasks.filter((t) => t.status === 'DONE')
 
   lines.push(`## Task Overview`)
   lines.push(``)
@@ -269,76 +395,39 @@ export function generateDetailedProjectReport(data: DetailedProjectReportData): 
     `**Total:** ${data.tasks.length} | **Planned:** ${planned.length} | **In Progress:** ${inProgress.length} | **Completed:** ${completed.length}`
   )
   lines.push(``)
-  lines.push(generatePieChartSvg(pieSlices))
+
+  // Pie chart 1: Tasks by state
+  lines.push(`### Tasks by Status`)
+  lines.push(``)
+  lines.push(generatePieChartSvg(buildStatusPieSlices(data.tasks)))
   lines.push(``)
 
-  // Planned tasks sorted by due date
-  lines.push(`## Planned Tasks`)
+  // Pie chart 2: Tasks by project
+  const projectCounts = new Map<string, number>()
+  for (const task of data.tasks) {
+    const name = task.projectName || 'No Project'
+    projectCounts.set(name, (projectCounts.get(name) || 0) + 1)
+  }
+  const projectSlices: PieSlice[] = [...projectCounts.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, count], i) => ({
+      label: name,
+      count,
+      color: PROJECT_COLORS[i % PROJECT_COLORS.length]
+    }))
+
+  lines.push(`### Tasks by Project`)
   lines.push(``)
-  if (planned.length === 0) {
-    lines.push(`No planned tasks.`)
-  } else {
-    const sorted = [...planned].sort((a, b) => {
-      if (!a.dueDate && !b.dueDate) return 0
-      if (!a.dueDate) return 1
-      if (!b.dueDate) return -1
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-    })
-    for (const task of sorted) {
-      lines.push(`### ${task.title}`)
-      lines.push(``)
-      lines.push(`**Due:** ${formatDateOrNone(task.dueDate)}`)
-      lines.push(``)
-      lines.push(task.description || '*No description*')
-      lines.push(``)
-    }
+  lines.push(generatePieChartSvg(projectSlices))
+  lines.push(``)
+
+  const getProjectLabel = (t: DetailedProjectTask) => {
+    return (t as AllTasksDetailedTask).projectName || 'No Project'
   }
 
-  // In-progress tasks sorted by due date
-  lines.push(`## In Progress Tasks`)
-  lines.push(``)
-  if (inProgress.length === 0) {
-    lines.push(`No tasks in progress.`)
-  } else {
-    const sorted = [...inProgress].sort((a, b) => {
-      if (!a.dueDate && !b.dueDate) return 0
-      if (!a.dueDate) return 1
-      if (!b.dueDate) return -1
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-    })
-    for (const task of sorted) {
-      lines.push(`### ${task.title}`)
-      lines.push(``)
-      lines.push(`**Due:** ${formatDateOrNone(task.dueDate)}`)
-      lines.push(``)
-      lines.push(task.description || '*No description*')
-      lines.push(``)
-    }
-  }
-
-  // Completed tasks sorted by completion date
-  lines.push(`## Completed Tasks`)
-  lines.push(``)
-  if (completed.length === 0) {
-    lines.push(`No completed tasks.`)
-  } else {
-    const sorted = [...completed].sort((a, b) => {
-      if (!a.completedAt && !b.completedAt) return 0
-      if (!a.completedAt) return 1
-      if (!b.completedAt) return -1
-      return (
-        new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime()
-      )
-    })
-    for (const task of sorted) {
-      lines.push(`### ${task.title}`)
-      lines.push(``)
-      lines.push(`**Completed:** ${formatDateOrNone(task.completedAt)}`)
-      lines.push(``)
-      lines.push(task.description || '*No description*')
-      lines.push(``)
-    }
-  }
+  renderPlannedTasks(planned, lines, getProjectLabel)
+  renderInProgressTasks(inProgress, lines, getProjectLabel)
+  renderCompletedTasks(completed, lines, getProjectLabel)
 
   return lines.join('\n')
 }
