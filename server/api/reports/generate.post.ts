@@ -1,32 +1,24 @@
 import { getServerSession } from '#auth'
 import { prisma } from '~/server/utils/db'
 import { startOfDay, endOfDay, differenceInDays, format } from 'date-fns'
-import { generateActivityReport } from '~/server/utils/reportGenerator'
-import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData } from '~/server/utils/reportGenerator'
+import { generateActivityReport, generateDetailedProjectReport } from '~/server/utils/reportGenerator'
+import type { ReportTask, ReportCyclicTask, ReportJournalEntry, ReportTrackerData, DetailedProjectTask } from '~/server/utils/reportGenerator'
 
-export default defineEventHandler(async (event) => {
-  const session = await getServerSession(event)
-  if (!session) {
-    throw createError({ statusCode: 401, message: 'Not authenticated' })
-  }
+interface ReportRequestBody {
+  reportType: string
+  startDate?: string
+  endDate?: string
+  projectId?: string
+}
 
-  const user = session.user as { id: string }
-  if (!user?.id) {
-    throw createError({ statusCode: 401, message: 'Not authenticated' })
-  }
+async function handleActivityReport(userId: string, body: ReportRequestBody) {
+  const { startDate: startDateStr, endDate: endDateStr } = body
 
-  const body = await readBody(event)
-  const { reportType, startDate: startDateStr, endDate: endDateStr } = body
-
-  if (!reportType || !startDateStr || !endDateStr) {
+  if (!startDateStr || !endDateStr) {
     throw createError({
       statusCode: 400,
-      message: 'reportType, startDate, and endDate are required'
+      message: 'startDate and endDate are required for activity reports'
     })
-  }
-
-  if (reportType !== 'activity') {
-    throw createError({ statusCode: 400, message: 'Invalid report type' })
   }
 
   const startDate = startOfDay(new Date(startDateStr))
@@ -55,16 +47,13 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Fetch completed tasks in the period
   const tasks = await prisma.task.findMany({
     where: {
-      userId: user.id,
+      userId,
       status: 'DONE',
       completedAt: { gte: startDate, lte: endDate }
     },
-    include: {
-      project: { select: { name: true } }
-    },
+    include: { project: { select: { name: true } } },
     orderBy: { completedAt: 'asc' }
   })
 
@@ -78,22 +67,11 @@ export default defineEventHandler(async (event) => {
 
   const nonProjectTasks: ReportTask[] = tasks
     .filter((t) => !t.projectId)
-    .map((t) => ({
-      title: t.title,
-      completedAt: t.completedAt!
-    }))
+    .map((t) => ({ title: t.title, completedAt: t.completedAt! }))
 
-  // Fetch cyclic task completions — these are tasks created by cyclic task completion
-  // They have status DONE and were created from cyclic tasks (they won't have a projectId
-  // and are created by the complete endpoint). We use the CyclicTask's lastCompletedDate
-  // if it falls in range. But actually cyclic task completions create regular Task entries.
-  // So cyclic task completions are already captured in nonProjectTasks above.
-  // However, the requirement says to list them separately. We can identify cyclic completions
-  // by looking at tasks that match cyclic task titles and have no project.
-  // A better approach: query cyclic tasks that have lastCompletedDate in range.
   const cyclicTasks = await prisma.cyclicTask.findMany({
     where: {
-      userId: user.id,
+      userId,
       lastCompletedDate: { gte: startDate, lte: endDate }
     },
     orderBy: { lastCompletedDate: 'asc' }
@@ -104,12 +82,8 @@ export default defineEventHandler(async (event) => {
     completedAt: ct.lastCompletedDate!
   }))
 
-  // Fetch journal entries in the period
   const journalEntries = await prisma.journalEntry.findMany({
-    where: {
-      userId: user.id,
-      date: { gte: startDate, lte: endDate }
-    },
+    where: { userId, date: { gte: startDate, lte: endDate } },
     orderBy: { date: 'asc' }
   })
 
@@ -118,15 +92,11 @@ export default defineEventHandler(async (event) => {
     date: je.date
   }))
 
-  // Fetch tracker entries in the period (value > 0 means completed)
   const trackers = await prisma.tracker.findMany({
-    where: { userId: user.id },
+    where: { userId },
     include: {
       entries: {
-        where: {
-          date: { gte: startDate, lte: endDate },
-          value: { gt: 0 }
-        },
+        where: { date: { gte: startDate, lte: endDate }, value: { gt: 0 } },
         orderBy: { date: 'asc' }
       }
     }
@@ -153,16 +123,93 @@ export default defineEventHandler(async (event) => {
 
   const title = `Activity Report: ${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`
 
-  const report = await prisma.report.create({
+  return prisma.report.create({
     data: {
-      userId: user.id,
-      reportType,
+      userId,
+      reportType: 'activity',
       title,
       markdown,
       startDate,
       endDate
     }
   })
+}
 
-  return report
+async function handleDetailedProjectReport(userId: string, body: ReportRequestBody) {
+  const { projectId } = body
+
+  if (!projectId) {
+    throw createError({
+      statusCode: 400,
+      message: 'projectId is required for detailed project reports'
+    })
+  }
+
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, userId }
+  })
+
+  if (!project) {
+    throw createError({ statusCode: 404, message: 'Project not found' })
+  }
+
+  const tasks = await prisma.task.findMany({
+    where: { projectId, userId },
+    orderBy: { createdAt: 'asc' }
+  })
+
+  const taskData: DetailedProjectTask[] = tasks.map((t) => ({
+    title: t.title,
+    description: t.notes,
+    status: t.status as 'BACKLOG' | 'IN_PROGRESS' | 'DONE',
+    dueDate: t.dueDate,
+    completedAt: t.completedAt
+  }))
+
+  const markdown = generateDetailedProjectReport({
+    projectName: project.name,
+    tasks: taskData
+  })
+
+  const now = new Date()
+  const title = `Project Report: ${project.name} (${format(now, 'MMM d, yyyy')})`
+
+  return prisma.report.create({
+    data: {
+      userId,
+      reportType: 'detailed-project',
+      title,
+      markdown,
+      startDate: now,
+      endDate: now
+    }
+  })
+}
+
+export default defineEventHandler(async (event) => {
+  const session = await getServerSession(event)
+  if (!session) {
+    throw createError({ statusCode: 401, message: 'Not authenticated' })
+  }
+
+  const user = session.user as { id: string }
+  if (!user?.id) {
+    throw createError({ statusCode: 401, message: 'Not authenticated' })
+  }
+
+  const body = await readBody(event)
+  const { reportType } = body
+
+  if (!reportType) {
+    throw createError({ statusCode: 400, message: 'reportType is required' })
+  }
+
+  switch (reportType) {
+    case 'activity':
+      return handleActivityReport(user.id, body)
+    case 'detailed-project':
+      return handleDetailedProjectReport(user.id, body)
+    default:
+      throw createError({ statusCode: 400, message: 'Invalid report type' })
+  }
 })

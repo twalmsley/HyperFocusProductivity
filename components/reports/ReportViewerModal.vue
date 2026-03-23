@@ -45,6 +45,14 @@ defineEmits<{
 const renderedHtml = computed(() => {
   if (!props.markdown) return ''
   const raw = marked(props.markdown) as string
-  return DOMPurify.sanitize(raw)
+  return DOMPurify.sanitize(raw, {
+    ADD_TAGS: ['svg', 'circle', 'path', 'rect', 'text', 'g', 'line', 'defs', 'clipPath', 'use'],
+    ADD_ATTR: [
+      'viewBox', 'xmlns', 'width', 'height', 'fill', 'stroke', 'stroke-width',
+      'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray', 'stroke-dashoffset',
+      'd', 'cx', 'cy', 'r', 'x', 'y', 'dx', 'dy', 'transform',
+      'text-anchor', 'dominant-baseline', 'font-size', 'font-weight'
+    ]
+  })
 })
 </script>

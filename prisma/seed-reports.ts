@@ -46,33 +46,90 @@ async function main() {
 
   console.log('Seeded projects: Alpha Project, Beta Project')
 
-  // --- Project Tasks (completed in March 2026) ---
-  const projectTasks = [
-    { id: 'seed-task-p1', title: 'Set up CI/CD pipeline', projectId: projectAlpha.id, completedAt: new Date('2026-03-03T10:00:00Z') },
-    { id: 'seed-task-p2', title: 'Write API documentation', projectId: projectAlpha.id, completedAt: new Date('2026-03-08T14:00:00Z') },
-    { id: 'seed-task-p3', title: 'Implement authentication', projectId: projectAlpha.id, completedAt: new Date('2026-03-15T09:00:00Z') },
-    { id: 'seed-task-p4', title: 'Design landing page', projectId: projectBeta.id, completedAt: new Date('2026-03-05T11:00:00Z') },
-    { id: 'seed-task-p5', title: 'Build contact form', projectId: projectBeta.id, completedAt: new Date('2026-03-12T16:00:00Z') },
-    { id: 'seed-task-p6', title: 'Optimise images', projectId: projectBeta.id, completedAt: new Date('2026-03-20T12:00:00Z') },
+  // --- Alpha Project: Completed tasks ---
+  const alphaCompletedTasks = [
+    { id: 'seed-task-p1', title: 'Set up CI/CD pipeline', notes: 'Configure GitHub Actions for automated builds and deployments to staging.', projectId: projectAlpha.id, completedAt: new Date('2026-03-03T10:00:00Z'), dueDate: new Date('2026-03-03') },
+    { id: 'seed-task-p2', title: 'Write API documentation', notes: 'Document all REST endpoints using OpenAPI 3.0 specification. Include request/response examples.', projectId: projectAlpha.id, completedAt: new Date('2026-03-08T14:00:00Z'), dueDate: new Date('2026-03-10') },
+    { id: 'seed-task-p3', title: 'Implement authentication', notes: 'Add OAuth2 with Google and GitHub providers. Include session management and CSRF protection.', projectId: projectAlpha.id, completedAt: new Date('2026-03-15T09:00:00Z'), dueDate: new Date('2026-03-14') },
   ]
 
-  for (const t of projectTasks) {
+  // --- Alpha Project: In-progress tasks ---
+  const alphaInProgressTasks = [
+    { id: 'seed-task-p-ip1', title: 'Build user dashboard', notes: 'Create the main dashboard view showing key metrics, recent activity, and quick actions.', projectId: projectAlpha.id, dueDate: new Date('2026-04-01') },
+    { id: 'seed-task-p-ip2', title: 'Add rate limiting', notes: 'Implement rate limiting on all public API endpoints to prevent abuse. Use sliding window algorithm.', projectId: projectAlpha.id, dueDate: new Date('2026-04-05') },
+  ]
+
+  // --- Alpha Project: Planned/backlog tasks ---
+  const alphaPlannedTasks = [
+    { id: 'seed-task-p-bl1', title: 'Set up monitoring and alerting', notes: 'Configure Datadog or similar for application monitoring, error tracking, and alerting on key metrics.', projectId: projectAlpha.id, dueDate: new Date('2026-04-15') },
+    { id: 'seed-task-p-bl2', title: 'Performance optimisation pass', notes: 'Profile the application and optimise slow database queries, reduce bundle size, and add caching where appropriate.', projectId: projectAlpha.id, dueDate: new Date('2026-04-20') },
+    { id: 'seed-task-p-bl3', title: 'Write end-to-end tests', notes: 'Create Playwright tests covering the critical user journeys: signup, login, dashboard, and data export.', projectId: projectAlpha.id, dueDate: null },
+  ]
+
+  // --- Beta Project: Completed tasks ---
+  const betaCompletedTasks = [
+    { id: 'seed-task-p4', title: 'Design landing page', notes: 'Create responsive landing page mockups in Figma, including hero section, features grid, and pricing table.', projectId: projectBeta.id, completedAt: new Date('2026-03-05T11:00:00Z'), dueDate: new Date('2026-03-05') },
+    { id: 'seed-task-p5', title: 'Build contact form', notes: 'Implement contact form with email validation, honeypot spam protection, and server-side processing.', projectId: projectBeta.id, completedAt: new Date('2026-03-12T16:00:00Z'), dueDate: new Date('2026-03-12') },
+    { id: 'seed-task-p6', title: 'Optimise images', notes: 'Convert all images to WebP format, add lazy loading, and implement responsive image srcsets.', projectId: projectBeta.id, completedAt: new Date('2026-03-20T12:00:00Z'), dueDate: new Date('2026-03-18') },
+  ]
+
+  // --- Beta Project: In-progress tasks ---
+  const betaInProgressTasks = [
+    { id: 'seed-task-p-ip3', title: 'Implement blog section', notes: 'Build a markdown-based blog with categories, tags, and RSS feed support.', projectId: projectBeta.id, dueDate: new Date('2026-03-28') },
+  ]
+
+  // --- Beta Project: Planned/backlog tasks ---
+  const betaPlannedTasks = [
+    { id: 'seed-task-p-bl4', title: 'Add SEO metadata', notes: 'Implement dynamic meta tags, Open Graph data, and structured data (JSON-LD) for all public pages.', projectId: projectBeta.id, dueDate: new Date('2026-04-10') },
+    { id: 'seed-task-p-bl5', title: 'Set up analytics', notes: 'Integrate privacy-friendly analytics (Plausible or Umami) and set up conversion tracking for the contact form.', projectId: projectBeta.id, dueDate: new Date('2026-04-12') },
+  ]
+
+  // Seed all project tasks
+  for (const t of alphaCompletedTasks) {
     await prisma.task.upsert({
       where: { id: t.id },
       update: {},
-      create: {
-        id: t.id,
-        userId: user.id,
-        projectId: t.projectId,
-        title: t.title,
-        status: 'DONE',
-        priority: 'MEDIUM',
-        completedAt: t.completedAt,
-        dueDate: t.completedAt
-      }
+      create: { id: t.id, userId: user.id, projectId: t.projectId, title: t.title, notes: t.notes, status: 'DONE', priority: 'MEDIUM', completedAt: t.completedAt, dueDate: t.dueDate }
     })
   }
-  console.log(`Seeded ${projectTasks.length} project tasks`)
+  for (const t of alphaInProgressTasks) {
+    await prisma.task.upsert({
+      where: { id: t.id },
+      update: {},
+      create: { id: t.id, userId: user.id, projectId: t.projectId, title: t.title, notes: t.notes, status: 'IN_PROGRESS', priority: 'HIGH', dueDate: t.dueDate }
+    })
+  }
+  for (const t of alphaPlannedTasks) {
+    await prisma.task.upsert({
+      where: { id: t.id },
+      update: {},
+      create: { id: t.id, userId: user.id, projectId: t.projectId, title: t.title, notes: t.notes, status: 'BACKLOG', priority: 'MEDIUM', dueDate: t.dueDate }
+    })
+  }
+  for (const t of betaCompletedTasks) {
+    await prisma.task.upsert({
+      where: { id: t.id },
+      update: {},
+      create: { id: t.id, userId: user.id, projectId: t.projectId, title: t.title, notes: t.notes, status: 'DONE', priority: 'MEDIUM', completedAt: t.completedAt, dueDate: t.dueDate }
+    })
+  }
+  for (const t of betaInProgressTasks) {
+    await prisma.task.upsert({
+      where: { id: t.id },
+      update: {},
+      create: { id: t.id, userId: user.id, projectId: t.projectId, title: t.title, notes: t.notes, status: 'IN_PROGRESS', priority: 'HIGH', dueDate: t.dueDate }
+    })
+  }
+  for (const t of betaPlannedTasks) {
+    await prisma.task.upsert({
+      where: { id: t.id },
+      update: {},
+      create: { id: t.id, userId: user.id, projectId: t.projectId, title: t.title, notes: t.notes, status: 'BACKLOG', priority: 'MEDIUM', dueDate: t.dueDate }
+    })
+  }
+  const totalProjectTasks = alphaCompletedTasks.length + alphaInProgressTasks.length + alphaPlannedTasks.length +
+    betaCompletedTasks.length + betaInProgressTasks.length + betaPlannedTasks.length
+  console.log(`Seeded ${totalProjectTasks} project tasks (completed, in-progress, and planned)`)
 
   // --- Non-project Tasks (completed in March 2026) ---
   const nonProjectTasks = [
@@ -209,7 +266,8 @@ async function main() {
   console.log(`Seeded ${trackersData.length} trackers with entries`)
 
   console.log('\nReport seed data complete!')
-  console.log('Generate a report for March 1-31, 2026 to see all sections populated.')
+  console.log('- Activity Report: use March 1-31, 2026 to see all sections populated.')
+  console.log('- Detailed Project Report: select Alpha Project or Beta Project to see all task states.')
 }
 
 main()

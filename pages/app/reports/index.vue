@@ -23,6 +23,20 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>
+        <button
+          @click="showProjectSelect = true"
+          class="w-full text-left px-4 py-3 border border-gray-200 rounded-md hover:bg-gray-50 hover:border-[var(--primary)] transition-colors flex items-center justify-between"
+        >
+          <div>
+            <span class="font-medium">Detailed Project Report</span>
+            <p class="text-sm text-gray-500 mt-1">
+              Detailed breakdown of all tasks in a project, grouped by status with a visual overview chart.
+            </p>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 flex-shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -62,7 +76,14 @@
     <ReportDatePickerModal
       :show="showDatePicker"
       @cancel="showDatePicker = false"
-      @run="handleRunReport"
+      @run="handleRunActivityReport"
+    />
+
+    <!-- Project Select Modal -->
+    <ProjectSelectModal
+      :show="showProjectSelect"
+      @cancel="showProjectSelect = false"
+      @run="handleRunProjectReport"
     />
 
     <!-- Report Viewer Modal -->
@@ -87,6 +108,7 @@
 import { ref, onMounted } from 'vue'
 import { format } from 'date-fns'
 import ReportDatePickerModal from '~/components/reports/ReportDatePickerModal.vue'
+import ProjectSelectModal from '~/components/reports/ProjectSelectModal.vue'
 import ReportViewerModal from '~/components/reports/ReportViewerModal.vue'
 
 interface ReportSummary {
@@ -112,6 +134,7 @@ const reports = ref<ReportSummary[]>([])
 const isLoading = ref(true)
 const isGenerating = ref(false)
 const showDatePicker = ref(false)
+const showProjectSelect = ref(false)
 const showViewer = ref(false)
 const viewerTitle = ref('')
 const viewerMarkdown = ref('')
@@ -133,7 +156,21 @@ async function fetchReports() {
   }
 }
 
-async function handleRunReport(payload: { startDate: string; endDate: string }) {
+function showGeneratedReport(report: ReportFull) {
+  reports.value.unshift({
+    id: report.id,
+    reportType: report.reportType,
+    title: report.title,
+    startDate: report.startDate,
+    endDate: report.endDate,
+    createdAt: report.createdAt
+  })
+  viewerTitle.value = report.title
+  viewerMarkdown.value = report.markdown
+  showViewer.value = true
+}
+
+async function handleRunActivityReport(payload: { startDate: string; endDate: string }) {
   showDatePicker.value = false
   isGenerating.value = true
 
@@ -146,19 +183,28 @@ async function handleRunReport(payload: { startDate: string; endDate: string }) 
         endDate: payload.endDate
       }
     })
+    showGeneratedReport(report)
+  } catch (error: any) {
+    console.error('Failed to generate report:', error)
+    alert(error.data?.message || 'Failed to generate report. Please try again.')
+  } finally {
+    isGenerating.value = false
+  }
+}
 
-    reports.value.unshift({
-      id: report.id,
-      reportType: report.reportType,
-      title: report.title,
-      startDate: report.startDate,
-      endDate: report.endDate,
-      createdAt: report.createdAt
+async function handleRunProjectReport(payload: { projectId: string }) {
+  showProjectSelect.value = false
+  isGenerating.value = true
+
+  try {
+    const report = await $fetch<ReportFull>('/api/reports/generate', {
+      method: 'POST',
+      body: {
+        reportType: 'detailed-project',
+        projectId: payload.projectId
+      }
     })
-
-    viewerTitle.value = report.title
-    viewerMarkdown.value = report.markdown
-    showViewer.value = true
+    showGeneratedReport(report)
   } catch (error: any) {
     console.error('Failed to generate report:', error)
     alert(error.data?.message || 'Failed to generate report. Please try again.')
