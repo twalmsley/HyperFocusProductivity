@@ -5,12 +5,14 @@ import {
   buildActivitySummaryReportMarkdown,
   buildDetailedAllProjectsReportMarkdown,
   buildDetailedProjectReportMarkdown,
+  buildTrackersActivityReportMarkdown,
 } from '~/server/utils/reportGenerator'
 import { createReport, listReports } from '~/server/utils/reportRepository'
 
 const ACTIVITY_SUMMARY_REPORT = 'ACTIVITY_SUMMARY'
 const DETAILED_PROJECT_REPORT = 'DETAILED_PROJECT'
 const DETAILED_ALL_PROJECTS_REPORT = 'DETAILED_ALL_PROJECTS'
+const TRACKERS_ACTIVITY_REPORT = 'TRACKERS_ACTIVITY'
 const MAX_REPORT_DAYS = 31
 
 function getSessionUserId(session: unknown): string {
@@ -52,7 +54,7 @@ export default defineEventHandler(async (event) => {
   const endDateInput = body?.endDate as string | undefined
   const projectId = body?.projectId as string | undefined
 
-  if (!reportType || ![ACTIVITY_SUMMARY_REPORT, DETAILED_PROJECT_REPORT, DETAILED_ALL_PROJECTS_REPORT].includes(reportType)) {
+  if (!reportType || ![ACTIVITY_SUMMARY_REPORT, DETAILED_PROJECT_REPORT, DETAILED_ALL_PROJECTS_REPORT, TRACKERS_ACTIVITY_REPORT].includes(reportType)) {
     throw createError({
       statusCode: 400,
       message: 'Invalid report type',
@@ -309,6 +311,54 @@ export default defineEventHandler(async (event) => {
       userId,
       reportType,
       title: 'Detailed All Projects Tasks Report',
+      startDate,
+      endDate,
+      markdownContent,
+    })
+  }
+
+  if (reportType === TRACKERS_ACTIVITY_REPORT) {
+    const { startDate, endDate } = parseAndValidateDateRange()
+    const totalDays = differenceInCalendarDays(endDate, startDate) + 1
+
+    const trackers = await prisma.tracker.findMany({
+      where: { userId },
+      include: {
+        entries: {
+          where: {
+            date: {
+              gte: startDate,
+              lte: endDate,
+            },
+            value: {
+              gt: 0,
+            },
+          },
+          orderBy: {
+            date: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    })
+
+    const markdownContent = buildTrackersActivityReportMarkdown({
+      startDate,
+      endDate,
+      generatedAt: now,
+      trackers: trackers.map((tracker) => ({
+        trackerName: tracker.name,
+        completedDates: tracker.entries.map((entry) => entry.date),
+        totalDays,
+      })),
+    })
+
+    return createReport(prisma, {
+      userId,
+      reportType,
+      title: 'Trackers Activity Report',
       startDate,
       endDate,
       markdownContent,

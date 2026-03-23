@@ -1,4 +1,4 @@
-export type ReportType = 'ACTIVITY_SUMMARY' | 'DETAILED_PROJECT' | 'DETAILED_ALL_PROJECTS'
+export type ReportType = 'ACTIVITY_SUMMARY' | 'DETAILED_PROJECT' | 'DETAILED_ALL_PROJECTS' | 'TRACKERS_ACTIVITY'
 
 export interface ReportSummary {
   id: string

@@ -3,6 +3,7 @@ import {
   buildActivitySummaryReportMarkdown,
   buildDetailedAllProjectsReportMarkdown,
   buildDetailedProjectReportMarkdown,
+  buildTrackersActivityReportMarkdown,
 } from '~/server/utils/reportGenerator'
 
 describe('buildActivitySummaryReportMarkdown', () => {
@@ -179,5 +180,26 @@ describe('buildDetailedAllProjectsReportMarkdown', () => {
     expect(markdown).toContain('- Project tasks: Project Z = 1')
     expect(markdown.indexOf('## Planned Tasks')).toBeLessThan(markdown.indexOf('## In-progress Tasks'))
     expect(markdown.indexOf('## In-progress Tasks')).toBeLessThan(markdown.indexOf('## Completed Tasks'))
+  })
+})
+
+describe('buildTrackersActivityReportMarkdown', () => {
+  it('includes tracker stats lines for chart rendering', () => {
+    const markdown = buildTrackersActivityReportMarkdown({
+      startDate: new Date('2026-03-01T00:00:00.000Z'),
+      endDate: new Date('2026-03-31T23:59:59.999Z'),
+      generatedAt: new Date('2026-04-01T10:00:00.000Z'),
+      trackers: [
+        {
+          trackerName: 'Workout',
+          totalDays: 31,
+          completedDates: [new Date('2026-03-02T12:00:00.000Z'), new Date('2026-03-05T12:00:00.000Z')],
+        },
+      ],
+    })
+
+    expect(markdown).toContain('# Trackers Activity Report')
+    expect(markdown).toContain('- Completed days: 2/31 (6%)')
+    expect(markdown).toContain('- Tracker stats: Workout|2|31|6|2026-03-02,2026-03-05')
   })
 })

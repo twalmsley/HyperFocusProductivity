@@ -63,6 +63,19 @@ export interface DetailedAllProjectsReportInput {
   completedTasks: DetailedProjectTaskItem[]
 }
 
+export interface TrackerActivityReportItem {
+  trackerName: string
+  completedDates: Date[]
+  totalDays: number
+}
+
+export interface TrackersActivityReportInput {
+  startDate: Date
+  endDate: Date
+  generatedAt: Date
+  trackers: TrackerActivityReportItem[]
+}
+
 function formatDate(value: Date): string {
   return format(value, 'dd MMM yyyy')
 }
@@ -286,6 +299,38 @@ export function buildDetailedAllProjectsReportMarkdown(input: DetailedAllProject
   appendTaskList(lines, 'Planned Tasks', plannedTasks, false, true)
   appendTaskList(lines, 'In-progress Tasks', inProgressTasks, false, true)
   appendTaskList(lines, 'Completed Tasks', completedTasks, true, true)
+
+  return lines.join('\n').trimEnd()
+}
+
+export function buildTrackersActivityReportMarkdown(input: TrackersActivityReportInput): string {
+  const lines: string[] = []
+
+  lines.push('# Trackers Activity Report')
+  lines.push('')
+  lines.push(`- Period: ${formatDate(input.startDate)} to ${formatDate(input.endDate)}`)
+  lines.push(`- Generated: ${format(input.generatedAt, 'dd MMM yyyy HH:mm')}`)
+  lines.push('')
+  lines.push('## Tracker Statistics')
+  lines.push('')
+
+  const sortedTrackers = input.trackers.slice().sort((a, b) => a.trackerName.localeCompare(b.trackerName))
+  if (sortedTrackers.length === 0) {
+    lines.push('- No trackers found for this account.')
+    return lines.join('\n').trimEnd()
+  }
+
+  for (const tracker of sortedTrackers) {
+    const uniqueDates = Array.from(new Set(tracker.completedDates.map((date) => format(date, 'yyyy-MM-dd')))).sort()
+    const completedDays = uniqueDates.length
+    const percentage = tracker.totalDays > 0 ? Math.round((completedDays / tracker.totalDays) * 100) : 0
+    const safeName = tracker.trackerName.replace(/\|/g, '/')
+    lines.push(`### ${safeName}`)
+    lines.push(`- Completed days: ${completedDays}/${tracker.totalDays} (${percentage}%)`)
+    lines.push(`- Activity dates: ${uniqueDates.join(', ') || 'None'}`)
+    lines.push(`- Tracker stats: ${safeName}|${completedDays}|${tracker.totalDays}|${percentage}|${uniqueDates.join(',')}`)
+    lines.push('')
+  }
 
   return lines.join('\n').trimEnd()
 }

@@ -219,6 +219,54 @@
           </div>
         </div>
 
+        <div
+          v-if="trackersActivityData"
+          class="border rounded-md p-4 bg-gray-50"
+        >
+          <h4 class="font-medium text-gray-900 mb-3">Tracker Activity</h4>
+          <div class="overflow-x-auto">
+            <div class="min-w-[48rem]">
+              <div class="flex items-center text-xs text-gray-500 mb-2">
+                <div class="w-56 shrink-0" />
+                <div class="grid gap-1" :style="{ gridTemplateColumns: `repeat(${trackersActivityDates.length}, minmax(0, 1fr))` }">
+                  <span v-for="day in trackersActivityDates" :key="day.key" class="text-center">{{ day.label }}</span>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <div
+                  v-for="stat in trackersActivityData"
+                  :key="stat.trackerName"
+                  class="flex items-center"
+                >
+                  <div class="w-56 pr-3">
+                    <p class="text-sm font-medium text-gray-900">{{ stat.trackerName }}</p>
+                    <p class="text-xs text-gray-600">
+                      {{ stat.percentage }}% ({{ stat.completedDays }}/{{ stat.totalDays }} days)
+                    </p>
+                    <div
+                      class="h-2 rounded mt-1"
+                      :style="{ backgroundColor: getProgressBandColor(stat.percentage) }"
+                    />
+                  </div>
+                  <div
+                    class="grid gap-1 flex-1"
+                    :style="{ gridTemplateColumns: `repeat(${trackersActivityDates.length}, minmax(0, 1fr))` }"
+                  >
+                    <div
+                      v-for="day in trackersActivityDates"
+                      :key="`${stat.trackerName}-${day.key}`"
+                      class="h-3 w-3 rounded-sm"
+                      :class="getActivityCellClass(stat, day.key)"
+                      :title="`${stat.trackerName} - ${day.key}`"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="border rounded-md overflow-auto max-h-[68vh] max-w-[90vw]">
           <div
             class="prose prose-sm max-w-none p-4 min-w-[40rem]"
@@ -283,6 +331,11 @@ const reportDefinitions: ReportDefinition[] = [
     id: 'DETAILED_ALL_PROJECTS',
     name: 'Detailed All Projects Tasks Report',
     description: 'Detailed project task breakdown across all projects for a selected date range.',
+  },
+  {
+    id: 'TRACKERS_ACTIVITY',
+    name: 'Trackers Activity Report',
+    description: 'GitHub-style activity chart and completion statistics for each tracker.',
   },
 ]
 
@@ -363,6 +416,63 @@ const canRunReport = computed(() => {
 const renderedReportHtml = computed(() => {
   if (!activeReport.value?.markdownContent) return ''
   return DOMPurify.sanitize(marked(activeReport.value.markdownContent) as string)
+})
+
+interface TrackerActivityStat {
+  trackerName: string
+  completedDays: number
+  totalDays: number
+  percentage: number
+  completedDateSet: Set<string>
+}
+
+const trackersActivityData = computed(() => {
+  if (activeReport.value?.reportType !== 'TRACKERS_ACTIVITY' || !activeReport.value.markdownContent) {
+    return null
+  }
+
+  const stats: TrackerActivityStat[] = []
+  const regex = /- Tracker stats: (.+)\|(\d+)\|(\d+)\|(\d+)\|([^\n]*)/g
+  let match: RegExpExecArray | null = regex.exec(activeReport.value.markdownContent)
+  while (match) {
+    const completedDateSet = new Set(
+      match[5]
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0),
+    )
+    stats.push({
+      trackerName: match[1],
+      completedDays: Number(match[2]),
+      totalDays: Number(match[3]),
+      percentage: Number(match[4]),
+      completedDateSet,
+    })
+    match = regex.exec(activeReport.value.markdownContent)
+  }
+
+  return stats
+})
+
+const trackersActivityDates = computed(() => {
+  if (!activeReport.value || activeReport.value.reportType !== 'TRACKERS_ACTIVITY') {
+    return []
+  }
+  const start = new Date(activeReport.value.startDate)
+  const end = new Date(activeReport.value.endDate)
+  start.setHours(0, 0, 0, 0)
+  end.setHours(0, 0, 0, 0)
+  const dates: Array<{ key: string; label: string }> = []
+  const cursor = new Date(start)
+  while (cursor <= end) {
+    const key = formatDateInput(cursor)
+    dates.push({
+      key,
+      label: `${cursor.getDate()}`,
+    })
+    cursor.setDate(cursor.getDate() + 1)
+  }
+  return dates
 })
 
 const statePieData = computed(() => {
@@ -495,7 +605,19 @@ function formatDateTime(dateValue: string): string {
 function getReportTypeLabel(reportType: ReportType): string {
   if (reportType === 'DETAILED_PROJECT') return 'Detailed Project'
   if (reportType === 'DETAILED_ALL_PROJECTS') return 'Detailed All Projects'
+  if (reportType === 'TRACKERS_ACTIVITY') return 'Trackers Activity'
   return 'Activity Summary'
+}
+
+function getProgressBandColor(percentage: number): string {
+  const clamped = Math.max(0, Math.min(100, percentage))
+  const band = Math.floor(clamped / 5) * 5
+  const hue = (band / 100) * 120
+  return `hsl(${hue}, 85%, 45%)`
+}
+
+function getActivityCellClass(stat: TrackerActivityStat, dayKey: string): string {
+  return stat.completedDateSet.has(dayKey) ? 'bg-emerald-500' : 'bg-gray-200'
 }
 
 function openRunModal(reportType: ReportType) {

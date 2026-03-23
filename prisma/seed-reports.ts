@@ -286,50 +286,58 @@ async function seedJournalEntries(userId: string) {
 }
 
 async function seedTrackerEntries(userId: string) {
-  let tracker = await prisma.tracker.findFirst({
-    where: {
-      userId,
+  const trackerSeeds = [
+    {
       name: 'Workout',
-      groupName: 'Reporting Samples',
+      completionDates: ['2026-03-02', '2026-03-05', '2026-03-10', '2026-03-14', '2026-03-20', '2026-03-27'],
     },
-  })
+    {
+      name: 'Meditation',
+      completionDates: ['2026-03-01', '2026-03-03', '2026-03-04', '2026-03-08', '2026-03-12', '2026-03-18', '2026-03-24'],
+    },
+    {
+      name: 'Reading',
+      completionDates: ['2026-03-06', '2026-03-13', '2026-03-19', '2026-03-26'],
+    },
+  ]
 
-  if (!tracker) {
-    tracker = await prisma.tracker.create({
-      data: {
+  for (const trackerSeed of trackerSeeds) {
+    let tracker = await prisma.tracker.findFirst({
+      where: {
         userId,
-        name: 'Workout',
+        name: trackerSeed.name,
         groupName: 'Reporting Samples',
       },
     })
-  }
 
-  const completionDates = [
-    '2026-03-02',
-    '2026-03-05',
-    '2026-03-10',
-    '2026-03-14',
-    '2026-03-20',
-    '2026-03-27',
-  ]
-
-  for (const day of completionDates) {
-    const date = new Date(`${day}T12:00:00.000Z`)
-    const exists = await prisma.trackerEntry.findFirst({
-      where: {
-        trackerId: tracker.id,
-        date,
-      },
-    })
-
-    if (!exists) {
-      await prisma.trackerEntry.create({
+    if (!tracker) {
+      tracker = await prisma.tracker.create({
         data: {
-          trackerId: tracker.id,
-          date,
-          value: 100,
+          userId,
+          name: trackerSeed.name,
+          groupName: 'Reporting Samples',
         },
       })
+    }
+
+    for (const day of trackerSeed.completionDates) {
+      const date = new Date(`${day}T12:00:00.000Z`)
+      const exists = await prisma.trackerEntry.findFirst({
+        where: {
+          trackerId: tracker.id,
+          date,
+        },
+      })
+
+      if (!exists) {
+        await prisma.trackerEntry.create({
+          data: {
+            trackerId: tracker.id,
+            date,
+            value: 100,
+          },
+        })
+      }
     }
   }
 }
