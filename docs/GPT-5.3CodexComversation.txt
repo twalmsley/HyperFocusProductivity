@@ -1,0 +1,469 @@
+I’ll implement this end-to-end: add the Reports nav/page + report generation flow + persistence + retrieval modal, then add tests and a seed file, and run the full test suite/dev checks. I’m starting by reading the project style rule and scanning the current app structure to wire this in consistently.
+
+I’ve confirmed the stack and style baseline; next I’m mapping existing nav/routing, modal patterns, and API/data model conventions so the reports feature fits cleanly with current architecture.
+
+I found the auth/API conventions and will now wire reports using the same getServerSession + prisma pattern and existing modal/page styling so it behaves consistently on desktop/mobile. I’m checking existing modal and tracker/journal patterns before editing.
+
+I’ve mapped the implementation points and I’m moving into edits now: Prisma model + reports API + reusable report generation/storage utilities, then a new Reports app page with run/view modals and history list, plus nav links, tests, and a report-focused seed script. After coding I’ll run Prisma generate, unit tests, and a dev boot check.
+
+schema.prisma
++16
+  trackers          Tracker[]       @relation("UserTrackers")}
+  trackers          Tracker[]       @relation("UserTrackers")  reports           Report[]}model Report {
+migration.sql
++20
+-- CreateTableCREATE TABLE "Report" (    "id" TEXT NOT NULL,    "userId" TEXT NOT NULL,    "reportType" TEXT NOT NULL,
+reportGenerator.ts
++155
+import { format } from 'date-fns'export interface ProjectTaskSummaryItem {  projectName: string  title: string
+reportRepository.ts
++97
+export interface CreateReportPayload {  userId: string  reportType: string  title: string  startDate: Date
+report.ts
++15
+export type ReportType = 'ACTIVITY_SUMMARY'export interface ReportSummary {  id: string  reportType: ReportType
+I’m now adding the core reports API endpoints (run, list, get by id) with date validation and markdown generation logic, then I’ll connect the new Reports page UI to these endpoints.
+
+index.ts
++224
+import { getServerSession } from '#auth'import { endOfDay, isAfter, isBefore, startOfDay, differenceInCalendarDays } from 'date-fns'import { prisma } from '~/server/utils/db'import { buildActivitySummaryReportMarkdown } from '~/server/utils/reportGenerator'import { createReport, listReports } from '~/server/utils/reportRepository'
+[id].get.ts
++45
+import { getServerSession } from '#auth'import { prisma } from '~/server/utils/db'import { getReportById } from '~/server/utils/reportRepository'function getSessionUserId(session: unknown): string {
+AppNavHeader.vue
++16
+-1
+          </NuxtLink>          <NuxtLink 
+          <NuxtLink           </NuxtLink>          <NuxtLink            to="/app/reports"            class="text-gray-900 hover:text-[var(--primary)] transition-colors"
+reports.vue
++376
+<template>  <div>    <AppNavHeader />    <main class="container mx-auto px-4 py-8">      <div v-if="userSession?.blocked">
+reportGenerator.test.ts
++63
+import { describe, expect, it } from 'vitest'import { buildActivitySummaryReportMarkdown } from '~/server/utils/reportGenerator'describe('buildActivitySummaryReportMarkdown', () => {  it('builds markdown with sorted sections and tracker summary', () => {
+reportRepository.test.ts
++76
+import { beforeEach, describe, expect, it, vi } from 'vitest'import { createReport, getReportById, listReports } from '~/server/utils/reportRepository'describe('reportRepository', () => {  const create = vi.fn()
+I’ve finished the main feature code and I’m adding the dedicated report seed data script now so every report section can be validated with realistic fixtures. Then I’ll run lint/test/dev verification and fix anything that surfaces.
+
+seed-reports.ts
++221
+import { PrismaClient } from '@prisma/client'const prisma = new PrismaClient()async function getOrCreateUser() {
+package.json
++1
+    "prisma:seed": "ts-node prisma/seed.ts",    "test": "vitest",
+    "prisma:seed": "ts-node prisma/seed.ts",    "prisma:seed:reports": "ts-node prisma/seed-reports.ts",    "test": "vitest",
+I’m at verification now: tests already passed, and I’m starting dev mode to confirm the app boots cleanly with the new reports feature and no startup console errors.
+
+Dev startup surfaced a Nuxt pre-transform #app-manifest resolution error (likely stale build artifacts, not from the reports code). I’m clearing Nuxt build cache and re-running dev to confirm a clean startup state.
+
+Implemented the reports feature end-to-end with nav integration, report generation, persistence, retrieval, tests, and seed data.
+
+What I changed
+Added Reports navigation for logged-in app users in components/AppNavHeader.vue (desktop + mobile), routing to pages/app/reports.vue.
+Added a new Reports page at pages/app/reports.vue with:
+Available report selection (currently one: Activity Summary)
+Previous reports list (fetched from DB)
+Run Report modal with start/end date pickers and:
+end date >= start date
+end date <= today
+max report span of 31 days (inclusive)
+disabled Run button when invalid
+Cancel behavior closes without producing a report
+Report viewer modal:
+renders markdown as sanitized HTML
+scrollable horizontally and vertically
+Dismiss button
+opening past reports from list loads from DB and displays in modal
+Added report persistence model to Prisma:
+Updated prisma/schema.prisma with Report model + relation on User
+Added migration prisma/migrations/20260323110000_add_reports/migration.sql
+Added reports API:
+server/api/reports/index.ts
+GET list reports
+POST run/generate/store report with full date validation rules
+server/api/reports/[id].get.ts for report retrieval
+Added reusable server utilities:
+server/utils/reportGenerator.ts (builds markdown with all required sections)
+server/utils/reportRepository.ts (storage/list/retrieval helpers)
+Added report types:
+types/report.ts
+Added report seed data script:
+prisma/seed-reports.ts
+script entry in package.json: prisma:seed:reports
+Report content implemented
+Activity Summary Report includes:
+
+Project Tasks summary:
+grouped by project
+projects sorted alphabetically
+tasks sorted by completion date
+title + completion date
+Non-project Tasks summary:
+tasks without project
+sorted by completion date
+title + completion date
+Cyclic Tasks summary:
+title + completion date
+sorted by completion date
+Journal summary:
+title + entry date
+sorted by entry date
+Trackers summary:
+per tracker, completion dates in selected period
+summary line: N completed out of M days
+Tests added
+test/utils/reportGenerator.test.ts
+verifies sorting/grouping and tracker summary output
+verifies empty-state section output
+test/utils/reportRepository.test.ts
+verifies report storage call
+verifies report listing (newest first)
+verifies report retrieval by id/user
+Verification run
+Ran Prisma client generation successfully: yarn prisma:generate
+Ran full test suite successfully: yarn test:run
+10 test files, 188 tests passed
+Dev startup check:
+First run showed a Nuxt cache manifest error
+Ran cleanup (nuxi cleanup) and re-ran dev
+Dev started cleanly afterward with no startup console errors from this feature
+Notes for your local run
+Apply migration to DB (if not already): run your normal Prisma migrate flow.
+Seed report test fixtures:
+yarn prisma:seed:reports
+Then run dev and use Reports at /app/reports.
+Change the seed data generation to use the user with email address 'tony@aosd.co.uk'
+
+I’ll update the report seed script to target the tony@aosd.co.uk user instead of the dedicated reports-test account, then I’ll quickly verify the file diff.
+
+seed-reports.ts
++4
+-4
+    where: {      email: 'reports-test@hyperfocus.local',    },      data: {
+      email: 'reports-test@hyperfocus.local',    where: {      email: 'tony@aosd.co.uk',    },      data: {
+Updated prisma/seed-reports.ts to use the user with email tony@aosd.co.uk.
+
+Changes made
+Replaced lookup email from reports-test@hyperfocus.local to tony@aosd.co.uk.
+Updated fallback create path to create tony@aosd.co.uk (name Tony Walmsley) if missing.
+Updated log message accordingly.
+If you want, I can also make this stricter so it fails when tony@aosd.co.uk does not exist instead of creating it.
+
+Add another report type for a Detailed Project. This report will give more detail for a selected projects. You will need to add more seed data for this report to create multiple tasks that are complete, in-progress, and planned. The report should detail all of the tasks for the project with title and descriptions - list the planned tasks first, then the in-progress tasks, then the completed tasks. Planned and in-progress tasks should be in order of due date, and completed tasks should be in order of completion date. Also add a pie chart at the top of the report showing the number of tasks of each state.
+
+I’ll extend the reports system with a second Detailed Project report type, including project selection, task-state ordering, and a pie chart in the report viewer. I’m first reading the current reports page/API to patch them safely, then I’ll update seed data and tests.
+
+report.ts
++1
+-1
+export type ReportType = 'ACTIVITY_SUMMARY'
+export type ReportType = 'ACTIVITY_SUMMARY'export type ReportType = 'ACTIVITY_SUMMARY' | 'DETAILED_PROJECT'
+reportGenerator.ts
++82
+export interface DetailedProjectTaskItem {  title: string  description: string  dueDate: Date | null
+index.ts
++251
+-160
+import { prisma } from '~/server/utils/db'import { buildActivitySummaryReportMarkdown } from '~/server/utils/reportGenerator'import { createReport, listReports } from '~/server/utils/reportRepository'const ACTIVITY_SUMMARY_REPORT = 'ACTIVITY_SUMMARY'
+import { buildActivitySummaryReportMarkdown } from '~/server/utils/reportGenerator'import { prisma } from '~/server/utils/db'import { buildActivitySummaryReportMarkdown, buildDetailedProjectReportMarkdown } from '~/server/utils/reportGenerator'import { createReport, listReports } from '~/server/utils/reportRepository'const ACTIVITY_SUMMARY_REPORT = 'ACTIVITY_SUMMARY'
+I’m now updating the Reports UI for report-type-specific inputs (project selector for Detailed Project), and adding a generated pie chart block at the top of detailed report display using task-state counts parsed from the stored markdown.
+
+reports.vue
++78
+-4
+import type { ReportDetail, ReportSummary, ReportType } from '~/types/report'  },
+import type { ReportDetail, ReportSummary, ReportType } from '~/types/report'import type { Project } from '~/types/project'  },  {
+reports.vue
++50
+-3
+            <h2 class="text-xl font-semibold mb-3">Available Reports</h2>            <p class="text-sm text-gray-600 mb-4">Select a report and choose a date range to generate it.</p>                <p class="text-xs text-gray-600">
+            <p class="text-sm text-gray-600 mb-4">Select a report and choose a date range to generate it.</p>            <h2 class="text-xl font-semibold mb-3">Available Reports</h2>            <p class="text-sm text-gray-600 mb-4">Select a report and complete any required parameters to generate it.</p>                <p class="text-xs text-gray-600">
+seed-reports.ts
++81
+async function seedDetailedProjectTasks(userId: string, projectId: string) {  const detailedTaskRows = [    {      title: 'Define project scope',
+reportGenerator.test.ts
++69
+-1
+import { describe, expect, it } from 'vitest'import { buildActivitySummaryReportMarkdown } from '~/server/utils/reportGenerator'
+import { buildActivitySummaryReportMarkdown } from '~/server/utils/reportGenerator'import { describe, expect, it } from 'vitest'import { buildActivitySummaryReportMarkdown, buildDetailedProjectReportMarkdown } from '~/server/utils/reportGenerator'
+Added the new Detailed Project report type end-to-end, including project selection, task ordering rules, pie chart display, and richer seed data.
+
+What I changed
+Extended report types in types/report.ts:
+
+Added DETAILED_PROJECT.
+Updated report generation in server/utils/reportGenerator.ts:
+
+Added buildDetailedProjectReportMarkdown(...).
+Outputs:
+project header + generated time
+task counts by state
+sections in required order:
+Planned tasks (BACKLOG) sorted by due date
+In-progress tasks (IN_PROGRESS) sorted by due date
+Completed tasks (DONE) sorted by completion date
+each task includes title + description (and date context)
+Kept existing activity summary generator intact.
+Updated report API in server/api/reports/index.ts:
+
+Supports both ACTIVITY_SUMMARY and DETAILED_PROJECT.
+DETAILED_PROJECT requires projectId.
+Verifies project belongs to authenticated user.
+Pulls all project tasks and builds/stores detailed report markdown.
+Stores a derived startDate/endDate from project task dates for history display.
+Updated Reports page in pages/app/reports.vue:
+
+Added second selectable report option.
+Added project dropdown in run modal for detailed report.
+Keeps date pickers for activity summary only.
+Sends projectId when running detailed project report.
+In report view modal:
+shows report type
+adds a pie chart block at top for detailed reports
+pie chart uses planned/in-progress/completed counts parsed from report markdown
+keeps markdown HTML rendering below chart
+Expanded report seed data in prisma/seed-reports.ts:
+
+Added multiple project tasks across all states (planned/in-progress/completed) with realistic descriptions and date fields to exercise detailed report requirements.
+Existing seeded records remain idempotent (checks before insert).
+Added/updated tests in test/utils/reportGenerator.test.ts:
+
+New test validates detailed report:
+section order
+state counts
+sorting behavior per state
+Validation
+Ran tests: yarn test:run
+Result: all pass (189 passed)
+If you want, I can also add a tiny legend percentage display next to each pie segment (e.g. Planned 25%) to make the chart easier to scan.
+
+Add another detailed report for all tasks across all projects. Tasks should be from a selected date period not exceeding 31 days and should be listed in the same order as the detailed project report. Also include two pie charts. One should tasks by state, as in the detailed project report, and one showing the number of tasks per project.
+
+I’ll add a third report type for all project tasks in a selected date range (max 31 days), wire it through API + UI, and include two pie charts in the viewer (state + tasks-per-project). I’m updating the report generators and endpoint first, then the page modal/visualization logic, then tests and seed data.
+
+report.ts
++1
+-1
+export type ReportType = 'ACTIVITY_SUMMARY' | 'DETAILED_PROJECT'
+export type ReportType = 'ACTIVITY_SUMMARY' | 'DETAILED_PROJECT'export type ReportType = 'ACTIVITY_SUMMARY' | 'DETAILED_PROJECT' | 'DETAILED_ALL_PROJECTS'
+reportGenerator.ts
++58
+-3
+  status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE'}
+  status: 'BACKLOG' | 'IN_PROGRESS' | 'DONE'  projectName?: string}export interface DetailedAllProjectsReportInput {
+index.ts
++95
+-3
+import { prisma } from '~/server/utils/db'import { buildActivitySummaryReportMarkdown, buildDetailedProjectReportMarkdown } from '~/server/utils/reportGenerator'
+import { buildActivitySummaryReportMarkdown, buildDetailedProjectReportMarkdown } from '~/server/utils/reportGenerator'import { prisma } from '~/server/utils/db'import {  buildActivitySummaryReportMarkdown,  buildDetailedAllProjectsReportMarkdown,
+I’m in the UI wiring phase now: adding the new report option, keeping the 31-day date validation for it, and extending the report viewer to render both pie charts when the all-projects detailed report is selected.
+
+reports.vue
++50
+-25
+                <p class="text-xs text-gray-600">                  Type: {{ report.reportType === 'DETAILED_PROJECT' ? 'Detailed Project' : 'Activity Summary' }}                </p>        <p class="text-sm text-gray-600">
+                  Type: {{ report.reportType === 'DETAILED_PROJECT' ? 'Detailed Project' : 'Activity Summary' }}                <p class="text-xs text-gray-600">                  Type: {{ getReportTypeLabel(report.reportType) }}                </p>        <p class="text-sm text-gray-600">
+reports.vue
++69
+-3
+  },
+  },  {    id: 'DETAILED_ALL_PROJECTS',    name: 'Detailed All Projects Tasks Report',    description: 'Detailed project task breakdown across all projects for a selected date range.',
+seed-reports.ts
++61
+-3
+async function seedAdditionalProjectDetailedTasks(userId: string, projectId: string) {  const taskRows = [    {      title: 'Finalize onboarding checklist',
+reportGenerator.test.ts
++54
+-1
+import { describe, expect, it } from 'vitest'import { buildActivitySummaryReportMarkdown, buildDetailedProjectReportMarkdown } from '~/server/utils/reportGenerator'
+import { buildActivitySummaryReportMarkdown, buildDetailedProjectReportMarkdown } from '~/server/utils/reportGenerator'import { describe, expect, it } from 'vitest'import {  buildActivitySummaryReportMarkdown,  buildDetailedAllProjectsReportMarkdown,
+Added a new report type for all tasks across all projects with date-range filtering, ordering, and dual pie charts.
+
+What’s implemented
+Added new report type in types/report.ts:
+
+DETAILED_ALL_PROJECTS
+Extended report generation in server/utils/reportGenerator.ts:
+
+New function: buildDetailedAllProjectsReportMarkdown(...)
+Uses selected period (startDate/endDate)
+Lists tasks in the same section order as detailed project report:
+Planned (BACKLOG) — sorted by due date
+In-progress (IN_PROGRESS) — sorted by due date
+Completed (DONE) — sorted by completion date
+Includes title + description for each task
+Includes project name per task
+Includes project aggregate lines for charting:
+- Project tasks: <Project Name> = <Count>
+Extended reports API in server/api/reports/index.ts:
+
+Supports DETAILED_ALL_PROJECTS
+Enforces date period validation (same 31-day max logic as activity summary)
+Pulls project tasks in selected period:
+DONE tasks by completedAt in range
+BACKLOG/IN_PROGRESS tasks by dueDate in range
+Stores report as markdown in DB with correct report metadata
+Updated reports UI in pages/app/reports.vue:
+
+Added “Detailed All Projects Tasks Report” option
+Uses date range (no project selector) for this report
+Added report type label helper for all types
+Added chart rendering logic:
+State pie chart for both detailed report types
+Project pie chart for all-projects report
+Project pie chart legend shows project names and counts
+Expanded seed data in prisma/seed-reports.ts:
+
+Added a second seeded project (Mobile App Refresh)
+Added mixed-status tasks (planned/in-progress/completed) for that project
+This ensures the all-projects report and project distribution pie chart have meaningful data
+Added tests in test/utils/reportGenerator.test.ts:
+
+New test for all-projects report markdown
+Verifies state counts, section order, and project-count lines
+Verification
+Ran test suite: yarn test:run
+Result: all passing (190 passed)
+Add a Trackers Report showing statistics for each tracker. Present the data in the style of a GitHub Activity chart - see attachment. Show the percentage of days completed for each tracker, as well as the number of days. Score the progress for each tracker in rainbow bands from red to green using 5% width bands.
+
+I’m implementing this as a new report type with date-range selection, server-generated tracker stats, and a custom GitHub-style activity grid renderer in the report modal (with 5% rainbow-banded progress scoring per tracker). I’m updating generator/API/types first.
+
+reportGenerator.ts
++45
+export interface TrackerActivityReportItem {  trackerName: string  completedDates: Date[]  totalDays: number
+report.ts
++1
+-1
+export type ReportType = 'ACTIVITY_SUMMARY' | 'DETAILED_PROJECT' | 'DETAILED_ALL_PROJECTS'
+export type ReportType = 'ACTIVITY_SUMMARY' | 'DETAILED_PROJECT' | 'DETAILED_ALL_PROJECTS'export type ReportType = 'ACTIVITY_SUMMARY' | 'DETAILED_PROJECT' | 'DETAILED_ALL_PROJECTS' | 'TRACKERS_ACTIVITY'
+index.ts
++51
+-1
+  buildDetailedProjectReportMarkdown,} from '~/server/utils/reportGenerator'const DETAILED_ALL_PROJECTS_REPORT = 'DETAILED_ALL_PROJECTS'
+  buildDetailedProjectReportMarkdown,  buildTrackersActivityReportMarkdown,} from '~/server/utils/reportGenerator'const DETAILED_ALL_PROJECTS_REPORT = 'DETAILED_ALL_PROJECTS'const TRACKERS_ACTIVITY_REPORT = 'TRACKERS_ACTIVITY'
+reports.vue
++74
+  },
+  },  {    id: 'TRACKERS_ACTIVITY',    name: 'Trackers Activity Report',    description: 'GitHub-style activity chart and completion statistics for each tracker.',
+reports.vue
++48
+        <div          v-if="trackersActivityData"          class="border rounded-md p-4 bg-gray-50"        >
+seed-reports.ts
++49
+-41
+async function seedTrackerEntries(userId: string) {  let tracker = await prisma.tracker.findFirst({    where: {      userId,      name: 'Workout',
+  let tracker = await prisma.tracker.findFirst({    where: {      userId,      name: 'Workout',      groupName: 'Reporting Samples',    },  })async function seedTrackerEntries(userId: string) {
+reportGenerator.test.ts
++22
+  buildDetailedProjectReportMarkdown,} from '~/server/utils/reportGenerator'
+  buildDetailedProjectReportMarkdown,  buildTrackersActivityReportMarkdown,} from '~/server/utils/reportGenerator'describe('buildTrackersActivityReportMarkdown', () => {
+Implemented a new Trackers Activity Report with GitHub-style visualization and rainbow-banded progress scoring.
+
+What I added
+New report type in types/report.ts:
+
+TRACKERS_ACTIVITY
+Server generation in server/api/reports/index.ts:
+
+Added TRACKERS_ACTIVITY handling
+Uses selected date range with existing validation rules (including max 31 days)
+Fetches all trackers + completed entries (value > 0) in range
+Stores generated markdown report in DB as Trackers Activity Report
+Markdown generator in server/utils/reportGenerator.ts:
+
+Added buildTrackersActivityReportMarkdown(...)
+Includes:
+date period
+generated timestamp
+per-tracker stats (completed days / total days and %)
+machine-readable tracker-stat lines for UI chart rendering:
+- Tracker stats: name|completed|total|percent|yyyy-mm-dd,...
+UI updates in pages/app/reports.vue:
+
+Added report option: Trackers Activity Report
+Uses date range selection (same constraints)
+Added report type labels for this new type
+Added a GitHub-style activity chart in the report modal:
+one row per tracker
+day cells across selected period
+completed days highlighted
+Added per-tracker progress summary:
+% complete and completed/total days
+progress color scored in 5% rainbow bands from red to green (quantized in 5% steps)
+Seed data expansion in prisma/seed-reports.ts:
+
+Added multiple trackers for richer statistics:
+Workout
+Meditation
+Reading
+Added completion-day entries for each, so the report displays multiple rows with varied progress
+Tests in test/utils/reportGenerator.test.ts:
+
+Added test for buildTrackersActivityReportMarkdown(...)
+Verifies expected stats output and tracker chart-data line format
+Verification
+Ran unit tests: yarn test:run
+Result: all passing (191 passed)
+Allow the Trackers Report to show data for up to 90 days and make sure the report can display that amount of data correctly.
+
+I’ll scope the date-limit rule by report type: keep 31 days for existing date-range reports and allow up to 90 days only for Trackers Activity. Then I’ll tighten the tracker chart layout so 90-day ranges remain readable and scroll cleanly.
+
+index.ts
++8
+-7
+const TRACKERS_ACTIVITY_REPORT = 'TRACKERS_ACTIVITY'const MAX_REPORT_DAYS = 31
+const MAX_REPORT_DAYS = 31const TRACKERS_ACTIVITY_REPORT = 'TRACKERS_ACTIVITY'const MAX_STANDARD_REPORT_DAYS = 31const MAX_TRACKERS_REPORT_DAYS = 90
+reports.vue
++34
+-9
+          <div class="overflow-x-auto">            <div class="min-w-[48rem]">              <div class="flex items-center text-xs text-gray-500 mb-2">                <div class="w-56 shrink-0" />
+            <div class="min-w-[48rem]">          <div class="overflow-x-auto">            <div :style="{ minWidth: `${trackerActivityMinWidthPx}px` }">              <div class="flex items-center text-xs text-gray-500 mb-2">                <div class="w-56 shrink-0" />
+Updated — the Trackers Report now supports up to 90 days and the chart rendering scales correctly for that range.
+
+Changes made
+In server/api/reports/index.ts:
+
+Added per-report max-range logic:
+31 days for standard date-based reports
+90 days for TRACKERS_ACTIVITY
+Validation now uses the report-specific maximum in both enforcement and error message.
+In pages/app/reports.vue:
+
+Updated client-side validation to match backend behavior:
+TRACKERS_ACTIVITY allows up to 90 days
+others remain at 31 days
+Improved tracker chart rendering for long ranges:
+adaptive cell sizing (smaller cells when range is long)
+adaptive grid gap
+dynamic minimum chart width for clean horizontal scrolling
+reduced x-axis label density (weekly/month boundary markers) to keep 90-day views readable
+Verification
+Ran full tests: yarn test:run
+Result: all passing (191 passed)
+Add trackers seed data for the last 90 days so I can test the report properly.
+
+I’ll update the tracker seed routine to generate realistic completion entries across the last 90 days (instead of fixed March dates), with varied completion patterns per tracker so the report is meaningful to test.
+
+seed-reports.ts
++18
+-3
+async function seedTrackerEntries(userId: string) {
+async function seedTrackerEntries(userId: string) {  const today = new Date()  today.setHours(0, 0, 0, 0)  const lastNDayStrings = Array.from({ length: 90 }, (_, index) => {
+Done — tracker seed data now covers the last 90 days dynamically.
+
+What changed
+In prisma/seed-reports.ts (seedTrackerEntries):
+
+Replaced fixed March dates with generated dates for the last 90 days (inclusive).
+Kept multiple trackers, each with a different completion pattern so the report has varied results:
+Workout: ~70% completion
+Meditation: ~55% completion
+Reading: ~40% completion
+This is idempotent with existing logic (it still checks before creating duplicate entries).
+
+Run it
+Use:
+
+yarn prisma:seed:reports
+to populate/update the data for testing.
