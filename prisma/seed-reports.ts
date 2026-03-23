@@ -286,18 +286,33 @@ async function seedJournalEntries(userId: string) {
 }
 
 async function seedTrackerEntries(userId: string) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const lastNDayStrings = Array.from({ length: 90 }, (_, index) => {
+    const date = new Date(today)
+    date.setDate(today.getDate() - (89 - index))
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  })
+
   const trackerSeeds = [
     {
       name: 'Workout',
-      completionDates: ['2026-03-02', '2026-03-05', '2026-03-10', '2026-03-14', '2026-03-20', '2026-03-27'],
+      // About 70% completion: misses every 3rd day.
+      completionDates: lastNDayStrings.filter((_, index) => index % 3 !== 0),
     },
     {
       name: 'Meditation',
-      completionDates: ['2026-03-01', '2026-03-03', '2026-03-04', '2026-03-08', '2026-03-12', '2026-03-18', '2026-03-24'],
+      // About 55% completion: alternates 2-on / 2-off blocks.
+      completionDates: lastNDayStrings.filter((_, index) => Math.floor(index / 2) % 2 === 0),
     },
     {
       name: 'Reading',
-      completionDates: ['2026-03-06', '2026-03-13', '2026-03-19', '2026-03-26'],
+      // About 40% completion: every 5-day cycle complete on first 2 days.
+      completionDates: lastNDayStrings.filter((_, index) => index % 5 < 2),
     },
   ]
 

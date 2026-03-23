@@ -13,7 +13,8 @@ const ACTIVITY_SUMMARY_REPORT = 'ACTIVITY_SUMMARY'
 const DETAILED_PROJECT_REPORT = 'DETAILED_PROJECT'
 const DETAILED_ALL_PROJECTS_REPORT = 'DETAILED_ALL_PROJECTS'
 const TRACKERS_ACTIVITY_REPORT = 'TRACKERS_ACTIVITY'
-const MAX_REPORT_DAYS = 31
+const MAX_STANDARD_REPORT_DAYS = 31
+const MAX_TRACKERS_REPORT_DAYS = 90
 
 function getSessionUserId(session: unknown): string {
   const user = (session as { user?: { id?: string } } | null)?.user
@@ -62,7 +63,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const now = new Date()
-  function parseAndValidateDateRange() {
+  function parseAndValidateDateRange(maxDays: number) {
     if (!startDateInput || !endDateInput) {
       throw createError({
         statusCode: 400,
@@ -96,10 +97,10 @@ export default defineEventHandler(async (event) => {
     }
 
     const daySpan = differenceInCalendarDays(endDate, startDate) + 1
-    if (daySpan > MAX_REPORT_DAYS) {
+    if (daySpan > maxDays) {
       throw createError({
         statusCode: 400,
-        message: `Report period cannot exceed ${MAX_REPORT_DAYS} days`,
+        message: `Report period cannot exceed ${maxDays} days`,
       })
     }
 
@@ -107,7 +108,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (reportType === ACTIVITY_SUMMARY_REPORT) {
-    const { startDate, endDate } = parseAndValidateDateRange()
+    const { startDate, endDate } = parseAndValidateDateRange(MAX_STANDARD_REPORT_DAYS)
 
     const [projectTasksRaw, nonProjectTasksRaw, cyclicTasksRaw, journalEntriesRaw, trackersRaw] = await Promise.all([
       prisma.task.findMany({
@@ -237,7 +238,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (reportType === DETAILED_ALL_PROJECTS_REPORT) {
-    const { startDate, endDate } = parseAndValidateDateRange()
+    const { startDate, endDate } = parseAndValidateDateRange(MAX_STANDARD_REPORT_DAYS)
 
     const projectTasks = await prisma.task.findMany({
       where: {
@@ -318,7 +319,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (reportType === TRACKERS_ACTIVITY_REPORT) {
-    const { startDate, endDate } = parseAndValidateDateRange()
+    const { startDate, endDate } = parseAndValidateDateRange(MAX_TRACKERS_REPORT_DAYS)
     const totalDays = differenceInCalendarDays(endDate, startDate) + 1
 
     const trackers = await prisma.tracker.findMany({

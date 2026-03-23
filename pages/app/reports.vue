@@ -225,11 +225,19 @@
         >
           <h4 class="font-medium text-gray-900 mb-3">Tracker Activity</h4>
           <div class="overflow-x-auto">
-            <div class="min-w-[48rem]">
+            <div :style="{ minWidth: `${trackerActivityMinWidthPx}px` }">
               <div class="flex items-center text-xs text-gray-500 mb-2">
                 <div class="w-56 shrink-0" />
-                <div class="grid gap-1" :style="{ gridTemplateColumns: `repeat(${trackersActivityDates.length}, minmax(0, 1fr))` }">
-                  <span v-for="day in trackersActivityDates" :key="day.key" class="text-center">{{ day.label }}</span>
+                <div
+                  class="grid"
+                  :style="{
+                    gridTemplateColumns: `repeat(${trackersActivityDates.length}, minmax(0, 1fr))`,
+                    gap: trackerGridGapPx
+                  }"
+                >
+                  <span v-for="day in trackersActivityDates" :key="day.key" class="text-center text-[10px]">
+                    {{ day.showLabel ? day.label : '' }}
+                  </span>
                 </div>
               </div>
 
@@ -250,14 +258,18 @@
                     />
                   </div>
                   <div
-                    class="grid gap-1 flex-1"
-                    :style="{ gridTemplateColumns: `repeat(${trackersActivityDates.length}, minmax(0, 1fr))` }"
+                    class="grid flex-1"
+                    :style="{
+                      gridTemplateColumns: `repeat(${trackersActivityDates.length}, minmax(0, 1fr))`,
+                      gap: trackerGridGapPx
+                    }"
                   >
                     <div
                       v-for="day in trackersActivityDates"
                       :key="`${stat.trackerName}-${day.key}`"
-                      class="h-3 w-3 rounded-sm"
+                      class="rounded-sm"
                       :class="getActivityCellClass(stat, day.key)"
+                      :style="{ width: `${trackerCellSizePx}px`, height: `${trackerCellSizePx}px` }"
                       :title="`${stat.trackerName} - ${day.key}`"
                     />
                   </div>
@@ -374,6 +386,7 @@ const parsedEndDate = computed(() => toLocalDate(runForm.value.endDate))
 
 const requiresProjectSelection = computed(() => selectedReportType.value === 'DETAILED_PROJECT')
 const requiresDateRange = computed(() => selectedReportType.value !== 'DETAILED_PROJECT')
+const maxDaysForSelectedReport = computed(() => selectedReportType.value === 'TRACKERS_ACTIVITY' ? 90 : 31)
 
 const validationMessage = computed(() => {
   if (requiresProjectSelection.value && !runForm.value.projectId) {
@@ -402,8 +415,8 @@ const validationMessage = computed(() => {
   }
 
   const daysInPeriod = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
-  if (daysInPeriod > 31) {
-    return 'Report period cannot exceed 31 days.'
+  if (daysInPeriod > maxDaysForSelectedReport.value) {
+    return `Report period cannot exceed ${maxDaysForSelectedReport.value} days.`
   }
 
   return ''
@@ -462,17 +475,29 @@ const trackersActivityDates = computed(() => {
   const end = new Date(activeReport.value.endDate)
   start.setHours(0, 0, 0, 0)
   end.setHours(0, 0, 0, 0)
-  const dates: Array<{ key: string; label: string }> = []
+  const dates: Array<{ key: string; label: string; showLabel: boolean }> = []
   const cursor = new Date(start)
+  let index = 0
   while (cursor <= end) {
     const key = formatDateInput(cursor)
+    const isMonthBoundary = cursor.getDate() === 1
+    const isWeeklyTick = index % 7 === 0
     dates.push({
       key,
       label: `${cursor.getDate()}`,
+      showLabel: isMonthBoundary || isWeeklyTick,
     })
     cursor.setDate(cursor.getDate() + 1)
+    index += 1
   }
   return dates
+})
+
+const trackerCellSizePx = computed(() => trackersActivityDates.value.length > 62 ? 8 : 12)
+const trackerGridGapPx = computed(() => `${trackersActivityDates.value.length > 62 ? 2 : 4}px`)
+const trackerActivityMinWidthPx = computed(() => {
+  const chartWidth = trackersActivityDates.value.length * (trackerCellSizePx.value + Number.parseInt(trackerGridGapPx.value, 10))
+  return Math.max(768, chartWidth + 260)
 })
 
 const statePieData = computed(() => {
